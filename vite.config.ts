@@ -7,6 +7,7 @@ import { qwikVite } from "@builder.io/qwik/optimizer";
 import { qwikCity } from "@builder.io/qwik-city/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import tailwindcss from "@tailwindcss/vite";
+import { getPlatformProxy } from "wrangler";
 import pkg from "./package.json";
 
 type PkgDep = Record<string, string>;
@@ -20,11 +21,24 @@ errorOnDuplicatesPkgDeps(devDependencies, dependencies);
 /**
  * Note that Vite normally starts from `index.html` but the qwikCity plugin makes start at `src/entry.ssr.tsx` instead.
  */
-export default defineConfig(({ command, mode }): UserConfig => {
+export default defineConfig(async ({ command }): Promise<UserConfig> => {
+  const platform =
+    command === "serve"
+      ? await getPlatformProxy<Env>({ persist: { path: ".wrangler/state/v3" } })
+      : undefined;
+
+      // Mirror .dev.vars (loaded by getPlatformProxy) into process.env so that                                      
+      // code paths not going through platform.env (e.g. @auth/qwik in dev) see them too.                          
+      if (platform) {                                                                                                
+        for (const [k, v] of Object.entries(platform.env)) {                                                  
+          if (typeof v === "string" && process.env[k] === undefined) process.env[k] = v;                           
+        }                                                                                                     
+      }                                                                                                       
+             
   return {
     plugins: [
       tailwindcss(),
-      qwikCity(),
+      qwikCity({ platform: platform ? { env: platform.env, cf: platform.cf, ctx: platform.ctx, caches: platform.caches } : undefined }),
       qwikVite(),
       tsconfigPaths({ root: "." }),
     ],
