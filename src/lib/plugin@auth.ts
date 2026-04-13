@@ -18,7 +18,7 @@ export const { onRequest, useSession, useSignIn, useSignOut } = QwikAuth$((ev) =
         sessionsTable: sessions,
         verificationTokensTable: verificationTokens,
       }),
-      session: { strategy: "database" as const },
+      session: { strategy: "database" },
       events: {
         signIn: async ({ user, isNewUser }) => {
           if (isNewUser && user?.id) await allocateRoom(db, user.id);
