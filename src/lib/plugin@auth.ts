@@ -1,9 +1,9 @@
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { QwikAuth$ } from "@auth/qwik";
 import Google from "@auth/qwik/providers/google";
-import { getDb } from "~/server/db";
-import { accounts, sessions, users, verificationTokens } from "~/server/db/schema";
-import { allocateRoom } from "~/server/rooms/allocate";
+import { getDb } from "~/server/infra/db";
+import { accounts, sessions, users, verificationTokens } from "~/server/infra/db/schema";
+import { allocateRoom } from "~/server/usecase/rooms/allocateRoom";
 
 export const { onRequest, useSession, useSignIn, useSignOut } = QwikAuth$((ev) => {
   const d1 = (ev.platform?.env as Env | undefined)?.DB;
