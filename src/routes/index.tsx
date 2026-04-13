@@ -1,8 +1,8 @@
 import { component$ } from "@builder.io/qwik";
 import { routeLoader$, type DocumentHead } from "@builder.io/qwik-city";
 import { asc, eq } from "drizzle-orm";
-import { getDb } from "~/server/db";
-import { rooms, towers, users } from "~/server/db/schema";
+import { getDb } from "~/server/infra/db";
+import { rooms, towers, users } from "~/server/infra/db/schema";
 
 export const useTowers = routeLoader$(async (ev) => {
   const d1 = (ev.platform?.env as Env | undefined)?.DB;
