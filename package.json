@@ -14,6 +14,10 @@
     "build.server": "qwik check-client src dist && vite build -c adapters/cloudflare-workers/vite.config.ts",
     "build.types": "tsc --incremental --noEmit",
     "cf-typegen": "wrangler types",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply bio-tower-dev --local",
+    "db:migrate:prod": "wrangler d1 migrations apply bio-tower-dev --remote",
+    "db:studio": "drizzle-kit studio",
     "deploy": "wrangler deploy",
     "dev": "vite --mode ssr",
     "dev.debug": "node --inspect-brk ./node_modules/vite/bin/vite.js --mode ssr --force",
@@ -21,7 +25,7 @@
     "fmt.check": "prettier --check .",
     "lint": "eslint \"src/**/*.ts*\"",
     "preview": "qwik build preview && vite preview --open",
-    "serve": "wrangler dev",
+    "serve": "qwik build && wrangler dev",
     "start": "vite --open --mode ssr",
     "qwik": "qwik"
   },
@@ -33,6 +37,7 @@
     "@eslint/js": "^9",
     "@tailwindcss/vite": "^4.2.2",
     "@types/node": "20.19.0",
+    "drizzle-kit": "^0.31.10",
     "eslint": "9.32.0",
     "eslint-plugin-qwik": "^1.19.2",
     "globals": "16.4.0",
@@ -45,5 +50,9 @@
     "vite": "7.3.1",
     "vite-tsconfig-paths": "^4.2.1",
     "wrangler": "^3.0.0"
+  },
+  "dependencies": {
+    "@auth/drizzle-adapter": "^1.11.1",
+    "drizzle-orm": "^0.45.2"
   }
 }

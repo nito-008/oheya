@@ -1,112 +1,66 @@
 import { component$ } from "@builder.io/qwik";
-import type { DocumentHead } from "@builder.io/qwik-city";
+import { routeLoader$, type DocumentHead } from "@builder.io/qwik-city";
+import { asc, eq } from "drizzle-orm";
+import { getDb } from "~/server/db";
+import { rooms, towers, users } from "~/server/db/schema";
 
-import Counter from "../components/starter/counter/counter";
-import Hero from "../components/starter/hero/hero";
-import Infobox from "../components/starter/infobox/infobox";
-import Starter from "../components/starter/next-steps/next-steps";
+export const useTowers = routeLoader$(async (ev) => {
+  const d1 = (ev.platform?.env as Env | undefined)?.DB;
+  if (!d1) return [];
+  const db = getDb(d1);
+
+  const towerRows = await db.select().from(towers).orderBy(asc(towers.id)).all();
+
+  return Promise.all(
+    towerRows.map(async (tower) => {
+      const roomRows = await db
+        .select({
+          floor: rooms.floor,
+          bio: rooms.bio,
+          userName: users.name,
+          userEmail: users.email,
+        })
+        .from(rooms)
+        .leftJoin(users, eq(users.id, rooms.userId))
+        .where(eq(rooms.towerId, tower.id))
+        .orderBy(asc(rooms.floor))
+        .all();
+      return { tower, rooms: roomRows };
+    }),
+  );
+});
 
 export default component$(() => {
+  const data = useTowers();
+
   return (
-    <>
-      <Hero />
-      <Starter />
-
-      <div role="presentation" class="ellipsis"></div>
-      <div role="presentation" class="ellipsis ellipsis-purple"></div>
-
-      <div class="container container-center container-spacing-xl">
-        <h3>
-          You can <span class="highlight">count</span>
-          <br /> on me
-        </h3>
-        <Counter />
-      </div>
-
-      <div class="container container-flex">
-        <Infobox>
-          <div q:slot="title" class="icon icon-cli">
-            CLI Commands
-          </div>
-          <>
-            <p>
-              <code>npm run dev</code>
-              <br />
-              Starts the development server and watches for changes
-            </p>
-            <p>
-              <code>npm run preview</code>
-              <br />
-              Creates production build and starts a server to preview it
-            </p>
-            <p>
-              <code>npm run build</code>
-              <br />
-              Creates production build
-            </p>
-            <p>
-              <code>npm run qwik add</code>
-              <br />
-              Runs the qwik CLI to add integrations
-            </p>
-          </>
-        </Infobox>
-
-        <div>
-          <Infobox>
-            <div q:slot="title" class="icon icon-apps">
-              Example Apps
-            </div>
-            <p>
-              Have a look at the <a href="/demo/flower">Flower App</a> or the{" "}
-              <a href="/demo/todolist">Todo App</a>.
-            </p>
-          </Infobox>
-
-          <Infobox>
-            <div q:slot="title" class="icon icon-community">
-              Community
-            </div>
+    <main style={{ padding: "2rem", fontFamily: "system-ui, sans-serif" }}>
+      <h1>Bio Tower</h1>
+      {data.value.length === 0 && <p>塔がまだありません。</p>}
+      {data.value.map(({ tower, rooms }) => (
+        <section key={tower.id} style={{ marginBottom: "2rem" }}>
+          <h2>
+            {tower.name} <small>(next floor: {tower.nextFloor})</small>
+          </h2>
+          {rooms.length === 0 ? (
+            <p>まだ住人がいません。</p>
+          ) : (
             <ul>
-              <li>
-                <span>Questions or just want to say hi? </span>
-                <a href="https://qwik.dev/chat" target="_blank">
-                  Chat on discord!
-                </a>
-              </li>
-              <li>
-                <span>Follow </span>
-                <a href="https://twitter.com/QwikDev" target="_blank">
-                  @QwikDev
-                </a>
-                <span> on Twitter</span>
-              </li>
-              <li>
-                <span>Open issues and contribute on </span>
-                <a href="https://github.com/QwikDev/qwik" target="_blank">
-                  GitHub
-                </a>
-              </li>
-              <li>
-                <span>Watch </span>
-                <a href="https://qwik.dev/media/" target="_blank">
-                  Presentations, Podcasts, Videos, etc.
-                </a>
-              </li>
+              {rooms.map((r) => (
+                <li key={r.floor}>
+                  <strong>{r.floor}F</strong> — {r.userName ?? r.userEmail ?? "(no name)"}
+                  {r.bio ? `: ${r.bio}` : " (bio未設定)"}
+                </li>
+              ))}
             </ul>
-          </Infobox>
-        </div>
-      </div>
-    </>
+          )}
+        </section>
+      ))}
+    </main>
   );
 });
 
 export const head: DocumentHead = {
-  title: "Welcome to Qwik",
-  meta: [
-    {
-      name: "description",
-      content: "Qwik site description",
-    },
-  ],
+  title: "Bio Tower",
+  meta: [{ name: "description", content: "Bioが積み上がる塔" }],
 };
