@@ -26,6 +26,7 @@
     "qwik": "qwik"
   },
   "devDependencies": {
+    "@auth/qwik": "0.8.0",
     "@builder.io/qwik": "^1.19.2",
     "@builder.io/qwik-city": "^1.19.2",
     "@cloudflare/workers-types": "^4.20251228.0",
