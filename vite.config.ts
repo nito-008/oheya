@@ -97,6 +97,7 @@ export default defineConfig({
         "**/package-lock.json",
         "**/yarn.lock",
         "/server",
+        "/scripts",
         "eslint.config.js",
       ],
       rules: {

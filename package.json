@@ -10,6 +10,7 @@
     "build.server": "qwik check-client src dist && vp build -c adapters/cloudflare-workers/vite.config.ts",
     "build.types": "tsc --incremental --noEmit",
     "cf-typegen": "wrangler types",
+    "db:erd": "node scripts/gen-erd.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
