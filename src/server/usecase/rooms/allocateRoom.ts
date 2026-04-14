@@ -1,9 +1,5 @@
-import type { Db } from "../../infra/db";
-import {
-  findRoomByUserId,
-  incrementTowerNextFloor,
-  insertRoom,
-} from "../../infra/db/roomsRepo";
+import type { Db } from "~/server/infra/db";
+import { findRoomByUserId, incrementTowerNextFloor, insertRoom } from "~/server/infra/db/roomsRepo";
 
 export const DEFAULT_TOWER_ID = 1;
 

@@ -38,7 +38,7 @@ export default defineConfig({
       "*": "vp check --fix"
     },
     lint: {
-      plugins: ["typescript"],
+      plugins: ["typescript", "import"],
       jsPlugins: ["eslint-plugin-qwik"],
       categories: {
         correctness: "off",
@@ -96,7 +96,7 @@ export default defineConfig({
         "**/pnpm-lock.yaml",
         "**/package-lock.json",
         "**/yarn.lock",
-        "**/server",
+        "/server",
         "eslint.config.js",
       ],
       rules: {
@@ -186,6 +186,7 @@ export default defineConfig({
         "typescript/prefer-as-const": "error",
         "typescript/prefer-namespace-keyword": "error",
         "typescript/triple-slash-reference": "error",
+        "import/no-relative-parent-imports": "error",
       },
       overrides: [
         {
@@ -251,7 +252,7 @@ export default defineConfig({
         "pnpm-lock.yaml",
         "package-lock.json",
         "yarn.lock",
-        "server",
+        "/server",
       ],
     },
     plugins: [
