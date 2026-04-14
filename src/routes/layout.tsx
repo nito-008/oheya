@@ -15,7 +15,14 @@ export default component$(() => {
 
   return (
     <>
-      <header style={{ display: "flex", justifyContent: "flex-end", gap: "1rem", padding: "1rem" }}>
+      <header
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: "1rem",
+          padding: "1rem",
+        }}
+      >
         {session.value?.user ? (
           <>
             <span>{session.value.user.name ?? session.value.user.email}</span>

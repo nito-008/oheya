@@ -7,10 +7,7 @@
   "name": "my-qwik-app",
   "main": "./dist/_worker.js",
   "compatibility_date": "2025-07-18",
-  "compatibility_flags": [
-    "nodejs_compat",
-    "global_fetch_strictly_public"
-  ],
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": {
     "binding": "ASSET",
     "directory": "./dist",
@@ -23,9 +20,9 @@
       "binding": "DB",
       "database_name": "bio-tower-dev",
       "database_id": "c2106a8f-6e94-4e62-9885-25f3e402021a",
-      "migrations_dir": "drizzle"
-    }
-  ]
+      "migrations_dir": "drizzle",
+    },
+  ],
   /**
    * Smart Placement
    * https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
