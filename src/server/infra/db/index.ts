@@ -1,7 +1,8 @@
-import { drizzle } from "drizzle-orm/d1";
+import type { Client } from "@libsql/client";
+import { drizzle } from "drizzle-orm/libsql";
 import * as schema from "./schema";
 
-export const getDb = (d1: D1Database) => drizzle(d1, { schema });
+export const getDb = (client: Client) => drizzle(client, { schema });
 
 export type Db = ReturnType<typeof getDb>;
 export { schema };

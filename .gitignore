@@ -46,6 +46,12 @@ lerna-debug.log*
 functions/**/*.js
 .wrangler/
 
+# Local DB (libSQL file)
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
 # Claude
 .claude
 AGENTS.md

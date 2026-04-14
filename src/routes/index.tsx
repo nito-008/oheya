@@ -2,12 +2,13 @@ import { component$ } from "@builder.io/qwik";
 import { routeLoader$, type DocumentHead } from "@builder.io/qwik-city";
 import { asc, eq } from "drizzle-orm";
 import { getDb } from "~/server/infra/db";
+import { createTursoClient } from "~/server/infra/db/client";
 import { rooms, towers, users } from "~/server/infra/db/schema";
 
 export const useTowers = routeLoader$(async (ev) => {
-  const d1 = (ev.platform?.env as Env | undefined)?.DB;
-  if (!d1) return [];
-  const db = getDb(d1);
+  const env = ev.platform?.env as Env | undefined;
+  if (!env?.TURSO_DATABASE_URL) return [];
+  const db = getDb(createTursoClient(env));
 
   const towerRows = await db.select().from(towers).orderBy(asc(towers.id)).all();
 

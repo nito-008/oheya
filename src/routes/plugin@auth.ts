@@ -2,12 +2,13 @@ import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { QwikAuth$ } from "@auth/qwik";
 import Google from "@auth/qwik/providers/google";
 import { getDb } from "~/server/infra/db";
+import { createTursoClient } from "~/server/infra/db/client";
 import { accounts, sessions, users, verificationTokens } from "~/server/infra/db/schema";
 import { allocateRoom } from "~/server/usecase/rooms/allocateRoom";
 
 export const { onRequest, useSession, useSignIn, useSignOut } = QwikAuth$((ev) => {
-  const d1 = (ev.platform?.env as Env | undefined)?.DB;
-  const db = d1 ? getDb(d1) : undefined;
+  const env = ev.platform?.env as Env | undefined;
+  const db = env?.TURSO_DATABASE_URL ? getDb(createTursoClient(env)) : undefined;
 
   return {
     providers: [Google],

@@ -11,8 +11,8 @@
     "build.types": "tsc --incremental --noEmit",
     "cf-typegen": "wrangler types",
     "db:generate": "drizzle-kit generate",
-    "db:migrate:local": "wrangler d1 migrations apply bio-tower-dev --local",
-    "db:migrate:prod": "wrangler d1 migrations apply bio-tower-dev --remote",
+    "db:migrate:local": "TURSO_DATABASE_URL=file:./local.db drizzle-kit migrate",
+    "db:migrate:prod": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "deploy": "wrangler deploy",
     "dev": "vp dev --mode ssr",
@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.1",
+    "@libsql/client": "^0.17.2",
     "drizzle-orm": "^0.45.2"
   },
   "devDependencies": {
