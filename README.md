@@ -1,7 +1,13 @@
 # Bio Tower
 
+## Install
+
+```sh
+vp install
+```
+
 ## Development
 
 ```sh
-bun run dev
+vp run dev
 ```

@@ -9,11 +9,7 @@ export const useTowers = routeLoader$(async (ev) => {
   if (!d1) return [];
   const db = getDb(d1);
 
-  const towerRows = await db
-    .select()
-    .from(towers)
-    .orderBy(asc(towers.id))
-    .all();
+  const towerRows = await db.select().from(towers).orderBy(asc(towers.id)).all();
 
   return Promise.all(
     towerRows.map(async (tower) => {
@@ -52,8 +48,7 @@ export default component$(() => {
             <ul>
               {rooms.map((r) => (
                 <li key={r.floor}>
-                  <strong>{r.floor}F</strong> —{" "}
-                  {r.userName ?? r.userEmail ?? "(no name)"}
+                  <strong>{r.floor}F</strong> — {r.userName ?? r.userEmail ?? "(no name)"}
                   {r.bio ? `: ${r.bio}` : " (bio未設定)"}
                 </li>
               ))}

@@ -48,3 +48,5 @@ functions/**/*.js
 
 # Claude
 .claude
+AGENTS.md
+CLAUDE.md
