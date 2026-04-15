@@ -1,8 +1,27 @@
 .door {
   display: flex;
   justify-content: center;
+  perspective: 1400px;
+  cursor: pointer;
+  user-select: none;
 }
 
 .door svg {
   overflow: visible;
+  width: clamp(280px, 38vw, 420px);
+  height: auto;
+}
+
+.door :global(#leaf) {
+  transform-box: fill-box;
+  transform-origin: left center;
+  will-change: transform;
+}
+
+.door :global(.leaf-bg) {
+  fill: white;
+}
+
+.door.open :global(#leaf) {
+  transform: rotateY(30deg) skewY(8deg) scaleX(102%);
 }
