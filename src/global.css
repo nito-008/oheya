@@ -6,6 +6,7 @@
  *
  */
 @import "kiso.css";
+@import url("https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&display=swap");
 
 @font-face {
   font-family: "Uzura";
@@ -20,6 +21,7 @@ html {
   -o-tab-size: 4;
   tab-size: 4;
   font-family:
+    "Caveat",
     "Uzura",
     ui-sans-serif,
     system-ui,

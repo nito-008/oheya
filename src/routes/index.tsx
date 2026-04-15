@@ -6,7 +6,6 @@ import { Jukebox } from "~/components/svg/jukebox/jukebox";
 export default component$(() => {
   return (
     <main style={{ padding: "2rem", fontFamily: "system-ui, sans-serif" }}>
-      <h1>Oheya</h1>
       <Door />
       <Jukebox />
     </main>

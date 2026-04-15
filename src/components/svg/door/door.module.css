@@ -1,9 +1,6 @@
 .door {
   display: flex;
   justify-content: center;
-  perspective: 1400px;
-  cursor: pointer;
-  user-select: none;
 }
 
 .door svg {

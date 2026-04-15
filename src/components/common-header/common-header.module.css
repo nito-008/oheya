@@ -1,3 +1,15 @@
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.8rem 1rem;
+}
+
+.header h1 {
+  margin-block: 0;
+}
+
 .signInButton {
   cursor: pointer;
 }

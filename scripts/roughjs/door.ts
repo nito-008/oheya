@@ -27,6 +27,7 @@ export default function draw(rc: RoughSVG, svg: SVGSVGElement, document: Documen
 
   // 2. ドア枠 (外側, 静止)
   append(svg, rc.rectangle(30, 30, 200, 385, style));
+  append(svg, rc.rectangle(45, 45, 170, 355, { ...style, roughness: 1.2 }));
 
   // 3. 蝶番 (枠側に残して扉と一緒に回転させない)
   append(svg, rc.rectangle(36, 80, 8, 20, { ...style, strokeWidth: 1.5 }));
