@@ -1,15 +1,19 @@
 import { component$ } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
+import { Door } from "~/components/svg/door/door";
+import { Jukebox } from "~/components/svg/jukebox/jukebox";
 
 export default component$(() => {
   return (
     <main style={{ padding: "2rem", fontFamily: "system-ui, sans-serif" }}>
-      <h1>Bio Tower</h1>
+      <h1>Oheya</h1>
+      <Door />
+      <Jukebox />
     </main>
   );
 });
 
 export const head: DocumentHead = {
-  title: "Bio Tower",
-  meta: [{ name: "description", content: "Bioが積み上がる塔" }],
+  title: "Oheya",
+  meta: [{ name: "description", content: "インターネットのどこかにある、あなただけのお部屋" }],
 };

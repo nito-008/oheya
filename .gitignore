@@ -52,7 +52,13 @@ functions/**/*.js
 *.db-shm
 *.db-wal
 
-# Claude
+# Agents
 .claude
 AGENTS.md
 CLAUDE.md
+
+# Tmp
+tmp
+
+# Output
+output

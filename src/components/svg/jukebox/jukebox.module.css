@@ -1,0 +1,25 @@
+.jukebox :global(#record) {
+  transform-origin: 150px 160px;
+  animation: spin 2.2s linear infinite;
+  animation-play-state: paused;
+}
+
+.jukebox.playing :global(#record) {
+  animation-play-state: running;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.jukebox :global(#arm) {
+  transform-origin: 205px 220px;
+  transform: rotate(35deg);
+  transition: transform 0.7s ease;
+}
+
+.jukebox.playing :global(#arm) {
+  transform: rotate(0deg);
+}

@@ -1,0 +1,8 @@
+.door {
+  display: flex;
+  justify-content: center;
+}
+
+.door svg {
+  overflow: visible;
+}
