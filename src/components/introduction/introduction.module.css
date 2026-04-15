@@ -10,8 +10,14 @@
   margin-block: 0 3rem;
 }
 
+.title span {
+  padding-inline: 0.1em 0.3em;
+  vertical-align: 0.05em;
+}
+
 .lead {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
+  font-weight: 400;
   margin-block: 0 1rem;
   color: #555;
   line-height: 1.4;

@@ -5,14 +5,14 @@ export const Introduction = component$(() => {
   return (
     <section class={styles.introduction}>
       <h2 class={styles.title}>
-        ようこそ
-        <wbr />
-        Oheyaへ
+        ようこそ<span>Oheya</span>へ
       </h2>
       <p class={styles.lead}>
         ここは
         <wbr />
-        インターネットのどこかにある、
+        インターネットの
+        <wbr />
+        どこかにある、
         <wbr />
         誰かのお部屋。
       </p>
