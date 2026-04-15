@@ -15,5 +15,5 @@ export default component$(() => {
 
 export const head: DocumentHead = {
   title: "Oheya",
-  meta: [{ name: "description", content: "インターネットのどこかにある、あなただけのお部屋" }],
+  meta: [{ name: "description", content: "インターネットのどこかにある、だれかのお部屋" }],
 };

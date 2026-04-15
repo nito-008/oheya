@@ -1,6 +1,9 @@
 import { component$, Slot } from "@builder.io/qwik";
-import { Form, routeLoader$ } from "@builder.io/qwik-city";
-import { useSession, useSignIn, useSignOut } from "~/routes/plugin@auth";
+import type { Session } from "@auth/qwik";
+import { routeLoader$ } from "@builder.io/qwik-city";
+import { CommonHeader } from "~/components/common-header/common-header";
+import { isDbConfigured } from "~/server/infra/db";
+import { getPublicIdByEmail } from "~/server/user";
 
 export const useServerTimeLoader = routeLoader$(() => {
   return {
@@ -8,37 +11,22 @@ export const useServerTimeLoader = routeLoader$(() => {
   };
 });
 
-export default component$(() => {
-  const session = useSession();
-  const signIn = useSignIn();
-  const signOut = useSignOut();
+export const useProfileGuard = routeLoader$(async (ev) => {
+  const session = ev.sharedMap.get("session") as Session | null;
+  if (!session?.user?.email) return;
+  if (ev.url.pathname === "/signup") return;
+  if (!isDbConfigured(ev)) return;
 
+  const publicId = await getPublicIdByEmail(ev.platform.env, session.user.email);
+  if (!publicId) {
+    throw ev.redirect(302, "/signup");
+  }
+});
+
+export default component$(() => {
   return (
     <>
-      <header
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: "1rem",
-          padding: "1rem",
-        }}
-      >
-        {session.value?.user ? (
-          <>
-            <span>{session.value.user.name ?? session.value.user.email}</span>
-            <Form action={signOut}>
-              <input type="hidden" name="redirectTo" value="/" />
-              <button type="submit">Sign Out</button>
-            </Form>
-          </>
-        ) : (
-          <Form action={signIn}>
-            <input type="hidden" name="providerId" value="google" />
-            <input type="hidden" name="options.redirectTo" value="/" />
-            <button type="submit">Sign In</button>
-          </Form>
-        )}
-      </header>
+      <CommonHeader />
       <main>
         <Slot />
       </main>

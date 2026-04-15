@@ -29,6 +29,7 @@ erDiagram
     text email UK "nullable"
     integer emailVerified "nullable"
     text image "nullable"
+    text public_id UK "nullable"
   }
   verificationToken {
     text identifier PK

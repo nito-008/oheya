@@ -1,0 +1,7 @@
+.signInButton {
+  cursor: pointer;
+}
+
+.signInButton:hover {
+  text-decoration: underline;
+}
