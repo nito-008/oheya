@@ -45,6 +45,7 @@ lerna-debug.log*
 # Cloudflare
 functions/**/*.js
 .wrangler/
+wrangler.jsonc
 
 # Local DB (libSQL file)
 *.db
