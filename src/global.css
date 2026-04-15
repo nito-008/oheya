@@ -5,6 +5,7 @@
  * the styles in here will be applied to the Document, without any sort of CSS scoping.
  *
  */
+@import "kiso.css";
 
 html {
   line-height: 1;

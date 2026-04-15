@@ -29,7 +29,8 @@
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.1",
     "@libsql/client": "^0.17.2",
-    "drizzle-orm": "^0.45.2"
+    "drizzle-orm": "^0.45.2",
+    "kiso.css": "^1.2.4"
   },
   "devDependencies": {
     "@auth/qwik": "0.8.0",
