@@ -1,12 +1,39 @@
 import { component$ } from "@builder.io/qwik";
 import type { Session } from "@auth/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
-import { Form, routeAction$, routeLoader$, z, zod$ } from "@builder.io/qwik-city";
+import { Form as AuthForm, routeLoader$ } from "@builder.io/qwik-city";
+import {
+  FormError,
+  type InitialValues,
+  formAction$,
+  useForm,
+  valiForm$,
+} from "@modular-forms/qwik";
+import * as v from "valibot";
 import { useSignIn } from "~/routes/plugin@auth";
 import { isDbConfigured } from "~/server/infra/db";
 import { getPublicIdByEmail, registerProfile } from "~/server/user";
+import styles from "./index.module.css";
 
 type ProfileStatus = { state: "guest" | "needsProfile" };
+
+const PUBLIC_ID_MAX_LENGTH = 16;
+const NAME_MAX_LENGTH = 32;
+
+const SignupSchema = v.object({
+  publicId: v.pipe(
+    v.string(),
+    v.regex(/^[A-Za-z0-9_]+$/, "英数字とアンダースコアだけが使えます"),
+    v.maxLength(PUBLIC_ID_MAX_LENGTH, `最大${PUBLIC_ID_MAX_LENGTH}文字です`),
+  ),
+  name: v.pipe(
+    v.string(),
+    v.minLength(1, "名前を入力してください"),
+    v.maxLength(NAME_MAX_LENGTH, `最大${NAME_MAX_LENGTH}文字です`),
+  ),
+});
+
+type SignupForm = v.InferInput<typeof SignupSchema>;
 
 export const useProfileStatus = routeLoader$<ProfileStatus>(async (ev) => {
   const session = ev.sharedMap.get("session") as Session | null;
@@ -18,81 +45,90 @@ export const useProfileStatus = routeLoader$<ProfileStatus>(async (ev) => {
   return { state: "needsProfile" };
 });
 
-export const useRegisterProfile = routeAction$(
-  async (data, ev) => {
-    const session = ev.sharedMap.get("session") as Session | null;
-    if (!session?.user?.email) {
-      return ev.fail(401, { formErrors: ["ログインが必要です"] });
-    }
-    if (!isDbConfigured(ev)) {
-      return ev.fail(500, { formErrors: ["サーバーエラー"] });
-    }
+export const useFormLoader = routeLoader$<InitialValues<SignupForm>>(() => ({
+  publicId: "",
+  name: "",
+}));
 
-    const result = await registerProfile(ev.platform.env, session.user.email, {
-      publicId: data.publicId,
-      name: data.name,
-    });
-    if (result === "duplicate_public_id") {
-      return ev.fail(409, { formErrors: ["このIDはもう誰かが使っています"] });
-    }
+export const useRegisterProfile = formAction$<SignupForm>(async (values, ev) => {
+  const session = ev.sharedMap.get("session") as Session | null;
+  if (!session?.user?.email) {
+    throw new FormError<SignupForm>("ログインが必要です");
+  }
+  if (!isDbConfigured(ev)) {
+    throw new FormError<SignupForm>("サーバーエラー");
+  }
 
-    throw ev.redirect(302, "/");
-  },
-  zod$({
-    publicId: z
-      .string()
-      .regex(/^[A-Za-z0-9_]+$/, "英数字とアンダースコアだけが使えます")
-      .max(16, "最大16文字です"),
-    name: z.string().min(1, "名前を入力してください").max(32, "最大32文字です"),
-  }),
-);
+  const result = await registerProfile(ev.platform.env, session.user.email, {
+    publicId: values.publicId,
+    name: values.name,
+  });
+  if (result === "duplicate_public_id") {
+    throw new FormError<SignupForm>({ publicId: "このIDはすでに誰かが使っています" });
+  }
+
+  throw ev.redirect(302, "/");
+}, valiForm$(SignupSchema));
 
 export default component$(() => {
   const status = useProfileStatus();
   const signIn = useSignIn();
-  const register = useRegisterProfile();
+  const [signupForm, { Form, Field }] = useForm<SignupForm>({
+    loader: useFormLoader(),
+    action: useRegisterProfile(),
+    validate: valiForm$(SignupSchema),
+  });
 
   return (
-    <main style={{ padding: "2rem", fontFamily: "system-ui, sans-serif" }}>
+    <main class={styles.main}>
       <h1>はじめる</h1>
       {status.value.state === "guest" ? (
         <>
           <p>このサービスを使うにはGoogleアカウントが必要です。</p>
-          <Form action={signIn}>
+          <AuthForm action={signIn}>
             <input type="hidden" name="providerId" value="google" />
             <input type="hidden" name="options.redirectTo" value="/signup" />
             <button type="submit">Googleアカウントではじめる</button>
-          </Form>
+          </AuthForm>
         </>
       ) : (
-        <Form
-          action={register}
-          style={{ display: "flex", flexDirection: "column", gap: "1rem", maxWidth: "20rem" }}
-        >
-          <label style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-            <span>ID（英数字とアンダースコア、最大16文字）</span>
-            <input type="text" name="publicId" maxLength={16} required />
-            {register.value?.failed && register.value.fieldErrors?.publicId && (
-              <span style={{ color: "red" }}>{register.value.fieldErrors.publicId}</span>
+        <Form class={styles.form}>
+          <Field name="publicId">
+            {(field, props) => (
+              <label class={styles.field}>
+                <span>ID（英数字とアンダースコア、最大{PUBLIC_ID_MAX_LENGTH}文字）</span>
+                <input
+                  {...props}
+                  type="text"
+                  value={field.value}
+                  maxLength={PUBLIC_ID_MAX_LENGTH}
+                  required
+                />
+                {field.error && <span class={styles.error}>{field.error}</span>}
+              </label>
             )}
-          </label>
-          <label style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-            <span>名前（最大32文字）</span>
-            <input type="text" name="name" maxLength={32} required />
-            {register.value?.failed && register.value.fieldErrors?.name && (
-              <span style={{ color: "red" }}>{register.value.fieldErrors.name}</span>
+          </Field>
+          <Field name="name">
+            {(field, props) => (
+              <label class={styles.field}>
+                <span>名前（最大{NAME_MAX_LENGTH}文字）</span>
+                <input
+                  {...props}
+                  type="text"
+                  value={field.value}
+                  maxLength={NAME_MAX_LENGTH}
+                  required
+                />
+                {field.error && <span class={styles.error}>{field.error}</span>}
+              </label>
             )}
-          </label>
-          {register.value?.failed &&
-            register.value.formErrors &&
-            register.value.formErrors.length > 0 && (
-              <ul style={{ color: "red", margin: 0, paddingLeft: "1rem" }}>
-                {register.value.formErrors.map((msg) => (
-                  <li key={msg}>{msg}</li>
-                ))}
-              </ul>
-            )}
-          <button type="submit">はじめる</button>
+          </Field>
+          {signupForm.response.status === "error" && signupForm.response.message && (
+            <p class={styles.error}>{signupForm.response.message}</p>
+          )}
+          <button type="submit" disabled={signupForm.submitting}>
+            {signupForm.submitting ? "処理中…" : "はじめる"}
+          </button>
         </Form>
       )}
     </main>
