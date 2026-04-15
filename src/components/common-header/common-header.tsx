@@ -20,15 +20,17 @@ export const CommonHeader = component$(() => {
           <span>{session.value.user.name ?? session.value.user.email}</span>
           <Form action={signOut}>
             <input type="hidden" name="redirectTo" value="/" />
-            <button type="submit">ログアウト</button>
+            <button type="submit" class={styles.button}>
+              ログアウト
+            </button>
           </Form>
         </>
       ) : (
         <Form action={signIn}>
           <input type="hidden" name="providerId" value="google" />
           <input type="hidden" name="options.redirectTo" value="/" />
-          <button type="submit" class={styles.signInButton}>
-            はじめる
+          <button type="submit" class={styles.button}>
+            ログイン
           </button>
         </Form>
       )}
