@@ -5,7 +5,7 @@
 
 .door svg {
   overflow: visible;
-  width: clamp(280px, 38vw, 420px);
+  width: clamp(280px, 23vw, 380px);
   height: auto;
 }
 

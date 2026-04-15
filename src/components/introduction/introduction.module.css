@@ -1,7 +1,7 @@
 .introduction {
   max-width: 40rem;
   margin-inline: auto;
-  padding: 2rem 1rem;
+  padding: clamp(1.5rem, 20lvh, 2.5rem) 1rem;
   text-align: center;
 }
 
@@ -12,7 +12,7 @@
 
 .lead {
   font-size: 1.1rem;
-  margin-block: 0 0.5rem;
+  margin-block: 0 1rem;
   color: #555;
   line-height: 1.4;
 }
