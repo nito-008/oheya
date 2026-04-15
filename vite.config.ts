@@ -5,7 +5,6 @@
 import { defineConfig } from "vite-plus";
 import { qwikVite } from "@builder.io/qwik/optimizer";
 import { qwikCity } from "@builder.io/qwik-city/vite";
-import tailwindcss from "@tailwindcss/vite";
 import { getPlatformProxy } from "wrangler";
 import pkg from "./package.json" with { type: "json" };
 
@@ -257,7 +256,6 @@ export default defineConfig({
       ],
     },
     plugins: [
-      tailwindcss(),
       qwikCity({ platform: platform ? { env: platform.env, cf: platform.cf, ctx: platform.ctx, caches: platform.caches } : undefined }),
       qwikVite(),
     ],
