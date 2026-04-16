@@ -24,14 +24,6 @@ const platform = needsPlatform
   ? await getPlatformProxy<Env>({ persist: { path: ".wrangler/state/v3" } })
   : undefined;
 
-// Mirror .dev.vars (loaded by getPlatformProxy) into process.env so that
-// code paths not going through platform.env (e.g. @auth/qwik in dev) see them too.
-if (platform) {
-  for (const [k, v] of Object.entries(platform.env)) {
-    if (typeof v === "string" && process.env[k] === undefined) process.env[k] = v;
-  }
-}
-
 export default defineConfig({
     staged: {
       "*": "vp check --fix"
