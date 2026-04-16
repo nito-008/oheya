@@ -11,7 +11,6 @@ import {
 } from "@modular-forms/qwik";
 import * as v from "valibot";
 import { useSignIn } from "~/routes/plugin@auth";
-import { isDbConfigured } from "~/server/infra/db";
 import { getPublicIdByEmail, registerProfile } from "~/server/user";
 import styles from "./index.module.css";
 
@@ -38,7 +37,6 @@ type SignupForm = v.InferInput<typeof SignupSchema>;
 export const useProfileStatus = routeLoader$<ProfileStatus>(async (ev) => {
   const session = ev.sharedMap.get("session") as Session | null;
   if (!session?.user?.email) return { state: "guest" };
-  if (!isDbConfigured(ev)) return { state: "guest" };
 
   const publicId = await getPublicIdByEmail(ev.platform.env, session.user.email);
   if (publicId) throw ev.redirect(302, "/");
@@ -54,9 +52,6 @@ export const useRegisterProfile = formAction$<SignupForm>(async (values, ev) => 
   const session = ev.sharedMap.get("session") as Session | null;
   if (!session?.user?.email) {
     throw new FormError<SignupForm>("ログインが必要です");
-  }
-  if (!isDbConfigured(ev)) {
-    throw new FormError<SignupForm>("サーバーエラー");
   }
 
   const result = await registerProfile(ev.platform.env, session.user.email, {

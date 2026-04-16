@@ -31,4 +31,4 @@ vp run cf-typegen
 ```
 
 > [!NOTE]
-> .envの項目を追加した場合はCloudflare Workers用に型の再生成が必要です。
+> .envの項目を追加した場合は型の再生成、`src/routes/plugin.ts`のEnvSchemaの更新が必要です。

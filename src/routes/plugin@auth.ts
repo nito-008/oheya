@@ -6,19 +6,16 @@ import { createTursoClient } from "~/server/infra/db/client";
 import { accounts, sessions, users, verificationTokens } from "~/server/infra/db/schema";
 
 export const { onRequest, useSession, useSignIn, useSignOut } = QwikAuth$((ev) => {
-  const env = ev.platform?.env as Env | undefined;
-  const db = env?.TURSO_DATABASE_URL ? getDb(createTursoClient(env)) : undefined;
+  const db = getDb(createTursoClient(ev.platform.env));
 
   return {
     providers: [Google],
-    ...(db && {
-      adapter: DrizzleAdapter(db, {
-        usersTable: users,
-        accountsTable: accounts,
-        sessionsTable: sessions,
-        verificationTokensTable: verificationTokens,
-      }),
-      session: { strategy: "database" },
+    adapter: DrizzleAdapter(db, {
+      usersTable: users,
+      accountsTable: accounts,
+      sessionsTable: sessions,
+      verificationTokensTable: verificationTokens,
     }),
+    session: { strategy: "database" },
   };
 });
