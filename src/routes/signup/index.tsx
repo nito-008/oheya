@@ -1,5 +1,4 @@
 import { component$ } from "@builder.io/qwik";
-import type { Session } from "@auth/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { Form as AuthForm, routeLoader$ } from "@builder.io/qwik-city";
 import {
@@ -9,38 +8,20 @@ import {
   useForm,
   valiForm$,
 } from "@modular-forms/qwik";
-import * as v from "valibot";
+import type * as v from "valibot";
+import { createApiClient } from "~/lib/api";
 import { useSignIn } from "~/routes/plugin@auth";
-import { getPublicIdByEmail, registerProfile } from "~/server/user";
+import { NAME_MAX_LENGTH, PUBLIC_ID_MAX_LENGTH, userSchema } from "~/schema/user";
 import styles from "./index.module.css";
 
-type ProfileStatus = { state: "guest" | "needsProfile" };
+type SignupForm = v.InferInput<typeof userSchema>;
 
-const PUBLIC_ID_MAX_LENGTH = 16;
-const NAME_MAX_LENGTH = 32;
-
-const SignupSchema = v.object({
-  publicId: v.pipe(
-    v.string(),
-    v.regex(/^[A-Za-z0-9_]+$/, "英数字とアンダースコアだけが使えます"),
-    v.maxLength(PUBLIC_ID_MAX_LENGTH, `最大${PUBLIC_ID_MAX_LENGTH}文字です`),
-  ),
-  name: v.pipe(
-    v.string(),
-    v.minLength(1, "名前を入力してください"),
-    v.maxLength(NAME_MAX_LENGTH, `最大${NAME_MAX_LENGTH}文字です`),
-  ),
-});
-
-type SignupForm = v.InferInput<typeof SignupSchema>;
-
-export const useProfileStatus = routeLoader$<ProfileStatus>(async (ev) => {
-  const session = ev.sharedMap.get("session") as Session | null;
-  if (!session?.user?.email) return { state: "guest" };
-
-  const publicId = await getPublicIdByEmail(ev.platform.env, session.user.email);
-  if (publicId) throw ev.redirect(302, "/");
-  return { state: "needsProfile" };
+export const useProfileStatus = routeLoader$(async (event) => {
+  const client = createApiClient(event);
+  const res = await client.api.users.me.$get();
+  const data = await res.json();
+  if (data.state === "registered") throw event.redirect(302, "/");
+  return data;
 });
 
 export const useFormLoader = routeLoader$<InitialValues<SignupForm>>(() => ({
@@ -48,22 +29,20 @@ export const useFormLoader = routeLoader$<InitialValues<SignupForm>>(() => ({
   name: "",
 }));
 
-export const useRegisterProfile = formAction$<SignupForm>(async (values, ev) => {
-  const session = ev.sharedMap.get("session") as Session | null;
-  if (!session?.user?.email) {
+export const useRegisterProfile = formAction$<SignupForm>(async (values, event) => {
+  const client = createApiClient(event);
+  const res = await client.api.users.me.$patch({ json: values });
+  if (res.status === 401) {
     throw new FormError<SignupForm>("ログインが必要です");
   }
-
-  const result = await registerProfile(ev.platform.env, session.user.email, {
-    publicId: values.publicId,
-    name: values.name,
-  });
-  if (result === "duplicate_public_id") {
+  if (res.status === 409) {
     throw new FormError<SignupForm>({ publicId: "このIDはすでに誰かが使っています" });
   }
-
-  throw ev.redirect(302, "/");
-}, valiForm$(SignupSchema));
+  if (!res.ok) {
+    throw new FormError<SignupForm>("登録に失敗しました");
+  }
+  throw event.redirect(302, "/");
+}, valiForm$(userSchema));
 
 export default component$(() => {
   const status = useProfileStatus();
@@ -71,7 +50,7 @@ export default component$(() => {
   const [signupForm, { Form, Field }] = useForm<SignupForm>({
     loader: useFormLoader(),
     action: useRegisterProfile(),
-    validate: valiForm$(SignupSchema),
+    validate: valiForm$(userSchema),
   });
 
   return (

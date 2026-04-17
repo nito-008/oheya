@@ -2,7 +2,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SQLiteTable, getTableConfig } from "drizzle-orm/sqlite-core";
-import * as schema from "../src/server/infra/db/schema.ts";
+import * as schema from "../src/lib/db/schema.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const outPath = resolve(here, "../docs/er.md");
@@ -52,7 +52,7 @@ for (const table of tables) {
 
 const content = `# ER Diagram
 
-Auto-generated from \`src/server/infra/db/schema.ts\` via \`scripts/gen-erd.ts\`.
+Auto-generated from \`src/lib/db/schema.ts\` via \`scripts/gen-erd.ts\`.
 Run \`npm run db:erd\` to regenerate. Do not edit by hand.
 
 \`\`\`mermaid

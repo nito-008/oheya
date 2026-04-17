@@ -1,12 +1,11 @@
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { QwikAuth$ } from "@auth/qwik";
 import Google from "@auth/qwik/providers/google";
-import { getDb } from "~/server/infra/db";
-import { createTursoClient } from "~/server/infra/db/client";
-import { accounts, sessions, users, verificationTokens } from "~/server/infra/db/schema";
+import { getDb } from "~/lib/db";
+import { accounts, sessions, users, verificationTokens } from "~/lib/db/schema";
 
-export const { onRequest, useSession, useSignIn, useSignOut } = QwikAuth$((ev) => {
-  const db = getDb(createTursoClient(ev.platform.env));
+export const { onRequest, useSession, useSignIn, useSignOut } = QwikAuth$((event) => {
+  const db = getDb(event.platform.env);
 
   return {
     providers: [Google],

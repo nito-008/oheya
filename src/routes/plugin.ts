@@ -22,10 +22,10 @@ true satisfies [InferredEnv] extends [Env]
     : { error: "Env has keys missing from EnvSchema" }
   : { error: "EnvSchema has keys missing from Env" };
 
-export const onRequest: RequestHandler = (ev) => {
-  const result = v.safeParse(EnvSchema, ev.platform.env);
+export const onRequest: RequestHandler = (event) => {
+  const result = v.safeParse(EnvSchema, event.platform.env);
   if (!result.success) {
     console.error("Invalid platform.env:", result.issues);
-    throw ev.error(500, "Server misconfigured");
+    throw event.error(500, "Server misconfigured");
   }
 };

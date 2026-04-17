@@ -28,8 +28,10 @@
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.1",
+    "@hono/valibot-validator": "^0.6.1",
     "@libsql/client": "^0.17.2",
     "drizzle-orm": "^0.45.2",
+    "hono": "^4.12.14",
     "kiso.css": "^1.2.4",
     "valibot": "^1.3.1"
   },

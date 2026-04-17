@@ -1,6 +1,6 @@
 # ER Diagram
 
-Auto-generated from `src/server/infra/db/schema.ts` via `scripts/gen-erd.ts`.
+Auto-generated from `src/lib/db/schema.ts` via `scripts/gen-erd.ts`.
 Run `npm run db:erd` to regenerate. Do not edit by hand.
 
 ```mermaid
