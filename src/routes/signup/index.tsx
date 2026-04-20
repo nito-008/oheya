@@ -1,6 +1,6 @@
 import { component$ } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
-import { Form as AuthForm, routeLoader$ } from "@builder.io/qwik-city";
+import { routeLoader$ } from "@builder.io/qwik-city";
 import {
   FormError,
   type InitialValues,
@@ -9,24 +9,22 @@ import {
   valiForm$,
 } from "@modular-forms/qwik";
 import type * as v from "valibot";
+import { FormErrorMessage } from "~/components/form/form-error-message/form-error-message";
+import { FormSubmitButton } from "~/components/form/form-submit-button/form-submit-button";
+import { FormTextInput } from "~/components/form/form-text-input/form-text-input";
 import { createApiClient } from "~/lib/api";
-import { useSignIn } from "~/routes/plugin@auth";
 import { NAME_MAX_LENGTH, PUBLIC_ID_MAX_LENGTH, userSchema } from "~/schema/user";
 import styles from "./index.module.css";
 
 type SignupForm = v.InferInput<typeof userSchema>;
 
-type ProfileStatus = {
-  authenticated: boolean;
-};
-
-export const useProfileStatus = routeLoader$<ProfileStatus>(async (event) => {
+export const useProfileStatus = routeLoader$(async (event) => {
   const client = createApiClient(event);
   const res = await client.api.users.me.$get();
   if (res.ok) throw event.redirect(302, "/");
-  if (res.status === 401) return { authenticated: false };
-  if (res.status === 404) return { authenticated: true };
-  throw new Error("プロフィール状態の取得に失敗しました");
+  if (res.status === 401) throw event.redirect(302, "/");
+  if (res.status === 404) return;
+  throw new Error("プロフィールの取得に失敗しました");
 });
 
 export const useFormLoader = routeLoader$<InitialValues<SignupForm>>(() => ({
@@ -41,7 +39,7 @@ export const useRegisterProfile = formAction$<SignupForm>(async (values, event) 
     throw new FormError<SignupForm>("ログインが必要です");
   }
   if (res.status === 409) {
-    throw new FormError<SignupForm>({ publicId: "このIDはすでに誰かが使っています" });
+    throw new FormError<SignupForm>({ publicId: "このIDはもう誰かが使っています" });
   }
   if (!res.ok) {
     throw new FormError<SignupForm>("登録に失敗しました");
@@ -50,8 +48,7 @@ export const useRegisterProfile = formAction$<SignupForm>(async (values, event) 
 }, valiForm$(userSchema));
 
 export default component$(() => {
-  const status = useProfileStatus();
-  const signIn = useSignIn();
+  useProfileStatus();
   const [signupForm, { Form, Field }] = useForm<SignupForm>({
     loader: useFormLoader(),
     action: useRegisterProfile(),
@@ -60,56 +57,43 @@ export default component$(() => {
 
   return (
     <main class={styles.main}>
-      <h1>はじめる</h1>
-      {!status.value.authenticated ? (
-        <>
-          <p>このサービスを使うにはGoogleアカウントが必要です。</p>
-          <AuthForm action={signIn}>
-            <input type="hidden" name="providerId" value="google" />
-            <input type="hidden" name="options.redirectTo" value="/signup" />
-            <button type="submit">Googleアカウントではじめる</button>
-          </AuthForm>
-        </>
-      ) : (
-        <Form class={styles.form}>
+      <h1>アカウント登録</h1>
+      <Form class={styles.form}>
+        <div class={styles.fields}>
           <Field name="publicId">
             {(field, props) => (
-              <label class={styles.field}>
-                <span>ID（英数字とアンダースコア、最大{PUBLIC_ID_MAX_LENGTH}文字）</span>
-                <input
-                  {...props}
-                  type="text"
-                  value={field.value}
-                  maxLength={PUBLIC_ID_MAX_LENGTH}
-                  required
-                />
-                {field.error && <span class={styles.error}>{field.error}</span>}
-              </label>
+              <FormTextInput
+                label={`ID（英数字とアンダースコア、最大${PUBLIC_ID_MAX_LENGTH}文字）`}
+                field={field}
+                fieldProps={props}
+                maxLength={PUBLIC_ID_MAX_LENGTH}
+                required
+              />
             )}
           </Field>
           <Field name="name">
             {(field, props) => (
-              <label class={styles.field}>
-                <span>名前（最大{NAME_MAX_LENGTH}文字）</span>
-                <input
-                  {...props}
-                  type="text"
-                  value={field.value}
-                  maxLength={NAME_MAX_LENGTH}
-                  required
-                />
-                {field.error && <span class={styles.error}>{field.error}</span>}
-              </label>
+              <FormTextInput
+                label={`名前（最大${NAME_MAX_LENGTH}文字）`}
+                field={field}
+                fieldProps={props}
+                maxLength={NAME_MAX_LENGTH}
+                required
+              />
             )}
           </Field>
           {signupForm.response.status === "error" && signupForm.response.message && (
-            <p class={styles.error}>{signupForm.response.message}</p>
+            <FormErrorMessage message={signupForm.response.message} />
           )}
-          <button type="submit" disabled={signupForm.submitting}>
-            {signupForm.submitting ? "処理中…" : "はじめる"}
-          </button>
-        </Form>
-      )}
+        </div>
+        <div class={styles.actions}>
+          <FormSubmitButton
+            label="はじめる"
+            submittingLabel="登録中..."
+            submitting={signupForm.submitting}
+          />
+        </div>
+      </Form>
     </main>
   );
 });

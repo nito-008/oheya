@@ -1,10 +1,19 @@
 import { component$ } from "@builder.io/qwik";
 import { Form, Link } from "@builder.io/qwik-city";
-import { useSession, useSignIn, useSignOut } from "~/routes/plugin@auth";
+import { useSignIn, useSignOut } from "~/routes/plugin@auth";
 import styles from "./common-header.module.css";
 
-export const CommonHeader = component$(() => {
-  const session = useSession();
+export type CommonHeaderUser = {
+  authenticated: boolean;
+  name: string | null;
+};
+
+type CommonHeaderProps = {
+  user: CommonHeaderUser;
+  showAuthActions?: boolean;
+};
+
+export const CommonHeader = component$<CommonHeaderProps>(({ user, showAuthActions = true }) => {
   const signIn = useSignIn();
   const signOut = useSignOut();
 
@@ -15,9 +24,9 @@ export const CommonHeader = component$(() => {
           Oheya
         </Link>
       </h1>
-      {session.value?.user ? (
+      {showAuthActions && user.authenticated ? (
         <>
-          <span>{session.value.user.name ?? session.value.user.email}</span>
+          {user.name && <span>{user.name}</span>}
           <Form action={signOut}>
             <input type="hidden" name="redirectTo" value="/" />
             <button type="submit" class={styles.button}>
@@ -25,7 +34,7 @@ export const CommonHeader = component$(() => {
             </button>
           </Form>
         </>
-      ) : (
+      ) : showAuthActions ? (
         <Form action={signIn}>
           <input type="hidden" name="providerId" value="google" />
           <input type="hidden" name="options.redirectTo" value="/signup" />
@@ -33,7 +42,7 @@ export const CommonHeader = component$(() => {
             ログイン
           </button>
         </Form>
-      )}
+      ) : null}
     </header>
   );
 });
