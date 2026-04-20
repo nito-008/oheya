@@ -1,5 +1,6 @@
 import { component$ } from "@builder.io/qwik";
 import { Form, Link } from "@builder.io/qwik-city";
+import houseSvg from "~/media/house.svg?raw";
 import { useSignIn, useSignOut } from "~/routes/plugin@auth";
 import styles from "./common-header.module.css";
 
@@ -21,7 +22,8 @@ export const CommonHeader = component$<CommonHeaderProps>(({ user, showAuthActio
     <header class={styles.header}>
       <h1>
         <Link href="/" class={styles.titleLink}>
-          Oheya
+          <span>Oheya</span>
+          <span class={styles.titleIcon} aria-hidden="true" dangerouslySetInnerHTML={houseSvg} />
         </Link>
       </h1>
       {showAuthActions && user.authenticated ? (
