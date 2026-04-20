@@ -16,12 +16,17 @@ import styles from "./index.module.css";
 
 type SignupForm = v.InferInput<typeof userSchema>;
 
-export const useProfileStatus = routeLoader$(async (event) => {
+type ProfileStatus = {
+  authenticated: boolean;
+};
+
+export const useProfileStatus = routeLoader$<ProfileStatus>(async (event) => {
   const client = createApiClient(event);
   const res = await client.api.users.me.$get();
-  const data = await res.json();
-  if (data.state === "registered") throw event.redirect(302, "/");
-  return data;
+  if (res.ok) throw event.redirect(302, "/");
+  if (res.status === 401) return { authenticated: false };
+  if (res.status === 404) return { authenticated: true };
+  throw new Error("プロフィール状態の取得に失敗しました");
 });
 
 export const useFormLoader = routeLoader$<InitialValues<SignupForm>>(() => ({
@@ -56,7 +61,7 @@ export default component$(() => {
   return (
     <main class={styles.main}>
       <h1>はじめる</h1>
-      {status.value.state === "guest" ? (
+      {!status.value.authenticated ? (
         <>
           <p>このサービスを使うにはGoogleアカウントが必要です。</p>
           <AuthForm action={signIn}>

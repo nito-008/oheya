@@ -1,12 +1,12 @@
 import type { MiddlewareHandler } from "hono";
 import type { Bindings } from "~/hono/types";
 
-export const requireAuth: MiddlewareHandler<{
+export const authMiddleware: MiddlewareHandler<{
   Bindings: Bindings;
-  Variables: { email: string };
+  Variables: { userId: string };
 }> = async (c, next) => {
-  const email = c.env.session?.user?.email;
-  if (!email) return c.json({ error: "unauthorized" } as const, 401);
-  c.set("email", email);
+  const session = c.env.session;
+  if (!session?.user?.id) return c.json({ message: "Unauthorized" } as const, 401);
+  c.set("userId", session.user.id);
   await next();
 };

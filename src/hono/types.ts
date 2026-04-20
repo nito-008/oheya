@@ -1,6 +1,5 @@
 import type { Session } from "@auth/qwik";
 
-export type Bindings = {
-  env: Env;
+export type Bindings = Env & {
   session: Session | null;
 };

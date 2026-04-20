@@ -7,7 +7,7 @@ export function createApiClient(event: RequestEventCommon) {
   return hc<AppType>(event.url.origin, {
     fetch: (input: RequestInfo | URL, init?: RequestInit) =>
       app.fetch(new Request(input, init), {
-        env: event.platform.env,
+        ...event.platform.env,
         session: event.sharedMap.get("session") as Session | null,
       }),
   });

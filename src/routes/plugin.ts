@@ -19,8 +19,8 @@ type InferredEnv = v.InferOutput<typeof EnvSchema>;
 true satisfies [InferredEnv] extends [Env]
   ? [Env] extends [InferredEnv]
     ? true
-    : { error: "Env has keys missing from EnvSchema" }
-  : { error: "EnvSchema has keys missing from Env" };
+    : { message: "Env has keys missing from EnvSchema" }
+  : { message: "EnvSchema has keys missing from Env" };
 
 export const onRequest: RequestHandler = (event) => {
   const result = v.safeParse(EnvSchema, event.platform.env);

@@ -16,5 +16,16 @@ export const { onRequest, useSession, useSignIn, useSignOut } = QwikAuth$((event
       verificationTokensTable: verificationTokens,
     }),
     session: { strategy: "database" },
+    callbacks: {
+      session({ session, user }) {
+        return {
+          ...session,
+          user: {
+            ...session.user,
+            id: user.id,
+          },
+        };
+      },
+    },
   };
 });

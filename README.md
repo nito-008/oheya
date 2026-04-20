@@ -24,6 +24,12 @@ vp run build && vp run serve
 vp run db:migrate
 ```
 
+## DB Preview
+
+```sh
+vp run db:studio
+```
+
 ## Cf-Workers Types
 
 ```sh

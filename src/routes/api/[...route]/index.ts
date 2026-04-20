@@ -4,7 +4,7 @@ import { app } from "~/hono/app";
 
 const handler: RequestHandler = async (event) => {
   const res = await app.fetch(event.request, {
-    env: event.platform.env,
+    ...event.platform.env,
     session: event.sharedMap.get("session") as Session | null,
   });
   event.send(res);
