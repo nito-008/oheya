@@ -28,7 +28,7 @@ export const CommonHeader = component$(() => {
       ) : (
         <Form action={signIn}>
           <input type="hidden" name="providerId" value="google" />
-          <input type="hidden" name="options.redirectTo" value="/" />
+          <input type="hidden" name="options.redirectTo" value="/signup" />
           <button type="submit" class={styles.button}>
             ログイン
           </button>

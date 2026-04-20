@@ -25,14 +25,12 @@ for (const table of tables) {
 
   lines.push(`  ${cfg.name} {`);
   for (const col of cfg.columns) {
-    // Mermaid erDiagram accepts a single key marker reliably; pick by priority.
-    const mark = pkCols.has(col.name)
-      ? " PK"
-      : fkCols.has(col.name)
-        ? " FK"
-        : col.isUnique
-          ? " UK"
-          : "";
+    const keys = [
+      pkCols.has(col.name) ? "PK" : undefined,
+      fkCols.has(col.name) ? "FK" : undefined,
+      col.isUnique ? "UK" : undefined,
+    ].filter((key) => key !== undefined);
+    const mark = keys.length > 0 ? ` ${keys.join(",")}` : "";
     const type = col.getSQLType().replace(/\s+/g, "_");
     const nullable = col.notNull ? "" : ' "nullable"';
     lines.push(`    ${type} ${col.name}${mark}${nullable}`);

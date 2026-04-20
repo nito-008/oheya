@@ -18,6 +18,11 @@ erDiagram
     text id_token "nullable"
     text session_state "nullable"
   }
+  profile {
+    text user_id PK,FK
+    text public_id UK
+    text name
+  }
   session {
     text sessionToken PK
     text userId FK
@@ -29,7 +34,6 @@ erDiagram
     text email UK "nullable"
     integer emailVerified "nullable"
     text image "nullable"
-    text public_id UK "nullable"
   }
   verificationToken {
     text identifier PK
@@ -37,5 +41,6 @@ erDiagram
     integer expires
   }
   user ||--o{ account : "userId"
+  user ||--o{ profile : "user_id"
   user ||--o{ session : "userId"
 ```
