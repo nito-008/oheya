@@ -223,25 +223,6 @@ export const AvatarCropInput = component$<AvatarCropInputProps>(({ field, fieldP
             />
           </label>
         </div>
-        {iconUrl.value && (
-          <div class={styles.controls}>
-            <Button
-              type="button"
-              variant="danger"
-              onClick$={async () => {
-                sourceImageUrl.value = "";
-                await updateIconUrl("");
-                draftIconUrl.value = "";
-                localError.value = "";
-                cropModalOpen.value = false;
-                zoomReady.value = false;
-                await resetCrop();
-              }}
-            >
-              削除
-            </Button>
-          </div>
-        )}
       </div>
       <FormErrorMessage message={field.error || localError.value} />
       <Modal open={cropModalOpen.value} title="アイコンを調整" onClose$={closeCropModal}>
@@ -271,7 +252,7 @@ export const AvatarCropInput = component$<AvatarCropInputProps>(({ field, fieldP
             <span class={styles.mask} aria-hidden="true" />
           </div>
           <div class={styles.modalActions}>
-            <Button type="button" variant="danger" onClick$={closeCropModal}>
+            <Button type="button" variant="secondary" onClick$={closeCropModal}>
               キャンセル
             </Button>
             <Button
@@ -280,7 +261,7 @@ export const AvatarCropInput = component$<AvatarCropInputProps>(({ field, fieldP
               disabled={!draftIconUrl.value}
               onClick$={applyCrop}
             >
-              適用
+              これにする！
             </Button>
           </div>
         </div>

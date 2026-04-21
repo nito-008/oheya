@@ -1,7 +1,7 @@
 import { component$, Slot, type PropsOf } from "@builder.io/qwik";
 import styles from "./button.module.css";
 
-type ButtonVariant = "accent" | "danger" | "neutral" | "primary";
+type ButtonVariant = "accent" | "primary" | "secondary";
 type ButtonSize = "md" | "sm";
 type ButtonWidth = "fit" | "full";
 
@@ -12,7 +12,7 @@ type ButtonProps = Omit<PropsOf<"button">, "class"> & {
 };
 
 export const Button = component$<ButtonProps>(
-  ({ size = "sm", type = "button", variant = "neutral", width = "fit", ...props }) => {
+  ({ size = "sm", type = "button", variant = "secondary", width = "fit", ...props }) => {
     return (
       <button
         {...props}

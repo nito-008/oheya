@@ -25,10 +25,9 @@
 }
 
 .button:disabled {
-  border-color: var(--button-disabled-border);
-  background: var(--button-disabled-background);
-  color: var(--button-disabled-color);
-  box-shadow: var(--button-disabled-shadow);
+  background: #f5f5f5;
+  color: #3a3a3a;
+  box-shadow: 1px 2px 0 #b8b8b8;
   cursor: not-allowed;
 }
 
@@ -40,26 +39,9 @@
   transform: none;
 }
 
-.variant-neutral {
-  --button-hover-background: #fff8d8;
+.variant-secondary {
+  --button-hover-background: #eee9dc;
   --button-active-shadow: 1px 2px 0 #d8d2c2;
-  --button-disabled-border: #9a9285;
-  --button-disabled-background: #d8d2c2;
-  --button-disabled-color: #6d6050;
-  --button-disabled-shadow: none;
-
-  background: #fffef8;
-  color: #252525;
-  box-shadow: 2px 3px 0 #d8d2c2;
-}
-
-.variant-danger {
-  --button-hover-background: #fff8d8;
-  --button-active-shadow: 1px 2px 0 #d8d2c2;
-  --button-disabled-border: #9a9285;
-  --button-disabled-background: #d8d2c2;
-  --button-disabled-color: #6d6050;
-  --button-disabled-shadow: none;
 
   border-color: #6d6050;
   background: #fffef8;
@@ -70,10 +52,6 @@
 .variant-primary {
   --button-hover-background: #3a352d;
   --button-active-shadow: 1px 2px 0 #d8d2c2;
-  --button-disabled-border: #9a9285;
-  --button-disabled-background: #d8d2c2;
-  --button-disabled-color: #6d6050;
-  --button-disabled-shadow: none;
 
   background: #252525;
   color: #fffef8;
@@ -81,14 +59,10 @@
 }
 
 .variant-accent {
-  --button-hover-background: #fff8df;
-  --button-active-shadow: 1px 1px 0 #2f2f2f;
-  --button-disabled-border: #2f2f2f;
-  --button-disabled-background: #eee9dc;
-  --button-disabled-color: #777;
-  --button-disabled-shadow: 1px 2px 0 #9b9688;
+  --button-hover-background: #fef1c4;
+  --button-active-shadow: 1px 1px 0 #9b9688;
 
-  background: #f7f1df;
+  background: #fff6d4;
   color: #252525;
   box-shadow: 2px 3px 0 #2f2f2f;
 }

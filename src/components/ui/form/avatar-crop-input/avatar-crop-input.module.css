@@ -116,15 +116,6 @@
   pointer-events: none;
 }
 
-.controls {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-  align-items: center;
-  width: 100%;
-  min-width: 0;
-}
-
 .modalEditor {
   display: grid;
   justify-items: center;
@@ -175,11 +166,6 @@
   .editor {
     grid-template-columns: 1fr;
     justify-items: center;
-  }
-
-  .controls {
-    align-items: center;
-    width: 100%;
   }
 
   .modalCropBox {

@@ -103,7 +103,7 @@ export default component$(() => {
             disabled={profileForm.submitting}
             aria-busy={profileForm.submitting}
           >
-            {profileForm.submitting ? "保存中..." : "保存"}
+            {profileForm.submitting ? "保存しています..." : "保存する"}
           </Button>
         </div>
       </Form>
