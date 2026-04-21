@@ -14,6 +14,10 @@
   font-display: swap;
 }
 
+:root {
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 html {
   line-height: 1;
   -webkit-text-size-adjust: 100%;
@@ -22,7 +26,6 @@ html {
   tab-size: 4;
   font-family:
     "Uzura", "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP";
-  scrollbar-gutter: auto;
 }
 
 body {
