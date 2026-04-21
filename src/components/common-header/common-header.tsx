@@ -6,6 +6,7 @@ import styles from "./common-header.module.css";
 
 export type CommonHeaderUser = {
   authenticated: boolean;
+  publicId: string | null;
   name: string | null;
 };
 
@@ -28,7 +29,11 @@ export const CommonHeader = component$<CommonHeaderProps>(({ user, showAuthActio
       </h1>
       {showAuthActions && user.authenticated ? (
         <>
-          {user.name && <span>{user.name}</span>}
+          {user.publicId && user.name && (
+            <Link href={`/${user.publicId}/`} class={styles.actionLink}>
+              {user.name}
+            </Link>
+          )}
           <Form action={signOut}>
             <input type="hidden" name="redirectTo" value="/" />
             <button type="submit" class={styles.button}>

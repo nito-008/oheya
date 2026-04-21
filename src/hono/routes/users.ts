@@ -20,6 +20,18 @@ export const usersRouter = new Hono<{ Bindings: Bindings }>()
     }
     return c.json(row);
   })
+  .get("/:publicId", async (c) => {
+    const publicId = c.req.param("publicId");
+    const db = getDb(c.env);
+    const [row] = await db
+      .select({ publicId: profiles.publicId, name: profiles.name })
+      .from(profiles)
+      .where(eq(profiles.publicId, publicId));
+    if (!row) {
+      return c.json({ message: "User not found" } as const, 404);
+    }
+    return c.json(row);
+  })
   .patch("/me", authMiddleware, vValidator("json", userSchema), async (c) => {
     const userId = c.var.userId;
     const values = c.req.valid("json");

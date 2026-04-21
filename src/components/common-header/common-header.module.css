@@ -37,6 +37,7 @@
   border: none;
 }
 
+.actionLink:hover,
 .button:hover {
   text-decoration: underline;
 }

@@ -11,16 +11,17 @@ export const useHeaderUser = routeLoader$<CommonHeaderUser>(async (event) => {
     const user = await res.json();
     return {
       authenticated: true,
+      publicId: user.publicId,
       name: user.name,
     };
   }
 
   if (res.status === 401) {
-    return { authenticated: false, name: null };
+    return { authenticated: false, publicId: null, name: null };
   }
 
   if (res.status === 404) {
-    return { authenticated: false, name: null };
+    return { authenticated: false, publicId: null, name: null };
   }
 
   throw new Error("ヘッダーユーザー情報の取得に失敗しました");

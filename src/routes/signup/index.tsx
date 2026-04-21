@@ -21,7 +21,10 @@ type SignupForm = v.InferInput<typeof userSchema>;
 export const useProfileStatus = routeLoader$(async (event) => {
   const client = createApiClient(event);
   const res = await client.api.users.me.$get();
-  if (res.ok) throw event.redirect(302, "/");
+  if (res.ok) {
+    const profile = await res.json();
+    throw event.redirect(302, `/${profile.publicId}`);
+  }
   if (res.status === 401) throw event.redirect(302, "/");
   if (res.status === 404) return;
   throw new Error("プロフィールの取得に失敗しました");
@@ -44,7 +47,7 @@ export const useRegisterProfile = formAction$<SignupForm>(async (values, event) 
   if (!res.ok) {
     throw new FormError<SignupForm>("登録に失敗しました");
   }
-  throw event.redirect(302, "/");
+  throw event.redirect(302, `/${values.publicId}`);
 }, valiForm$(userSchema));
 
 export default component$(() => {
