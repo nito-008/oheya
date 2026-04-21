@@ -25,9 +25,9 @@ const platform = needsPlatform
   : undefined;
 
 export default defineConfig({
-    staged: {
-      "*": "vp check --fix"
-    },
+  staged: {
+    "*": ["vp check --fix", () => "vp run build.types"],
+  },
     lint: {
       plugins: ["typescript", "import"],
       jsPlugins: ["eslint-plugin-qwik"],
