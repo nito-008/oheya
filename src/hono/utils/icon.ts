@@ -1,11 +1,9 @@
-const inlineImagePattern = /^data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/=]+)$/;
-const iconUrlPattern = /^\/api\/users\/[A-Za-z0-9_]+\/icon$/;
-
 const contentTypeToExtension = {
-  "image/jpeg": "jpg",
   "image/png": "png",
   "image/webp": "webp",
 } as const;
+const inlineImagePattern = /^data:(image\/(?:png|webp));base64,([A-Za-z0-9+/=]+)$/;
+const iconUrlPattern = /^\/api\/users\/[A-Za-z0-9_]+\/icon$/;
 
 export const getIconUrl = (publicId: string, iconObjectKey: string | null) =>
   iconObjectKey ? `/api/users/${publicId}/icon` : null;

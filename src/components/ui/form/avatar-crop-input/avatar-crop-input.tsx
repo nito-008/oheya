@@ -11,6 +11,9 @@ const OUTPUT_SIZE = 256;
 const MAX_SOURCE_SIZE = 6 * 1024 * 1024;
 const MIN_SCALE = 1;
 const MAX_SCALE = 3;
+const ICON_CONTENT_TYPE = "image/webp";
+const ICON_QUALITY = 0.86;
+const FALLBACK_ICON_CONTENT_TYPE = "image/png";
 
 type FieldProps = {
   name: string;
@@ -80,7 +83,18 @@ export const AvatarCropInput = component$<AvatarCropInputProps>(({ field, fieldP
     context.fillStyle = "#fffef8";
     context.fillRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
     context.drawImage(image, drawX, drawY, drawWidth, drawHeight);
-    draftIconUrl.value = canvas.toDataURL("image/webp", 0.86);
+    const iconDataUrl = canvas.toDataURL(ICON_CONTENT_TYPE, ICON_QUALITY);
+    if (
+      !iconDataUrl.startsWith(`data:${ICON_CONTENT_TYPE};base64,`) &&
+      !iconDataUrl.startsWith(`data:${FALLBACK_ICON_CONTENT_TYPE};base64,`)
+    ) {
+      draftIconUrl.value = "";
+      localError.value = "このブラウザはアイコン画像の保存形式に対応していません";
+      return;
+    }
+
+    localError.value = "";
+    draftIconUrl.value = iconDataUrl;
   });
 
   const resetCrop = $(async () => {
@@ -164,7 +178,7 @@ export const AvatarCropInput = component$<AvatarCropInputProps>(({ field, fieldP
             <span aria-hidden="true">+</span>
             <input
               type="file"
-              accept="image/png,image/jpeg,image/webp"
+              accept="image/png,image/jpeg,image/webp,image/avif"
               onChange$={async (event) => {
                 const input = event.target as HTMLInputElement;
                 const file = input.files?.[0];
