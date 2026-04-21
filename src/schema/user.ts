@@ -5,7 +5,7 @@ export const NAME_MAX_LENGTH = 32;
 export const ICON_URL_MAX_LENGTH = 120_000;
 
 const inlineImagePattern = /^data:image\/(?:png|webp);base64,[A-Za-z0-9+/=]+$/;
-const profileIconUrlPattern = /^\/api\/users\/[A-Za-z0-9_]+\/icon$/;
+const profileIconUrlPattern = /^\/api\/users\/[A-Za-z0-9_]+\/icon(?:\?v=[A-Fa-f0-9]+)?$/;
 
 export const userSchema = v.object({
   publicId: v.pipe(
