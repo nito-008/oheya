@@ -1,7 +1,6 @@
 import type { QRL } from "@builder.io/qwik";
 import { $, component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import type { FieldElement, FieldEvent } from "@modular-forms/qwik";
-import { useZoomImageWheel } from "@zoom-image/qwik";
 import { Button } from "~/components/ui/button/button";
 import { FormErrorMessage } from "~/components/ui/form/form-error-message/form-error-message";
 import { Modal } from "~/components/ui/modal/modal";
@@ -17,6 +16,7 @@ const MAX_SCALE = 3;
 const ICON_CONTENT_TYPE = "image/webp";
 const ICON_QUALITY = 0.86;
 const FALLBACK_ICON_CONTENT_TYPE = "image/png";
+const WHEEL_ZOOM_STEP = 0.12;
 
 type FieldProps = {
   name: string;
@@ -38,17 +38,39 @@ type AvatarCropInputProps = {
   label: string;
 };
 
+type CropDragState = {
+  pointerId: number;
+  startClientX: number;
+  startClientY: number;
+  startPositionX: number;
+  startPositionY: number;
+};
+
+type CropLayout = {
+  viewSize: number;
+  imageWidth: number;
+  imageHeight: number;
+  maxPositionX: number;
+  maxPositionY: number;
+};
+
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+
 export const AvatarCropInput = component$<AvatarCropInputProps>(({ field, fieldProps, label }) => {
   const sourceImageUrl = useSignal("");
   const iconUrl = useSignal(field.value ?? "");
-  const draftIconUrl = useSignal("");
   const sourceImageRef = useSignal<HTMLImageElement>();
   const cropBoxRef = useSignal<HTMLDivElement>();
   const hiddenInputRef = useSignal<HTMLInputElement>();
   const localError = useSignal("");
-  const zoomReady = useSignal(false);
   const cropModalOpen = useSignal(false);
-  const { createZoomImage, setZoomImageState, zoomImageState } = useZoomImageWheel();
+  const cropImageReady = useSignal(false);
+  const cropZoom = useSignal(MIN_SCALE);
+  const cropPositionX = useSignal(0);
+  const cropPositionY = useSignal(0);
+  const cropImageWidth = useSignal(OUTPUT_SIZE);
+  const cropImageHeight = useSignal(OUTPUT_SIZE);
+  const cropDrag = useSignal<CropDragState | null>(null);
 
   const updateIconUrl = $(async (value: string) => {
     iconUrl.value = value;
@@ -56,6 +78,37 @@ export const AvatarCropInput = component$<AvatarCropInputProps>(({ field, fieldP
       hiddenInputRef.value.value = value;
       await fieldProps.onInput$(new Event("input"), hiddenInputRef.value);
     }
+  });
+
+  const readFileAsDataUrl = $((file: File) => {
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.addEventListener("load", () => resolve(String(reader.result ?? "")));
+      reader.addEventListener("error", () => reject(reader.error));
+      reader.readAsDataURL(file);
+    });
+  });
+
+  const updateCropLayout = $((): CropLayout | null => {
+    const image = sourceImageRef.value;
+    const cropBox = cropBoxRef.value;
+    if (!image || !cropBox || !image.naturalWidth || !image.naturalHeight) return null;
+
+    const cropRect = cropBox.getBoundingClientRect();
+    const viewSize = cropRect.width || OUTPUT_SIZE;
+    const coverScale =
+      Math.max(viewSize / image.naturalWidth, viewSize / image.naturalHeight) * cropZoom.value;
+    const imageWidth = image.naturalWidth * coverScale;
+    const imageHeight = image.naturalHeight * coverScale;
+    const maxPositionX = Math.max(0, (imageWidth - viewSize) / 2);
+    const maxPositionY = Math.max(0, (imageHeight - viewSize) / 2);
+
+    cropImageWidth.value = imageWidth;
+    cropImageHeight.value = imageHeight;
+    cropPositionX.value = clamp(cropPositionX.value, -maxPositionX, maxPositionX);
+    cropPositionY.value = clamp(cropPositionY.value, -maxPositionY, maxPositionY);
+
+    return { viewSize, imageWidth, imageHeight, maxPositionX, maxPositionY };
   });
 
   const drawCrop = $(() => {
@@ -72,16 +125,14 @@ export const AvatarCropInput = component$<AvatarCropInputProps>(({ field, fieldP
     const cropRect = cropBox.getBoundingClientRect();
     const viewSize = cropRect.width || OUTPUT_SIZE;
     const viewToOutput = OUTPUT_SIZE / viewSize;
-    const baseScale = Math.max(OUTPUT_SIZE / image.naturalWidth, OUTPUT_SIZE / image.naturalHeight);
-    const drawScale = baseScale * zoomImageState.currentZoom;
+    const drawScale =
+      Math.max(viewSize / image.naturalWidth, viewSize / image.naturalHeight) *
+      cropZoom.value *
+      viewToOutput;
     const drawWidth = image.naturalWidth * drawScale;
     const drawHeight = image.naturalHeight * drawScale;
-    const drawX =
-      ((OUTPUT_SIZE - image.naturalWidth * baseScale) / 2) * zoomImageState.currentZoom +
-      zoomImageState.currentPositionX * viewToOutput;
-    const drawY =
-      ((OUTPUT_SIZE - image.naturalHeight * baseScale) / 2) * zoomImageState.currentZoom +
-      zoomImageState.currentPositionY * viewToOutput;
+    const drawX = (OUTPUT_SIZE - drawWidth) / 2 + cropPositionX.value * viewToOutput;
+    const drawY = (OUTPUT_SIZE - drawHeight) / 2 + cropPositionY.value * viewToOutput;
 
     context.fillStyle = "#fffef8";
     context.fillRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
@@ -91,66 +142,157 @@ export const AvatarCropInput = component$<AvatarCropInputProps>(({ field, fieldP
       !iconDataUrl.startsWith(`data:${ICON_CONTENT_TYPE};base64,`) &&
       !iconDataUrl.startsWith(`data:${FALLBACK_ICON_CONTENT_TYPE};base64,`)
     ) {
-      draftIconUrl.value = "";
       localError.value = "このブラウザはアイコン画像の保存形式に対応していません";
-      return;
+      return "";
     }
 
     localError.value = "";
-    draftIconUrl.value = iconDataUrl;
+    return iconDataUrl;
   });
 
   const resetCrop = $(async () => {
-    await setZoomImageState({
-      currentZoom: MIN_SCALE,
-      zoomTarget: sourceImageRef.value,
-    });
+    cropZoom.value = MIN_SCALE;
+    cropPositionX.value = 0;
+    cropPositionY.value = 0;
+    await updateCropLayout();
   });
 
   const closeCropModal = $(() => {
     cropModalOpen.value = false;
     sourceImageUrl.value = "";
-    draftIconUrl.value = "";
-    zoomReady.value = false;
+    cropImageReady.value = false;
+    cropDrag.value = null;
   });
 
   const applyCrop = $(async () => {
-    await drawCrop();
-    if (draftIconUrl.value) {
-      await updateIconUrl(draftIconUrl.value);
+    const croppedIconUrl = await drawCrop();
+    if (croppedIconUrl) {
+      await updateIconUrl(croppedIconUrl);
     }
     await closeCropModal();
   });
 
-  // eslint-disable-next-line qwik/no-use-visible-task
-  useVisibleTask$(async ({ track }) => {
-    track(() => cropBoxRef.value);
-    track(() => sourceImageRef.value);
-    track(() => sourceImageUrl.value);
-    track(() => cropModalOpen.value);
-    if (
-      !cropModalOpen.value ||
-      !cropBoxRef.value ||
-      !sourceImageRef.value ||
-      !sourceImageUrl.value ||
-      zoomReady.value
-    )
-      return;
+  const handleSourceFileChange = $(async (event: Event) => {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    localError.value = "";
+    if (!file) return;
 
-    await createZoomImage(cropBoxRef.value, {
-      initialState: { currentZoom: MIN_SCALE, zoomTarget: sourceImageRef.value },
-      maxZoom: MAX_SCALE,
-      zoomTarget: sourceImageRef.value,
-    });
-    zoomReady.value = true;
+    if (!file.type.startsWith("image/")) {
+      localError.value = "画像ファイルを選んでください";
+      input.value = "";
+      return;
+    }
+
+    if (file.size > MAX_SOURCE_SIZE) {
+      localError.value = "6MB以下の画像を選んでください";
+      input.value = "";
+      return;
+    }
+
+    try {
+      sourceImageUrl.value = await readFileAsDataUrl(file);
+      cropImageReady.value = false;
+      cropDrag.value = null;
+      cropModalOpen.value = true;
+      input.value = "";
+    } catch {
+      localError.value = "画像を読み込めませんでした";
+      input.value = "";
+    }
+  });
+
+  const handleCropPointerDown = $((event: PointerEvent, element: Element) => {
+    if (!sourceImageRef.value || (event.pointerType === "mouse" && event.button !== 0)) return;
+
+    const cropBox = element as HTMLDivElement;
+    cropBox.setPointerCapture(event.pointerId);
+    cropDrag.value = {
+      pointerId: event.pointerId,
+      startClientX: event.clientX,
+      startClientY: event.clientY,
+      startPositionX: cropPositionX.value,
+      startPositionY: cropPositionY.value,
+    };
+  });
+
+  const handleCropPointerMove = $(async (event: PointerEvent) => {
+    const drag = cropDrag.value;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    const layout = await updateCropLayout();
+    if (!layout) return;
+
+    cropPositionX.value = clamp(
+      drag.startPositionX + event.clientX - drag.startClientX,
+      -layout.maxPositionX,
+      layout.maxPositionX,
+    );
+    cropPositionY.value = clamp(
+      drag.startPositionY + event.clientY - drag.startClientY,
+      -layout.maxPositionY,
+      layout.maxPositionY,
+    );
+  });
+
+  const handleCropPointerEnd = $((event: PointerEvent, element: Element) => {
+    if (cropDrag.value?.pointerId !== event.pointerId) return;
+
+    const cropBox = element as HTMLDivElement;
+    if (cropBox.hasPointerCapture(event.pointerId)) {
+      cropBox.releasePointerCapture(event.pointerId);
+    }
+    cropDrag.value = null;
+  });
+
+  const handleCropWheel = $(async (event: WheelEvent) => {
+    const image = sourceImageRef.value;
+    const cropBox = cropBoxRef.value;
+    if (!image || !cropBox || !image.naturalWidth || !image.naturalHeight) return;
+
+    const cropRect = cropBox.getBoundingClientRect();
+    const viewSize = cropRect.width || OUTPUT_SIZE;
+    const oldZoom = cropZoom.value;
+    const newZoom = clamp(
+      oldZoom * (event.deltaY < 0 ? 1 + WHEEL_ZOOM_STEP : 1 - WHEEL_ZOOM_STEP),
+      MIN_SCALE,
+      MAX_SCALE,
+    );
+    if (newZoom === oldZoom) return;
+
+    const coverScale = Math.max(viewSize / image.naturalWidth, viewSize / image.naturalHeight);
+    const oldImageWidth = image.naturalWidth * coverScale * oldZoom;
+    const oldImageHeight = image.naturalHeight * coverScale * oldZoom;
+    const newImageWidth = image.naturalWidth * coverScale * newZoom;
+    const newImageHeight = image.naturalHeight * coverScale * newZoom;
+    const oldImageLeft = (viewSize - oldImageWidth) / 2 + cropPositionX.value;
+    const oldImageTop = (viewSize - oldImageHeight) / 2 + cropPositionY.value;
+    const zoomPointX = event.clientX - cropRect.left;
+    const zoomPointY = event.clientY - cropRect.top;
+    const imagePointX = (zoomPointX - oldImageLeft) / oldImageWidth;
+    const imagePointY = (zoomPointY - oldImageTop) / oldImageHeight;
+    const maxPositionX = Math.max(0, (newImageWidth - viewSize) / 2);
+    const maxPositionY = Math.max(0, (newImageHeight - viewSize) / 2);
+
+    cropZoom.value = newZoom;
+    cropPositionX.value = clamp(
+      zoomPointX - imagePointX * newImageWidth - (viewSize - newImageWidth) / 2,
+      -maxPositionX,
+      maxPositionX,
+    );
+    cropPositionY.value = clamp(
+      zoomPointY - imagePointY * newImageHeight - (viewSize - newImageHeight) / 2,
+      -maxPositionY,
+      maxPositionY,
+    );
+    await updateCropLayout();
   });
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(async ({ track }) => {
-    track(() => zoomImageState.currentZoom);
-    track(() => zoomImageState.currentPositionX);
-    track(() => zoomImageState.currentPositionY);
-    await drawCrop();
+    track(() => cropModalOpen.value);
+    track(() => sourceImageUrl.value);
+    await updateCropLayout();
   });
 
   return (
@@ -191,43 +333,12 @@ export const AvatarCropInput = component$<AvatarCropInputProps>(({ field, fieldP
               <input
                 type="file"
                 accept="image/png,image/jpeg,image/webp,image/avif"
-                onChange$={async (event) => {
-                  const input = event.target as HTMLInputElement;
-                  const file = input.files?.[0];
-                  localError.value = "";
-                  if (!file) return;
-                  if (!file.type.startsWith("image/")) {
-                    localError.value = "画像ファイルを選んでください";
-                    input.value = "";
-                    return;
-                  }
-                  if (file.size > MAX_SOURCE_SIZE) {
-                    localError.value = "6MB以下の画像を選んでください";
-                    input.value = "";
-                    return;
-                  }
-
-                  try {
-                    sourceImageUrl.value = await new Promise<string>((resolve, reject) => {
-                      const reader = new FileReader();
-                      reader.addEventListener("load", () => resolve(String(reader.result ?? "")));
-                      reader.addEventListener("error", () => reject(reader.error));
-                      reader.readAsDataURL(file);
-                    });
-                    draftIconUrl.value = "";
-                    zoomReady.value = false;
-                    cropModalOpen.value = true;
-                    input.value = "";
-                  } catch {
-                    localError.value = "画像を読み込めませんでした";
-                    input.value = "";
-                  }
-                }}
+                onChange$={handleSourceFileChange}
               />
             </label>
           </div>
           <picture>
-            <source media="(hover: none) and (pointer: coarse)" srcSet={tapSvg} />
+            <source media="(hover: none) and (pointer: coarse)" srcset={tapSvg} />
             <img class={styles.clickCue} src={clickSvg} alt="" width={256} height={146} />
           </picture>
         </div>
@@ -240,6 +351,12 @@ export const AvatarCropInput = component$<AvatarCropInputProps>(({ field, fieldP
             class={[styles.cropBox, styles.modalCropBox]}
             preventdefault:touchmove
             preventdefault:touchstart
+            preventdefault:wheel
+            onPointerDown$={handleCropPointerDown}
+            onPointerMove$={handleCropPointerMove}
+            onPointerUp$={handleCropPointerEnd}
+            onPointerCancel$={handleCropPointerEnd}
+            onWheel$={handleCropWheel}
           >
             {sourceImageUrl.value ? (
               <img
@@ -250,9 +367,14 @@ export const AvatarCropInput = component$<AvatarCropInputProps>(({ field, fieldP
                 width={OUTPUT_SIZE}
                 height={OUTPUT_SIZE}
                 draggable={false}
+                style={{
+                  height: `${cropImageHeight.value}px`,
+                  transform: `translate(calc(-50% + ${cropPositionX.value}px), calc(-50% + ${cropPositionY.value}px))`,
+                  width: `${cropImageWidth.value}px`,
+                }}
                 onLoad$={async () => {
+                  cropImageReady.value = true;
                   await resetCrop();
-                  await drawCrop();
                 }}
               />
             ) : null}
@@ -266,7 +388,7 @@ export const AvatarCropInput = component$<AvatarCropInputProps>(({ field, fieldP
             <Button
               type="button"
               variant="primary"
-              disabled={!draftIconUrl.value}
+              disabled={!cropImageReady.value}
               onClick$={applyCrop}
             >
               これにする！
