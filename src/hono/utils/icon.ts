@@ -3,10 +3,19 @@ const contentTypeToExtension = {
   "image/webp": "webp",
 } as const;
 const inlineImagePattern = /^data:(image\/(?:png|webp));base64,([A-Za-z0-9+/=]+)$/;
-const iconUrlPattern = /^\/api\/users\/[A-Za-z0-9_]+\/icon$/;
+const iconUrlPattern = /^\/api\/users\/[A-Za-z0-9_]+\/icon(?:\?v=[A-Fa-f0-9]+)?$/;
 
-export const getIconUrl = (publicId: string, iconObjectKey: string | null) =>
-  iconObjectKey ? `/api/users/${publicId}/icon` : null;
+const getIconVersion = (iconObjectKey: string) => {
+  const match = iconObjectKey.match(/\/icon-([A-Fa-f0-9]+)\.[^.]+$/);
+  return match?.[1] ?? null;
+};
+
+export const getIconUrl = (publicId: string, iconObjectKey: string | null) => {
+  if (!iconObjectKey) return null;
+
+  const version = getIconVersion(iconObjectKey);
+  return version ? `/api/users/${publicId}/icon?v=${version}` : `/api/users/${publicId}/icon`;
+};
 
 export const isExistingIconUrl = (value: string) => iconUrlPattern.test(value);
 
