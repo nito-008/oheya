@@ -9,7 +9,7 @@ import {
   valiForm$,
 } from "@modular-forms/qwik";
 import type * as v from "valibot";
-import { AvatarCropInput } from "~/components/ui/form/avatar-crop-input/avatar-crop-input";
+import { IconCropInput } from "~/components/ui/form/icon-crop-input/icon-crop-input";
 import { FormErrorMessage } from "~/components/ui/form/form-error-message/form-error-message";
 import { FormTextInput } from "~/components/ui/form/form-text-input/form-text-input";
 import { Button } from "~/components/ui/button/button";
@@ -88,9 +88,7 @@ export default component$(() => {
             )}
           </Field>
           <Field name="iconUrl">
-            {(field, props) => (
-              <AvatarCropInput label="アイコン" field={field} fieldProps={props} />
-            )}
+            {(field, props) => <IconCropInput label="アイコン" field={field} fieldProps={props} />}
           </Field>
           {signupForm.response.status === "error" && signupForm.response.message && (
             <FormErrorMessage message={signupForm.response.message} />

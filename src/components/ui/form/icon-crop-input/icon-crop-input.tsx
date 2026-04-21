@@ -7,7 +7,7 @@ import { Modal } from "~/components/ui/modal/modal";
 import clickSvg from "~/media/click.svg";
 import iconPlaceholderSvg from "~/media/icon-placeholder.svg";
 import tapSvg from "~/media/tap.svg";
-import styles from "./avatar-crop-input.module.css";
+import styles from "./icon-crop-input.module.css";
 
 const OUTPUT_SIZE = 256;
 const MAX_SOURCE_SIZE = 6 * 1024 * 1024;
@@ -32,7 +32,7 @@ type FieldState = {
   error?: string;
 };
 
-type AvatarCropInputProps = {
+type IconCropInputProps = {
   field: FieldState;
   fieldProps: FieldProps;
   label: string;
@@ -56,7 +56,7 @@ type CropLayout = {
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
-export const AvatarCropInput = component$<AvatarCropInputProps>(({ field, fieldProps, label }) => {
+export const IconCropInput = component$<IconCropInputProps>(({ field, fieldProps, label }) => {
   const sourceImageUrl = useSignal("");
   const iconUrl = useSignal(field.value ?? "");
   const sourceImageRef = useSignal<HTMLImageElement>();
