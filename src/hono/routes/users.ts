@@ -3,7 +3,13 @@ import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { authMiddleware } from "~/hono/middleware/auth";
 import type { Bindings } from "~/hono/types";
-import { getIconUrl, isExistingIconUrl, isInlineIconImage, uploadIcon } from "~/hono/utils/icon";
+import {
+  applyR2HttpMetadata,
+  getIconUrl,
+  isExistingIconUrl,
+  isInlineIconImage,
+  uploadIcon,
+} from "~/hono/utils/icon";
 import { getDb } from "~/lib/db";
 import { profiles } from "~/lib/db/schema";
 import { userSchema } from "~/schema/user";
@@ -42,11 +48,11 @@ export const usersRouter = new Hono<{ Bindings: Bindings }>()
 
     const object = await c.env.R2_BUCKET.get(row.iconObjectKey);
     if (!object) {
-      return c.json({ message: "Icon not found" } as const, 404);
+      throw new Error("Profile icon object is missing in R2");
     }
 
     const headers = new Headers();
-    object.writeHttpMetadata(headers);
+    applyR2HttpMetadata(headers, object.httpMetadata);
     headers.set("etag", object.httpEtag);
     headers.set("cache-control", "public, max-age=60");
     return new Response(object.body, { status: 200, headers });

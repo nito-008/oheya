@@ -38,10 +38,19 @@ export const AvatarCropInput = component$<AvatarCropInputProps>(({ field, fieldP
   const draftIconUrl = useSignal("");
   const sourceImageRef = useSignal<HTMLImageElement>();
   const cropBoxRef = useSignal<HTMLDivElement>();
+  const hiddenInputRef = useSignal<HTMLInputElement>();
   const localError = useSignal("");
   const zoomReady = useSignal(false);
   const cropModalOpen = useSignal(false);
   const { createZoomImage, setZoomImageState, zoomImageState } = useZoomImageWheel();
+
+  const updateIconUrl = $(async (value: string) => {
+    iconUrl.value = value;
+    if (hiddenInputRef.value) {
+      hiddenInputRef.value.value = value;
+      await fieldProps.onInput$(new Event("input"), hiddenInputRef.value);
+    }
+  });
 
   const drawCrop = $(() => {
     const image = sourceImageRef.value;
@@ -91,7 +100,7 @@ export const AvatarCropInput = component$<AvatarCropInputProps>(({ field, fieldP
   const applyCrop = $(async () => {
     await drawCrop();
     if (draftIconUrl.value) {
-      iconUrl.value = draftIconUrl.value;
+      await updateIconUrl(draftIconUrl.value);
     }
     await closeCropModal();
   });
@@ -130,7 +139,15 @@ export const AvatarCropInput = component$<AvatarCropInputProps>(({ field, fieldP
   return (
     <div class={styles.field}>
       <span class={styles.label}>{label}</span>
-      <input {...fieldProps} type="hidden" value={iconUrl.value} />
+      <input
+        {...fieldProps}
+        ref={async (element) => {
+          hiddenInputRef.value = element;
+          await fieldProps.ref(element);
+        }}
+        type="hidden"
+        value={iconUrl.value}
+      />
       <div class={styles.editor}>
         <div class={styles.cropBox}>
           {iconUrl.value ? (
@@ -190,7 +207,7 @@ export const AvatarCropInput = component$<AvatarCropInputProps>(({ field, fieldP
               variant="danger"
               onClick$={async () => {
                 sourceImageUrl.value = "";
-                iconUrl.value = "";
+                await updateIconUrl("");
                 draftIconUrl.value = "";
                 localError.value = "";
                 cropModalOpen.value = false;
