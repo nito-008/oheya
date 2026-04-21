@@ -5,7 +5,7 @@
   overflow: auto;
   border: 2px solid #2f2f2f;
   border-radius: 7px;
-  background: #fffef8;
+  background: #fff;
   color: #252525;
   box-shadow: 4px 5px 0 rgb(47 47 47 / 22%);
   outline: none;
@@ -15,38 +15,78 @@
   background: rgb(37 37 37 / 54%);
 }
 
-.dialog:focus-visible {
-  box-shadow:
-    4px 5px 0 rgb(47 47 47 / 22%),
-    0 0 0 3px rgb(255 254 248 / 62%);
-}
-
 .header {
   display: flex;
   align-items: center;
+  gap: 0.75rem;
   padding: 1rem 1rem 0.85rem;
   border-bottom: 1px solid rgb(47 47 47 / 14%);
 }
 
 .title {
+  flex: 1;
   margin: 0;
   font-size: 1.05rem;
   font-weight: 400;
   line-height: 1.35;
 }
 
+.closeButton {
+  position: relative;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: rgb(47 47 47 / 34%);
+  cursor: pointer;
+}
+
+.closeButton span,
+.closeButton span::before {
+  display: block;
+  width: 0.85rem;
+  height: 1px;
+  background: currentcolor;
+  content: "";
+}
+
+.closeButton span {
+  rotate: 45deg;
+}
+
+.closeButton span::before {
+  rotate: 90deg;
+}
+
+.closeButton:hover,
+.closeButton:focus-visible {
+  color: rgb(47 47 47 / 58%);
+  background: rgb(47 47 47 / 6%);
+  outline: none;
+}
+
+.closeButton:active {
+  scale: 0.96;
+}
+
 .body {
-  padding: 1rem;
+  padding: 2rem;
 }
 
 @media (max-width: 32rem) {
   .dialog {
-    width: 100%;
-    max-height: calc(100dvh - 0.75rem);
-    margin-block: auto 0;
-    border-right: 0;
-    border-bottom: 0;
-    border-left: 0;
-    border-radius: 7px 7px 0 0;
+    width: calc(100% - 2rem);
+    max-height: calc(100dvh - 2rem);
+    margin: auto;
+    border-radius: 7px;
+  }
+
+  .body {
+    padding: 1.25rem;
   }
 }

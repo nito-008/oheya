@@ -53,6 +53,16 @@ export const Modal = component$<ModalProps>(({ open, title, onClose$ }) => {
     >
       <div class={styles.header}>
         <h2 class={styles.title}>{title}</h2>
+        <button
+          type="button"
+          class={styles.closeButton}
+          aria-label="Close modal"
+          onClick$={async () => {
+            await onClose$();
+          }}
+        >
+          <span aria-hidden="true" />
+        </button>
       </div>
       <div class={styles.body}>
         <Slot />

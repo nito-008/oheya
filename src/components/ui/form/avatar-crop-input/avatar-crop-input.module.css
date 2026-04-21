@@ -21,6 +21,7 @@
 
 .cropBox {
   position: relative;
+  box-sizing: border-box;
   display: grid;
   place-items: center;
   width: 9.5rem;
@@ -127,13 +128,13 @@
 .modalEditor {
   display: grid;
   justify-items: center;
-  gap: 1rem;
+  gap: 2rem;
 }
 
 .modalActions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.8rem;
+  gap: 5rem;
   justify-content: center;
 }
 
@@ -148,7 +149,7 @@
   opacity: 0;
   background: rgb(255 255 255 / 30%);
   backdrop-filter: blur(3px);
-  transition: opacity 0.15s ease-in-out;
+  transition: opacity 0.05s ease-in-out;
 }
 
 .fileOverlay span {
@@ -182,6 +183,16 @@
   }
 
   .modalCropBox {
-    width: min(86vw, 21rem);
+    width: min(76vw, 16rem);
+    max-width: 100%;
+  }
+
+  .modalEditor {
+    width: 100%;
+    gap: 1.5rem;
+  }
+
+  .modalActions {
+    gap: 2.5rem;
   }
 }
