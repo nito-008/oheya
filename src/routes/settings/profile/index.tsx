@@ -87,7 +87,7 @@ export default component$(() => {
           </Field>
           <Field name="iconUrl">
             {(field, props) => (
-              <AvatarCropInput label="アイコン（任意）" field={field} fieldProps={props} />
+              <AvatarCropInput label="アイコン" field={field} fieldProps={props} />
             )}
           </Field>
           {profileForm.response.status === "error" && profileForm.response.message && (

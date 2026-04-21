@@ -2,6 +2,7 @@ import { component$ } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { routeLoader$ } from "@builder.io/qwik-city";
 import { createApiClient } from "~/lib/api";
+import iconPlaceholderSvg from "~/media/icon-placeholder.svg";
 
 export const useProfile = routeLoader$(async (event) => {
   const client = createApiClient(event);
@@ -42,21 +43,23 @@ export default component$(() => {
             }}
           />
         ) : (
-          <div
+          <img
             aria-hidden="true"
+            src={iconPlaceholderSvg}
+            alt=""
+            width={96}
+            height={96}
             style={{
-              display: "grid",
-              placeItems: "center",
               width: "6rem",
               height: "6rem",
               border: "2px solid #2f2f2f",
               borderRadius: "999px",
               background: "#fffef8",
-              color: "#777",
+              boxSizing: "border-box",
+              objectFit: "contain",
+              padding: "1.1rem",
             }}
-          >
-            icon
-          </div>
+          />
         )}
         <h1 style={{ margin: 0, fontSize: "2rem", fontWeight: 400 }}>{profile.value.name}</h1>
       </div>

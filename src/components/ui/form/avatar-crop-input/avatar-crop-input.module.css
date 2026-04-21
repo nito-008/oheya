@@ -76,6 +76,12 @@
   pointer-events: none;
 }
 
+.placeholderImage {
+  width: 62%;
+  height: 62%;
+  pointer-events: none;
+}
+
 .guides {
   position: absolute;
   inset: 0;

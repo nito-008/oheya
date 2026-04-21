@@ -5,6 +5,7 @@ import { useZoomImageWheel } from "@zoom-image/qwik";
 import { FormErrorMessage } from "~/components/ui/form/form-error-message/form-error-message";
 import { Button } from "~/components/ui/button/button";
 import { Modal } from "~/components/ui/modal/modal";
+import iconPlaceholderSvg from "~/media/icon-placeholder.svg";
 import styles from "./avatar-crop-input.module.css";
 
 const OUTPUT_SIZE = 256;
@@ -172,7 +173,15 @@ export const AvatarCropInput = component$<AvatarCropInputProps>(({ field, fieldP
               width={OUTPUT_SIZE}
               height={OUTPUT_SIZE}
             />
-          ) : null}
+          ) : (
+            <img
+              class={styles.placeholderImage}
+              src={iconPlaceholderSvg}
+              alt=""
+              width={64}
+              height={64}
+            />
+          )}
           <span class={styles.mask} aria-hidden="true" />
           <label class={styles.fileOverlay} aria-label="画像を選ぶ">
             <span aria-hidden="true">+</span>
