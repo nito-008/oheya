@@ -63,10 +63,10 @@
 }
 
 .variant-accent {
-  --button-hover-background: #fef1c4;
+  --button-hover-background: #fff6d4;
   --button-active-shadow: 1px 1px 0 #9b9688;
 
-  background: #fff6d4;
+  background: #fef1c4;
   color: #252525;
   box-shadow: 2px 3px 0 #2f2f2f;
 }
