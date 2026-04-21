@@ -5,7 +5,9 @@ import { useZoomImageWheel } from "@zoom-image/qwik";
 import { Button } from "~/components/ui/button/button";
 import { FormErrorMessage } from "~/components/ui/form/form-error-message/form-error-message";
 import { Modal } from "~/components/ui/modal/modal";
+import clickSvg from "~/media/click.svg";
 import iconPlaceholderSvg from "~/media/icon-placeholder.svg";
+import tapSvg from "~/media/tap.svg";
 import styles from "./avatar-crop-input.module.css";
 
 const OUTPUT_SIZE = 256;
@@ -164,64 +166,70 @@ export const AvatarCropInput = component$<AvatarCropInputProps>(({ field, fieldP
         value={iconUrl.value}
       />
       <div class={styles.editor}>
-        <div class={styles.cropBox}>
-          {iconUrl.value ? (
-            <img
-              class={styles.previewImage}
-              src={iconUrl.value}
-              alt=""
-              width={OUTPUT_SIZE}
-              height={OUTPUT_SIZE}
-            />
-          ) : (
-            <img
-              class={styles.placeholderImage}
-              src={iconPlaceholderSvg}
-              alt=""
-              width={64}
-              height={64}
-            />
-          )}
-          <span class={styles.mask} aria-hidden="true" />
-          <label class={styles.fileOverlay} aria-label="画像を選ぶ">
-            <span aria-hidden="true">+</span>
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp,image/avif"
-              onChange$={async (event) => {
-                const input = event.target as HTMLInputElement;
-                const file = input.files?.[0];
-                localError.value = "";
-                if (!file) return;
-                if (!file.type.startsWith("image/")) {
-                  localError.value = "画像ファイルを選んでください";
-                  input.value = "";
-                  return;
-                }
-                if (file.size > MAX_SOURCE_SIZE) {
-                  localError.value = "6MB以下の画像を選んでください";
-                  input.value = "";
-                  return;
-                }
+        <div class={styles.cropBoxFrame}>
+          <div class={styles.cropBox}>
+            {iconUrl.value ? (
+              <img
+                class={styles.previewImage}
+                src={iconUrl.value}
+                alt=""
+                width={OUTPUT_SIZE}
+                height={OUTPUT_SIZE}
+              />
+            ) : (
+              <img
+                class={styles.placeholderImage}
+                src={iconPlaceholderSvg}
+                alt=""
+                width={64}
+                height={64}
+              />
+            )}
+            <span class={styles.mask} aria-hidden="true" />
+            <label class={styles.fileOverlay} aria-label="画像を選ぶ">
+              <span aria-hidden="true">+</span>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/avif"
+                onChange$={async (event) => {
+                  const input = event.target as HTMLInputElement;
+                  const file = input.files?.[0];
+                  localError.value = "";
+                  if (!file) return;
+                  if (!file.type.startsWith("image/")) {
+                    localError.value = "画像ファイルを選んでください";
+                    input.value = "";
+                    return;
+                  }
+                  if (file.size > MAX_SOURCE_SIZE) {
+                    localError.value = "6MB以下の画像を選んでください";
+                    input.value = "";
+                    return;
+                  }
 
-                try {
-                  sourceImageUrl.value = await new Promise<string>((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.addEventListener("load", () => resolve(String(reader.result ?? "")));
-                    reader.addEventListener("error", () => reject(reader.error));
-                    reader.readAsDataURL(file);
-                  });
-                  draftIconUrl.value = "";
-                  zoomReady.value = false;
-                  cropModalOpen.value = true;
-                  input.value = "";
-                } catch {
-                  localError.value = "画像を読み込めませんでした";
-                  input.value = "";
-                }
-              }}
-            />
-          </label>
+                  try {
+                    sourceImageUrl.value = await new Promise<string>((resolve, reject) => {
+                      const reader = new FileReader();
+                      reader.addEventListener("load", () => resolve(String(reader.result ?? "")));
+                      reader.addEventListener("error", () => reject(reader.error));
+                      reader.readAsDataURL(file);
+                    });
+                    draftIconUrl.value = "";
+                    zoomReady.value = false;
+                    cropModalOpen.value = true;
+                    input.value = "";
+                  } catch {
+                    localError.value = "画像を読み込めませんでした";
+                    input.value = "";
+                  }
+                }}
+              />
+            </label>
+          </div>
+          <picture>
+            <source media="(hover: none) and (pointer: coarse)" srcSet={tapSvg} />
+            <img class={styles.clickCue} src={clickSvg} alt="" width={256} height={146} />
+          </picture>
         </div>
       </div>
       <FormErrorMessage message={field.error || localError.value} />

@@ -23,7 +23,7 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: 2.5rem;
+  gap: 2.75rem;
   width: min(100%, 25rem);
   text-align: left;
 }
@@ -31,7 +31,7 @@
 .fields {
   display: flex;
   flex-direction: column;
-  gap: 1.15rem;
+  gap: 1.65rem;
 }
 
 .actions {
