@@ -1,6 +1,6 @@
 import { component$, type QRL } from "@builder.io/qwik";
 import type { FieldElement, FieldEvent } from "@modular-forms/qwik";
-import { FormErrorMessage } from "~/components/form/form-error-message/form-error-message";
+import { FormErrorMessage } from "~/components/ui/form/form-error-message/form-error-message";
 import styles from "./form-text-input.module.css";
 
 type FieldProps = {

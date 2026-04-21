@@ -37,6 +37,21 @@
   border: none;
 }
 
+.actionLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.userIcon {
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1.5px solid #2f2f2f;
+  border-radius: 999px;
+  object-fit: cover;
+  background: #fffef8;
+}
+
 .actionLink:hover,
 .button:hover {
   text-decoration: underline;

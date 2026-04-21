@@ -26,6 +26,13 @@
    * databases, object storage, AI inference, real-time communication and more.
    * https://developers.cloudflare.com/workers/runtime-apis/bindings/
    */
+  "r2_buckets": [
+    {
+      "binding": "R2_BUCKET",
+      "bucket_name": "oheya",
+      "preview_bucket_name": "oheya-dev",
+    },
+  ],
   /**
    * Environment Variables
    * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables

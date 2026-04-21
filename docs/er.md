@@ -22,6 +22,7 @@ erDiagram
     text user_id PK,FK
     text public_id UK
     text name
+    text icon_object_key "nullable"
   }
   session {
     text sessionToken PK

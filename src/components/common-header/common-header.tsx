@@ -8,6 +8,7 @@ export type CommonHeaderUser = {
   authenticated: boolean;
   publicId: string | null;
   name: string | null;
+  iconUrl: string | null;
 };
 
 type CommonHeaderProps = {
@@ -31,7 +32,15 @@ export const CommonHeader = component$<CommonHeaderProps>(({ user, showAuthActio
         <>
           {user.publicId && user.name && (
             <Link href={`/${user.publicId}/`} class={styles.actionLink}>
+              {user.iconUrl && (
+                <img class={styles.userIcon} src={user.iconUrl} alt="" width={28} height={28} />
+              )}
               {user.name}
+            </Link>
+          )}
+          {user.publicId && (
+            <Link href="/settings/profile/" class={styles.actionLink}>
+              設定
             </Link>
           )}
           <Form action={signOut}>

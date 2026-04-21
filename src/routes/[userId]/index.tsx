@@ -14,7 +14,7 @@ export const useProfile = routeLoader$(async (event) => {
   }
 
   if (!res.ok) {
-    throw new Error("プロフィールの取得に失敗しました");
+    throw new Error("プロフィールを取得できませんでした");
   }
 
   return res.json();
@@ -25,6 +25,41 @@ export default component$(() => {
 
   return (
     <main style={{ padding: "2rem" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1.5rem" }}>
+        {profile.value.iconUrl ? (
+          <img
+            src={profile.value.iconUrl}
+            alt={`${profile.value.name}のアイコン`}
+            width={96}
+            height={96}
+            style={{
+              width: "6rem",
+              height: "6rem",
+              border: "2px solid #2f2f2f",
+              borderRadius: "999px",
+              objectFit: "cover",
+              background: "#fffef8",
+            }}
+          />
+        ) : (
+          <div
+            aria-hidden="true"
+            style={{
+              display: "grid",
+              placeItems: "center",
+              width: "6rem",
+              height: "6rem",
+              border: "2px solid #2f2f2f",
+              borderRadius: "999px",
+              background: "#fffef8",
+              color: "#777",
+            }}
+          >
+            icon
+          </div>
+        )}
+        <h1 style={{ margin: 0, fontSize: "2rem", fontWeight: 400 }}>{profile.value.name}</h1>
+      </div>
       <dl>
         <dt>public_id</dt>
         <dd>{profile.value.publicId}</dd>

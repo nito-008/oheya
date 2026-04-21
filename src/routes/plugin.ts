@@ -5,6 +5,14 @@ const EnvSchema = v.object({
   ASSET: v.custom<Fetcher>(
     (input) => typeof input === "object" && input !== null && "fetch" in (input as object),
   ),
+  R2_BUCKET: v.custom<R2Bucket>(
+    (input) =>
+      typeof input === "object" &&
+      input !== null &&
+      "get" in (input as object) &&
+      "put" in (input as object) &&
+      "delete" in (input as object),
+  ),
   TURSO_DATABASE_URL: v.pipe(v.string(), v.nonEmpty()),
   TURSO_AUTH_TOKEN: v.pipe(v.string(), v.nonEmpty()),
   AUTH_SECRET: v.pipe(v.string(), v.nonEmpty()),

@@ -1,0 +1,181 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  color: #444;
+  line-height: 1.45;
+}
+
+.label {
+  padding-inline: 0.1rem;
+  font-size: 0.95rem;
+}
+
+.editor {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  align-items: center;
+  justify-items: center;
+}
+
+.cropBox {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 9.5rem;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 2px solid #2f2f2f;
+  border-radius: 999px;
+  background:
+    linear-gradient(45deg, rgb(47 47 47 / 8%) 25%, transparent 25% 75%, rgb(47 47 47 / 8%) 75%),
+    linear-gradient(45deg, rgb(47 47 47 / 8%) 25%, transparent 25% 75%, rgb(47 47 47 / 8%) 75%),
+    #fffef8;
+  background-position:
+    0 0,
+    0.5rem 0.5rem;
+  background-size: 1rem 1rem;
+  box-shadow: 2px 3px 0 #d8d2c2;
+  touch-action: none;
+  user-select: none;
+}
+
+.modalCropBox {
+  width: min(70vw, 20rem);
+  max-width: 100%;
+}
+
+.cropBox:focus-within,
+.cropBox:hover {
+  box-shadow:
+    2px 3px 0 #d8d2c2,
+    0 0 0 3px rgb(17 17 17 / 10%);
+}
+
+.cropBox:focus-within .fileOverlay,
+.cropBox:hover .fileOverlay {
+  opacity: 1;
+}
+
+.sourceImage,
+.previewImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sourceImage {
+  cursor: grab;
+  transform-origin: center;
+}
+
+.previewImage {
+  pointer-events: none;
+}
+
+.guides {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(
+      to right,
+      transparent calc(33.333% - 0.5px),
+      rgb(255 255 255 / 56%) calc(33.333% - 0.5px) calc(33.333% + 0.5px),
+      transparent calc(33.333% + 0.5px) calc(66.667% - 0.5px),
+      rgb(255 255 255 / 56%) calc(66.667% - 0.5px) calc(66.667% + 0.5px),
+      transparent calc(66.667% + 0.5px)
+    ),
+    linear-gradient(
+      to bottom,
+      transparent calc(33.333% - 0.5px),
+      rgb(255 255 255 / 56%) calc(33.333% - 0.5px) calc(33.333% + 0.5px),
+      transparent calc(33.333% + 0.5px) calc(66.667% - 0.5px),
+      rgb(255 255 255 / 56%) calc(66.667% - 0.5px) calc(66.667% + 0.5px),
+      transparent calc(66.667% + 0.5px)
+    );
+  box-shadow: inset 0 0 0 1px rgb(47 47 47 / 16%);
+  pointer-events: none;
+}
+
+.mask {
+  position: absolute;
+  inset: 0;
+  border: 2px solid rgb(255 255 255 / 80%);
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgb(47 47 47 / 20%);
+  pointer-events: none;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+
+.modalEditor {
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+}
+
+.modalActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  justify-content: center;
+}
+
+.fileOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  color: #252525;
+  cursor: pointer;
+  opacity: 0;
+  background: rgb(255 255 255 / 30%);
+  backdrop-filter: blur(5px);
+  transition: opacity 160ms ease;
+}
+
+.fileOverlay span {
+  font-size: 2rem;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.fileOverlay:active span {
+  scale: 0.96;
+}
+
+.fileOverlay input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+@media (max-width: 32rem) {
+  .editor {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .controls {
+    align-items: center;
+    width: 100%;
+  }
+
+  .modalCropBox {
+    width: min(86vw, 21rem);
+  }
+}

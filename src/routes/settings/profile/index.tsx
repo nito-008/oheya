@@ -15,54 +15,52 @@ import { FormTextInput } from "~/components/ui/form/form-text-input/form-text-in
 import { Button } from "~/components/ui/button/button";
 import { createApiClient } from "~/lib/api";
 import { NAME_MAX_LENGTH, PUBLIC_ID_MAX_LENGTH, userSchema } from "~/schema/user";
-import styles from "./index.module.css";
+import styles from "~/routes/signup/index.module.css";
 
-type SignupForm = v.InferInput<typeof userSchema>;
+type ProfileSettingsForm = v.InferInput<typeof userSchema>;
 
-export const useProfileStatus = routeLoader$(async (event) => {
-  const client = createApiClient(event);
-  const res = await client.api.users.me.$get();
-  if (res.ok) {
+export const useProfileSettingsLoader = routeLoader$<InitialValues<ProfileSettingsForm>>(
+  async (event) => {
+    const client = createApiClient(event);
+    const res = await client.api.users.me.$get();
+    if (res.status === 401) throw event.redirect(302, "/");
+    if (res.status === 404) throw event.redirect(302, "/signup");
+    if (!res.ok) throw new Error("プロフィールを取得できませんでした");
+
     const profile = await res.json();
-    throw event.redirect(302, `/${profile.publicId}`);
-  }
-  if (res.status === 401) throw event.redirect(302, "/");
-  if (res.status === 404) return;
-  throw new Error("プロフィールを取得できませんでした");
-});
+    return {
+      publicId: profile.publicId,
+      name: profile.name,
+      iconUrl: profile.iconUrl ?? "",
+    };
+  },
+);
 
-export const useFormLoader = routeLoader$<InitialValues<SignupForm>>(() => ({
-  publicId: "",
-  name: "",
-  iconUrl: "",
-}));
-
-export const useRegisterProfile = formAction$<SignupForm>(async (values, event) => {
+export const useSaveProfileSettings = formAction$<ProfileSettingsForm>(async (values, event) => {
   const client = createApiClient(event);
   const res = await client.api.users.me.$patch({ json: values });
   if (res.status === 401) {
-    throw new FormError<SignupForm>("ログインが必要です");
+    throw new FormError<ProfileSettingsForm>("ログインが必要です");
   }
   if (res.status === 409) {
-    throw new FormError<SignupForm>({ publicId: "このIDはもう誰かが使っています" });
+    throw new FormError<ProfileSettingsForm>({ publicId: "このIDはもう誰かが使っています" });
   }
   if (!res.ok) {
-    throw new FormError<SignupForm>("登録できませんでした");
+    throw new FormError<ProfileSettingsForm>("保存できませんでした");
   }
   throw event.redirect(302, `/${values.publicId}`);
 }, valiForm$(userSchema));
 
 export default component$(() => {
-  useProfileStatus();
-  const [signupForm, { Form, Field }] = useForm<SignupForm>({
-    loader: useFormLoader(),
-    action: useRegisterProfile(),
+  const [profileForm, { Form, Field }] = useForm<ProfileSettingsForm>({
+    loader: useProfileSettingsLoader(),
+    action: useSaveProfileSettings(),
     validate: valiForm$(userSchema),
   });
 
   return (
     <main class={styles.main}>
-      <h1>アカウント登録</h1>
+      <h1>プロフィール設定</h1>
       <Form class={styles.form}>
         <div class={styles.fields}>
           <Field name="publicId">
@@ -89,11 +87,11 @@ export default component$(() => {
           </Field>
           <Field name="iconUrl">
             {(field, props) => (
-              <AvatarCropInput label="アイコン" field={field} fieldProps={props} />
+              <AvatarCropInput label="アイコン（任意）" field={field} fieldProps={props} />
             )}
           </Field>
-          {signupForm.response.status === "error" && signupForm.response.message && (
-            <FormErrorMessage message={signupForm.response.message} />
+          {profileForm.response.status === "error" && profileForm.response.message && (
+            <FormErrorMessage message={profileForm.response.message} />
           )}
         </div>
         <div class={styles.actions}>
@@ -102,10 +100,10 @@ export default component$(() => {
             variant="accent"
             size="md"
             width="full"
-            disabled={signupForm.submitting}
-            aria-busy={signupForm.submitting}
+            disabled={profileForm.submitting}
+            aria-busy={profileForm.submitting}
           >
-            {signupForm.submitting ? "登録中..." : "はじめる"}
+            {profileForm.submitting ? "保存中..." : "保存"}
           </Button>
         </div>
       </Form>
@@ -114,6 +112,6 @@ export default component$(() => {
 });
 
 export const head: DocumentHead = {
-  title: "はじめる | Oheya",
-  meta: [{ name: "description", content: "Oheyaのユーザー登録ページ" }],
+  title: "プロフィール設定 | Oheya",
+  meta: [{ name: "description", content: "Oheyaのプロフィール設定ページ" }],
 };

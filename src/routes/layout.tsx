@@ -13,18 +13,19 @@ export const useHeaderUser = routeLoader$<CommonHeaderUser>(async (event) => {
       authenticated: true,
       publicId: user.publicId,
       name: user.name,
+      iconUrl: user.iconUrl,
     };
   }
 
   if (res.status === 401) {
-    return { authenticated: false, publicId: null, name: null };
+    return { authenticated: false, publicId: null, name: null, iconUrl: null };
   }
 
   if (res.status === 404) {
-    return { authenticated: false, publicId: null, name: null };
+    return { authenticated: false, publicId: null, name: null, iconUrl: null };
   }
 
-  throw new Error("ヘッダーユーザー情報の取得に失敗しました");
+  throw new Error("ユーザー情報を取得できませんでした");
 });
 
 export default component$(() => {
