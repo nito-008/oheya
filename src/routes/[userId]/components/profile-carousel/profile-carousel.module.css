@@ -1,0 +1,150 @@
+.profileCarousel {
+  --profile-panel-width: clamp(calc(100% / 3), 22rem, 100%);
+  --profile-edge-space: calc((100% - var(--profile-panel-width)) / 2);
+
+  display: flex;
+  width: 100%;
+  min-height: min(34rem, calc(100svh - 3.4rem));
+  margin-inline: auto;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--profile-edge-space);
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.profileCarousel::-webkit-scrollbar {
+  display: none;
+}
+
+.carouselButton {
+  position: fixed;
+  z-index: 1;
+  top: 3.4rem;
+  bottom: 0;
+  display: grid;
+  place-items: center;
+  width: clamp(4rem, 12vw, 8rem);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.carouselButton:hover,
+.carouselButton:active {
+  background: rgb(128 128 128 / 12%);
+  backdrop-filter: blur(0.7rem);
+}
+
+.carouselButton:disabled {
+  cursor: default;
+  opacity: 0.28;
+}
+
+.carouselButton:disabled:hover,
+.carouselButton:disabled:active {
+  background: transparent;
+  backdrop-filter: none;
+}
+
+.carouselButton:focus-visible {
+  outline: 2px solid #3b332d;
+  outline-offset: 0.2rem;
+}
+
+.carouselButtonPrevious {
+  left: 0;
+}
+
+.carouselButtonNext {
+  right: 0;
+}
+
+.carouselButtonMark {
+  display: block;
+  width: 3rem;
+  height: 3.2rem;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.carouselButtonMarkNext {
+  transform: scaleX(-1);
+}
+
+.profilePanel {
+  display: grid;
+  flex: 0 0 var(--profile-panel-width);
+  min-width: 0;
+  scroll-snap-align: center;
+}
+
+.profileCarousel::before,
+.profileCarousel::after {
+  content: "";
+  flex: 0 0 var(--profile-edge-space);
+}
+
+.sidePanelFill {
+  min-height: 100%;
+}
+
+.centerPanel {
+  place-items: center;
+  align-content: center;
+  gap: 0.8rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+.icon {
+  position: relative;
+  display: inline-grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 10rem;
+  height: 10rem;
+}
+
+.iconImage,
+.iconPlaceholder {
+  width: 8.6rem;
+  height: 8.6rem;
+  border-radius: 999px;
+  background: #fffef8;
+}
+
+.iconImage {
+  object-fit: cover;
+}
+
+.iconPlaceholder {
+  box-sizing: border-box;
+  object-fit: contain;
+  padding: 0.85rem;
+}
+
+.iconFrame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.name {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+
+.userId {
+  margin: 0;
+  color: #6f6862;
+  font-family: "Caveat", "Uzura", cursive;
+  font-size: 1.35rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
