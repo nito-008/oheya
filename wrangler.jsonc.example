@@ -31,6 +31,7 @@
       "binding": "R2_BUCKET",
       "bucket_name": "oheya",
       "preview_bucket_name": "oheya-dev",
+      "remote": true,
     },
   ],
   /**
