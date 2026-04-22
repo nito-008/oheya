@@ -1,5 +1,6 @@
 import { $, component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import carouselArrowSvg from "~/media/carousel-arrow.svg";
+import floorLineSvg from "~/media/floor-line.svg";
 import iconFrameSvg from "~/media/icon-frame.svg";
 import iconPlaceholderSvg from "~/media/icon-placeholder.svg";
 import { getImageUrl } from "~/schema/image";
@@ -122,6 +123,14 @@ export const ProfileCarousel = component$<ProfileCarouselProps>(({ profile }) =>
           <div class={styles.sidePanelFill} />
         </section>
       </div>
+      <img
+        class={styles.floorLine}
+        src={floorLineSvg}
+        width={260}
+        height={36}
+        alt=""
+        aria-hidden="true"
+      />
       <button
         class={`${styles.carouselButton} ${styles.carouselButtonNext}`}
         type="button"

@@ -4,7 +4,7 @@
 
   display: flex;
   width: 100%;
-  min-height: min(34rem, calc(100svh - 3.4rem));
+  min-height: calc(100svh - 3.4rem - 1.5rem);
   margin-inline: auto;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
@@ -31,21 +31,9 @@
   cursor: pointer;
 }
 
-.carouselButton:hover,
-.carouselButton:active {
-  background: rgb(128 128 128 / 12%);
-  backdrop-filter: blur(0.7rem);
-}
-
 .carouselButton:disabled {
   cursor: default;
   opacity: 0.28;
-}
-
-.carouselButton:disabled:hover,
-.carouselButton:disabled:active {
-  background: transparent;
-  backdrop-filter: none;
 }
 
 .carouselButton:focus-visible {
@@ -67,10 +55,19 @@
   height: 3.2rem;
   overflow: visible;
   pointer-events: none;
+  transition: transform 180ms var(--ease-out-expo);
 }
 
 .carouselButtonMarkNext {
   transform: scaleX(-1);
+}
+
+.carouselButtonPrevious:is(:hover, :active):not(:disabled) .carouselButtonMark {
+  transform: translateX(-0.25rem);
+}
+
+.carouselButtonNext:is(:hover, :active):not(:disabled) .carouselButtonMarkNext {
+  transform: translateX(0.25rem) scaleX(-1);
 }
 
 .profilePanel {
@@ -84,6 +81,13 @@
 .profileCarousel::after {
   content: "";
   flex: 0 0 var(--profile-edge-space);
+}
+
+.floorLine {
+  display: block;
+  width: 100%;
+  height: 1.5rem;
+  pointer-events: none;
 }
 
 .sidePanelFill {
