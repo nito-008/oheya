@@ -1,6 +1,7 @@
 .dialog {
-  width: min(100%, 32rem);
+  width: min(32rem, calc(100% - 2rem));
   max-height: min(42rem, calc(100dvh - 2rem));
+  margin: auto;
   padding: 0;
   overflow: auto;
   border: 2px solid #2f2f2f;
@@ -75,18 +76,5 @@
 }
 
 .body {
-  padding: 2rem;
-}
-
-@media (max-width: 32rem) {
-  .dialog {
-    width: calc(100% - 2rem);
-    max-height: calc(100dvh - 2rem);
-    margin: auto;
-    border-radius: 7px;
-  }
-
-  .body {
-    padding: 1.25rem;
-  }
+  padding: clamp(1.25rem, 6.25vw, 2rem);
 }

@@ -49,7 +49,7 @@
 }
 
 .modalCropBox {
-  width: min(70vw, 20rem);
+  width: clamp(14rem, 70vw, 20rem);
   max-width: 100%;
 }
 
@@ -143,13 +143,14 @@
 .modalEditor {
   display: grid;
   justify-items: center;
-  gap: 2rem;
+  width: 100%;
+  gap: clamp(1.5rem, 6.25vw, 2rem);
 }
 
 .modalActions {
   display: flex;
   flex-wrap: wrap;
-  gap: 5rem;
+  gap: clamp(2.5rem, 15.625vw, 5rem);
   justify-content: center;
 }
 
@@ -185,25 +186,4 @@
   margin: -1px;
   overflow: hidden;
   clip: rect(0 0 0 0);
-}
-
-@media (max-width: 32rem) {
-  .editor {
-    grid-template-columns: 1fr;
-    justify-items: center;
-  }
-
-  .modalCropBox {
-    width: min(76vw, 16rem);
-    max-width: 100%;
-  }
-
-  .modalEditor {
-    width: 100%;
-    gap: 1.5rem;
-  }
-
-  .modalActions {
-    gap: 2.5rem;
-  }
 }
