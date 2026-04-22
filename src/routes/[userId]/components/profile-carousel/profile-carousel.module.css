@@ -1,108 +1,121 @@
 .profileCarousel {
-  --profile-panel-width: clamp(calc(100% / 3), 22rem, 100%);
-  --profile-edge-space: calc((100% - var(--profile-panel-width)) / 2);
+  overflow: hidden;
+}
 
+.carouselViewport {
   display: flex;
   width: 100%;
-  min-height: calc(100svh - 3.4rem - 1.5rem);
+  min-height: 80svh;
   margin-inline: auto;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  scroll-padding-inline: var(--profile-edge-space);
   overscroll-behavior-x: contain;
   scrollbar-width: none;
 }
 
-.profileCarousel::-webkit-scrollbar {
+.carouselViewport::-webkit-scrollbar {
   display: none;
 }
 
-.carouselButton {
-  position: fixed;
-  z-index: 1;
-  top: 3.4rem;
-  bottom: 0;
+.carouselControls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 2.5rem;
+  padding-inline: clamp(0.75rem, 4vw, 2.5rem);
+}
+
+.carouselControl {
   display: grid;
   place-items: center;
-  width: clamp(4rem, 12vw, 8rem);
+  width: 2.5rem;
+  height: 2.2rem;
   padding: 0;
   border: 0;
   background: transparent;
   cursor: pointer;
 }
 
-.carouselButton:disabled {
+.carouselControl:disabled {
   cursor: default;
   opacity: 0.28;
 }
 
-.carouselButton:focus-visible {
+.carouselControl:focus-visible {
   outline: 2px solid #3b332d;
   outline-offset: 0.2rem;
 }
 
-.carouselButtonPrevious {
-  left: 0;
-}
-
-.carouselButtonNext {
-  right: 0;
-}
-
-.carouselButtonMark {
+.carouselControlIcon {
   display: block;
-  width: 3rem;
-  height: 3.2rem;
+  width: 1.875rem;
+  height: 2rem;
   overflow: visible;
   pointer-events: none;
   transition: transform 180ms var(--ease-out-expo);
 }
 
-.carouselButtonMarkNext {
+.carouselControlIconNext {
   transform: scaleX(-1);
 }
 
-.carouselButtonPrevious:is(:hover, :active):not(:disabled) .carouselButtonMark {
-  transform: translateX(-0.25rem);
+.carouselControlPrevious:is(:hover, :active):not(:disabled) .carouselControlIcon {
+  transform: translateX(-0.15rem);
 }
 
-.carouselButtonNext:is(:hover, :active):not(:disabled) .carouselButtonMarkNext {
-  transform: translateX(0.25rem) scaleX(-1);
+.carouselControlNext:is(:hover, :active):not(:disabled) .carouselControlIconNext {
+  transform: translateX(0.15rem) scaleX(-1);
 }
 
-.profilePanel {
+.carouselSlide {
   display: grid;
-  flex: 0 0 var(--profile-panel-width);
+  flex: 0 0 100%;
   min-width: 0;
   scroll-snap-align: center;
 }
 
-.profileCarousel::before,
-.profileCarousel::after {
-  content: "";
-  flex: 0 0 var(--profile-edge-space);
-}
-
-.floorLine {
+.roomFloorLine {
   display: block;
   width: 100%;
   height: 1.5rem;
   pointer-events: none;
 }
 
-.sidePanelFill {
-  min-height: 100%;
-}
-
-.centerPanel {
+.profileSlide {
   place-items: center;
   align-content: center;
-  gap: 0.8rem;
   padding: 2rem;
   text-align: center;
 }
 
-.icon {
+.profileBlock {
+  position: relative;
+  display: grid;
+  place-items: center;
+  gap: 0.8rem;
+  max-width: min(100%, 22rem);
+  padding: 1rem 1.4rem;
+}
+
+.cornerPlus {
+  position: absolute;
+  width: 2.5rem;
+  height: 2.5rem;
+  pointer-events: none;
+}
+
+.cornerPlusTopLeft {
+  top: -1.4rem;
+  left: -1rem;
+}
+
+.cornerPlusBottomRight {
+  right: -1rem;
+  bottom: -1.8rem;
+  transform: rotate(180deg);
+}
+
+.avatar {
   position: relative;
   display: inline-grid;
   flex-shrink: 0;
@@ -111,25 +124,25 @@
   height: 10rem;
 }
 
-.iconImage,
-.iconPlaceholder {
+.avatarImage,
+.avatarPlaceholder {
   width: 8.6rem;
   height: 8.6rem;
   border-radius: 999px;
   background: #fffef8;
 }
 
-.iconImage {
+.avatarImage {
   object-fit: cover;
 }
 
-.iconPlaceholder {
+.avatarPlaceholder {
   box-sizing: border-box;
   object-fit: contain;
   padding: 0.85rem;
 }
 
-.iconFrame {
+.avatarFrame {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -137,14 +150,14 @@
   pointer-events: none;
 }
 
-.name {
+.profileName {
   margin: 0;
   font-size: 2rem;
   font-weight: 400;
   overflow-wrap: anywhere;
 }
 
-.userId {
+.profileHandle {
   margin: 0;
   color: #6f6862;
   font-family: "Caveat", "Uzura", cursive;

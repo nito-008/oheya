@@ -3,6 +3,7 @@ import carouselArrowSvg from "~/media/carousel-arrow.svg";
 import floorLineSvg from "~/media/floor-line.svg";
 import iconFrameSvg from "~/media/icon-frame.svg";
 import iconPlaceholderSvg from "~/media/icon-placeholder.svg";
+import profilePlusSvg from "~/media/profile-plus.svg";
 import { getImageUrl } from "~/schema/image";
 import styles from "./profile-carousel.module.css";
 
@@ -33,7 +34,7 @@ export const ProfileCarousel = component$<ProfileCarouselProps>(({ profile }) =>
     const carousel = carouselRef.value;
     if (!carousel) return;
 
-    const panel = carousel.querySelector<HTMLElement>(`.${styles.profilePanel}`);
+    const panel = carousel.querySelector<HTMLElement>(`.${styles.carouselSlide}`);
     carousel.scrollBy({
       left: direction * (panel?.offsetWidth ?? carousel.clientWidth),
       behavior: "smooth",
@@ -60,93 +61,103 @@ export const ProfileCarousel = component$<ProfileCarouselProps>(({ profile }) =>
   });
 
   return (
-    <>
-      <button
-        class={`${styles.carouselButton} ${styles.carouselButtonPrevious}`}
-        type="button"
-        aria-label="前へ"
-        disabled={!canScrollPrevious.value}
-        onClick$={() => scrollCarousel$(-1)}
-      >
-        <img
-          class={styles.carouselButtonMark}
-          src={carouselArrowSvg}
-          width={60}
-          height={64}
-          alt=""
-          aria-hidden="true"
-        />
-      </button>
-      <div ref={carouselRef} class={styles.profileCarousel} aria-label={`${profile.name}のお部屋`}>
-        <section class={`${styles.profilePanel} ${styles.centerPanel}`} aria-label="プロフィール">
-          <span class={styles.icon}>
-            {profile.icon ? (
-              <img
-                src={getImageUrl(profile.icon) ?? ""}
-                alt={`${profile.name}のアイコン`}
-                width={96}
-                height={96}
-                class={styles.iconImage}
-              />
-            ) : (
+    <div class={styles.profileCarousel}>
+      <div ref={carouselRef} class={styles.carouselViewport} aria-label={`${profile.name}のお部屋`}>
+        <section class={`${styles.carouselSlide} ${styles.profileSlide}`} aria-label="プロフィール">
+          <div class={styles.profileBlock}>
+            <img
+              class={`${styles.cornerPlus} ${styles.cornerPlusTopLeft}`}
+              src={profilePlusSvg}
+              width={40}
+              height={40}
+              alt=""
+              aria-hidden="true"
+            />
+            <span class={styles.avatar}>
+              {profile.icon ? (
+                <img
+                  src={getImageUrl(profile.icon) ?? ""}
+                  alt={`${profile.name}のアイコン`}
+                  width={96}
+                  height={96}
+                  class={styles.avatarImage}
+                />
+              ) : (
+                <img
+                  aria-hidden="true"
+                  src={iconPlaceholderSvg}
+                  alt=""
+                  width={96}
+                  height={96}
+                  class={styles.avatarPlaceholder}
+                />
+              )}
               <img
                 aria-hidden="true"
-                src={iconPlaceholderSvg}
+                src={iconFrameSvg}
                 alt=""
                 width={96}
                 height={96}
-                class={styles.iconPlaceholder}
+                class={styles.avatarFrame}
               />
-            )}
+            </span>
+            <h1 class={styles.profileName}>{profile.name}</h1>
+            <p class={styles.profileHandle}>@{profile.publicId}</p>
             <img
-              aria-hidden="true"
-              src={iconFrameSvg}
+              class={`${styles.cornerPlus} ${styles.cornerPlusBottomRight}`}
+              src={profilePlusSvg}
+              width={40}
+              height={40}
               alt=""
-              width={96}
-              height={96}
-              class={styles.iconFrame}
+              aria-hidden="true"
             />
-          </span>
-          <h1 class={styles.name}>{profile.name}</h1>
-          <p class={styles.userId}>@{profile.publicId}</p>
+          </div>
         </section>
-        <section
-          class={`${styles.profilePanel} ${styles.sidePanelStart}`}
-          aria-label="プロフィール左側"
-        >
-          <div class={styles.sidePanelFill} />
-        </section>
-        <section
-          class={`${styles.profilePanel} ${styles.sidePanelEnd}`}
-          aria-label="プロフィール右側"
-        >
-          <div class={styles.sidePanelFill} />
-        </section>
+        <section class={styles.carouselSlide} aria-label="プロフィール左側" />
+        <section class={styles.carouselSlide} aria-label="プロフィール右側" />
       </div>
       <img
-        class={styles.floorLine}
+        class={styles.roomFloorLine}
         src={floorLineSvg}
         width={260}
         height={36}
         alt=""
         aria-hidden="true"
       />
-      <button
-        class={`${styles.carouselButton} ${styles.carouselButtonNext}`}
-        type="button"
-        aria-label="次へ"
-        disabled={!canScrollNext.value}
-        onClick$={() => scrollCarousel$(1)}
-      >
-        <img
-          class={`${styles.carouselButtonMark} ${styles.carouselButtonMarkNext}`}
-          src={carouselArrowSvg}
-          width={60}
-          height={64}
-          alt=""
-          aria-hidden="true"
-        />
-      </button>
-    </>
+      <div class={styles.carouselControls} role="group" aria-label="プロフィールの切り替え">
+        <button
+          class={`${styles.carouselControl} ${styles.carouselControlPrevious}`}
+          type="button"
+          aria-label="前へ"
+          disabled={!canScrollPrevious.value}
+          onClick$={() => scrollCarousel$(-1)}
+        >
+          <img
+            class={styles.carouselControlIcon}
+            src={carouselArrowSvg}
+            width={38}
+            height={40}
+            alt=""
+            aria-hidden="true"
+          />
+        </button>
+        <button
+          class={`${styles.carouselControl} ${styles.carouselControlNext}`}
+          type="button"
+          aria-label="次へ"
+          disabled={!canScrollNext.value}
+          onClick$={() => scrollCarousel$(1)}
+        >
+          <img
+            class={`${styles.carouselControlIcon} ${styles.carouselControlIconNext}`}
+            src={carouselArrowSvg}
+            width={38}
+            height={40}
+            alt=""
+            aria-hidden="true"
+          />
+        </button>
+      </div>
+    </div>
   );
 });

@@ -37,8 +37,9 @@
   border: none;
 }
 
+.header > form,
 .actionLink {
-  display: inline-flex;
+  display: none;
   align-items: center;
   gap: 0.45rem;
 }
@@ -59,4 +60,14 @@
 
 .button:active {
   color: #cdcdcd;
+}
+
+@media (min-width: 32rem) {
+  .header > form {
+    display: block;
+  }
+
+  .actionLink {
+    display: inline-flex;
+  }
 }
