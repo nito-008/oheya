@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import type { ApplyGlobalResponse } from "hono/client";
 import { logger } from "hono/logger";
+import { imagesRouter } from "./routes/images";
 import { usersRouter } from "./routes/users";
 import type { Bindings } from "./types";
 
@@ -11,6 +12,7 @@ export const app = new Hono<{ Bindings: Bindings }>()
     console.error(`[hono:error] ${c.req.method} ${c.req.path}`, error);
     return c.json({ message: "Internal Server Error" } as const, 500);
   })
+  .route("/images", imagesRouter)
   .route("/users", usersRouter);
 
 export type AppType = ApplyGlobalResponse<

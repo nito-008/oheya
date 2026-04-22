@@ -7,6 +7,7 @@ import { Modal } from "~/components/ui/modal/modal";
 import clickSvg from "~/media/click.svg";
 import iconPlaceholderSvg from "~/media/icon-placeholder.svg";
 import tapSvg from "~/media/tap.svg";
+import { getImageUrl } from "~/schema/image";
 import styles from "./icon-crop-input.module.css";
 
 const OUTPUT_SIZE = 256;
@@ -58,10 +59,11 @@ const clamp = (value: number, min: number, max: number) => Math.min(Math.max(val
 
 export const IconCropInput = component$<IconCropInputProps>(({ field, fieldProps, label }) => {
   const sourceImageUrl = useSignal("");
-  const iconUrl = useSignal(field.value ?? "");
+  const icon = useSignal(field.value ?? "");
+  const previewImageUrl = useSignal(getImageUrl(icon.value) ?? "");
   const sourceImageRef = useSignal<HTMLImageElement>();
   const cropBoxRef = useSignal<HTMLDivElement>();
-  const hiddenInputRef = useSignal<HTMLInputElement>();
+  const hiddenImageInputRef = useSignal<HTMLInputElement>();
   const localError = useSignal("");
   const cropModalOpen = useSignal(false);
   const cropImageReady = useSignal(false);
@@ -71,14 +73,6 @@ export const IconCropInput = component$<IconCropInputProps>(({ field, fieldProps
   const cropImageWidth = useSignal(OUTPUT_SIZE);
   const cropImageHeight = useSignal(OUTPUT_SIZE);
   const cropDrag = useSignal<CropDragState | null>(null);
-
-  const updateIconUrl = $(async (value: string) => {
-    iconUrl.value = value;
-    if (hiddenInputRef.value) {
-      hiddenInputRef.value.value = value;
-      await fieldProps.onInput$(new Event("input"), hiddenInputRef.value);
-    }
-  });
 
   const readFileAsDataUrl = $((file: File) => {
     return new Promise<string>((resolve, reject) => {
@@ -111,7 +105,7 @@ export const IconCropInput = component$<IconCropInputProps>(({ field, fieldProps
     return { viewSize, imageWidth, imageHeight, maxPositionX, maxPositionY };
   });
 
-  const drawCrop = $(() => {
+  const drawCrop = $(async () => {
     const image = sourceImageRef.value;
     const cropBox = cropBoxRef.value;
     if (!image || !cropBox || !image.naturalWidth || !image.naturalHeight) return;
@@ -137,17 +131,23 @@ export const IconCropInput = component$<IconCropInputProps>(({ field, fieldProps
     context.fillStyle = "#fffef8";
     context.fillRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
     context.drawImage(image, drawX, drawY, drawWidth, drawHeight);
-    const iconDataUrl = canvas.toDataURL(ICON_CONTENT_TYPE, ICON_QUALITY);
-    if (
-      !iconDataUrl.startsWith(`data:${ICON_CONTENT_TYPE};base64,`) &&
-      !iconDataUrl.startsWith(`data:${FALLBACK_ICON_CONTENT_TYPE};base64,`)
-    ) {
+
+    const toBlob = (contentType: string) =>
+      new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, contentType, ICON_QUALITY));
+
+    let blob = await toBlob(ICON_CONTENT_TYPE);
+    if (blob && blob.type !== ICON_CONTENT_TYPE && blob.type !== FALLBACK_ICON_CONTENT_TYPE) {
+      blob = await toBlob(FALLBACK_ICON_CONTENT_TYPE);
+    }
+
+    if (!blob || (blob.type !== ICON_CONTENT_TYPE && blob.type !== FALLBACK_ICON_CONTENT_TYPE)) {
       localError.value = "このブラウザはアイコン画像の保存形式に対応していません";
-      return "";
+      return null;
     }
 
     localError.value = "";
-    return iconDataUrl;
+    const extension = blob.type === FALLBACK_ICON_CONTENT_TYPE ? "png" : "webp";
+    return new File([blob], `icon.${extension}`, { type: blob.type });
   });
 
   const resetCrop = $(async () => {
@@ -165,9 +165,18 @@ export const IconCropInput = component$<IconCropInputProps>(({ field, fieldProps
   });
 
   const applyCrop = $(async () => {
-    const croppedIconUrl = await drawCrop();
-    if (croppedIconUrl) {
-      await updateIconUrl(croppedIconUrl);
+    const croppedIcon = await drawCrop();
+    if (croppedIcon) {
+      if (previewImageUrl.value.startsWith("blob:")) {
+        URL.revokeObjectURL(previewImageUrl.value);
+      }
+      previewImageUrl.value = URL.createObjectURL(croppedIcon);
+
+      if (hiddenImageInputRef.value) {
+        const files = new DataTransfer();
+        files.items.add(croppedIcon);
+        hiddenImageInputRef.value.files = files.files;
+      }
     }
     await closeCropModal();
   });
@@ -301,19 +310,19 @@ export const IconCropInput = component$<IconCropInputProps>(({ field, fieldProps
       <input
         {...fieldProps}
         ref={async (element) => {
-          hiddenInputRef.value = element;
           await fieldProps.ref(element);
         }}
         type="hidden"
-        value={iconUrl.value}
+        value={icon.value}
       />
+      <input ref={hiddenImageInputRef} type="file" name="iconImage" hidden />
       <div class={styles.editor}>
         <div class={styles.cropBoxFrame}>
           <div class={styles.cropBox}>
-            {iconUrl.value ? (
+            {previewImageUrl.value ? (
               <img
                 class={styles.previewImage}
-                src={iconUrl.value}
+                src={previewImageUrl.value}
                 alt=""
                 width={OUTPUT_SIZE}
                 height={OUTPUT_SIZE}

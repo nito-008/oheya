@@ -13,16 +13,16 @@ export const useHeaderUser = routeLoader$<CommonHeaderUser>(async (event) => {
       authenticated: true,
       publicId: user.publicId,
       name: user.name,
-      iconUrl: user.iconUrl,
+      icon: user.icon,
     };
   }
 
   if (res.status === 401) {
-    return { authenticated: false, publicId: null, name: null, iconUrl: null };
+    return { authenticated: false, publicId: null, name: null, icon: null };
   }
 
   if (res.status === 404) {
-    return { authenticated: false, publicId: null, name: null, iconUrl: null };
+    return { authenticated: false, publicId: null, name: null, icon: null };
   }
 
   throw new Error("ユーザー情報を取得できませんでした");

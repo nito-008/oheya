@@ -1,13 +1,7 @@
 import { component$ } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { routeLoader$ } from "@builder.io/qwik-city";
-import {
-  FormError,
-  type InitialValues,
-  formAction$,
-  useForm,
-  valiForm$,
-} from "@modular-forms/qwik";
+import { FormError, type InitialValues, useForm, valiForm$ } from "@modular-forms/qwik";
 import type * as v from "valibot";
 import { IconCropInput } from "~/components/ui/form/icon-crop-input/icon-crop-input";
 import { FormErrorMessage } from "~/components/ui/form/form-error-message/form-error-message";
@@ -34,36 +28,59 @@ export const useProfileStatus = routeLoader$(async (event) => {
 export const useFormLoader = routeLoader$<InitialValues<SignupForm>>(() => ({
   publicId: "",
   name: "",
-  iconUrl: "",
+  icon: "",
 }));
-
-export const useRegisterProfile = formAction$<SignupForm>(async (values, event) => {
-  const client = createApiClient(event);
-  const res = await client.api.users.me.$patch({ json: values });
-  if (res.status === 401) {
-    throw new FormError<SignupForm>("ログインが必要です");
-  }
-  if (res.status === 409) {
-    throw new FormError<SignupForm>({ publicId: "このIDはもう誰かが使っています" });
-  }
-  if (!res.ok) {
-    throw new FormError<SignupForm>("登録できませんでした");
-  }
-  throw event.redirect(302, `/${values.publicId}`);
-}, valiForm$(userSchema));
 
 export default component$(() => {
   useProfileStatus();
   const [signupForm, { Form, Field }] = useForm<SignupForm>({
     loader: useFormLoader(),
-    action: useRegisterProfile(),
     validate: valiForm$(userSchema),
   });
 
   return (
     <main class={styles.main}>
       <h1>アカウント登録</h1>
-      <Form class={styles.form}>
+      <Form
+        class={styles.form}
+        onSubmit$={async (values, event) => {
+          const form = event.target as HTMLFormElement;
+          const iconImage = new FormData(form).get("iconImage");
+          let uploadedIcon: string | null = null;
+
+          if (iconImage instanceof File && iconImage.size > 0) {
+            const imageFormData = new FormData();
+            imageFormData.set("image", iconImage, iconImage.name);
+            const uploadRes = await fetch("/api/images", { method: "POST", body: imageFormData });
+            if (!uploadRes.ok) {
+              throw new FormError<SignupForm>("アイコン画像をアップロードできませんでした");
+            }
+            const uploaded = (await uploadRes.json()) as { imageId: string };
+            uploadedIcon = uploaded.imageId;
+          }
+
+          const res = await fetch("/api/users/me", {
+            method: "PATCH",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ ...values, icon: uploadedIcon ?? values.icon }),
+          });
+
+          if (!res.ok && uploadedIcon) {
+            await fetch(`/api/images/${uploadedIcon}`, { method: "DELETE" });
+          }
+          if (res.status === 401) {
+            throw new FormError<SignupForm>("ログインが必要です");
+          }
+          if (res.status === 409) {
+            throw new FormError<SignupForm>({ publicId: "このIDはもう誰かが使っています" });
+          }
+          if (!res.ok) {
+            throw new FormError<SignupForm>("登録できませんでした");
+          }
+
+          window.location.href = `/${values.publicId}`;
+        }}
+      >
         <div class={styles.fields}>
           <Field name="publicId">
             {(field, props) => (
@@ -87,7 +104,7 @@ export default component$(() => {
               />
             )}
           </Field>
-          <Field name="iconUrl">
+          <Field name="icon">
             {(field, props) => <IconCropInput label="アイコン" field={field} fieldProps={props} />}
           </Field>
           {signupForm.response.status === "error" && signupForm.response.message && (

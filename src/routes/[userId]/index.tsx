@@ -3,6 +3,7 @@ import type { DocumentHead } from "@builder.io/qwik-city";
 import { routeLoader$ } from "@builder.io/qwik-city";
 import { createApiClient } from "~/lib/api";
 import iconPlaceholderSvg from "~/media/icon-placeholder.svg";
+import { getImageUrl } from "~/schema/image";
 
 export const useProfile = routeLoader$(async (event) => {
   const client = createApiClient(event);
@@ -27,9 +28,9 @@ export default component$(() => {
   return (
     <main style={{ padding: "2rem" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1.5rem" }}>
-        {profile.value.iconUrl ? (
+        {profile.value.icon ? (
           <img
-            src={profile.value.iconUrl}
+            src={getImageUrl(profile.value.icon) ?? ""}
             alt={`${profile.value.name}のアイコン`}
             width={96}
             height={96}

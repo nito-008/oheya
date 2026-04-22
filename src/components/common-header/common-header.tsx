@@ -2,13 +2,14 @@ import { component$ } from "@builder.io/qwik";
 import { Form, Link } from "@builder.io/qwik-city";
 import houseSvg from "~/media/house.svg?raw";
 import { useSignIn, useSignOut } from "~/routes/plugin@auth";
+import { getImageUrl } from "~/schema/image";
 import styles from "./common-header.module.css";
 
 export type CommonHeaderUser = {
   authenticated: boolean;
   publicId: string | null;
   name: string | null;
-  iconUrl: string | null;
+  icon: string | null;
 };
 
 type CommonHeaderProps = {
@@ -32,8 +33,14 @@ export const CommonHeader = component$<CommonHeaderProps>(({ user, showAuthActio
         <>
           {user.publicId && user.name && (
             <Link href={`/${user.publicId}/`} class={styles.actionLink}>
-              {user.iconUrl && (
-                <img class={styles.userIcon} src={user.iconUrl} alt="" width={28} height={28} />
+              {user.icon && (
+                <img
+                  class={styles.userIcon}
+                  src={getImageUrl(user.icon) ?? ""}
+                  alt=""
+                  width={28}
+                  height={28}
+                />
               )}
               {user.name}
             </Link>

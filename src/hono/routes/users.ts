@@ -3,13 +3,6 @@ import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { authMiddleware } from "~/hono/middleware/auth";
 import type { Bindings } from "~/hono/types";
-import {
-  applyR2HttpMetadata,
-  getIconUrl,
-  isExistingIconUrl,
-  isInlineIconImage,
-  uploadIcon,
-} from "~/hono/utils/icon";
 import { getDb } from "~/lib/db";
 import { profiles } from "~/lib/db/schema";
 import { userSchema } from "~/schema/user";
@@ -22,7 +15,7 @@ export const usersRouter = new Hono<{ Bindings: Bindings }>()
       .select({
         publicId: profiles.publicId,
         name: profiles.name,
-        iconObjectKey: profiles.iconObjectKey,
+        icon: profiles.icon,
       })
       .from(profiles)
       .where(eq(profiles.userId, userId));
@@ -32,30 +25,8 @@ export const usersRouter = new Hono<{ Bindings: Bindings }>()
     return c.json({
       publicId: row.publicId,
       name: row.name,
-      iconUrl: getIconUrl(row.publicId, row.iconObjectKey),
+      icon: row.icon,
     });
-  })
-  .get("/:publicId/icon", async (c) => {
-    const publicId = c.req.param("publicId");
-    const db = getDb(c.env);
-    const [row] = await db
-      .select({ iconObjectKey: profiles.iconObjectKey })
-      .from(profiles)
-      .where(eq(profiles.publicId, publicId));
-    if (!row?.iconObjectKey) {
-      return c.json({ message: "Icon not found" } as const, 404);
-    }
-
-    const object = await c.env.R2_BUCKET.get(row.iconObjectKey);
-    if (!object) {
-      throw new Error("Profile icon object is missing in R2");
-    }
-
-    const headers = new Headers();
-    applyR2HttpMetadata(headers, object.httpMetadata);
-    headers.set("etag", object.httpEtag);
-    headers.set("cache-control", "public, max-age=60");
-    return new Response(object.body, { status: 200, headers });
   })
   .get("/:publicId", async (c) => {
     const publicId = c.req.param("publicId");
@@ -64,7 +35,7 @@ export const usersRouter = new Hono<{ Bindings: Bindings }>()
       .select({
         publicId: profiles.publicId,
         name: profiles.name,
-        iconObjectKey: profiles.iconObjectKey,
+        icon: profiles.icon,
       })
       .from(profiles)
       .where(eq(profiles.publicId, publicId));
@@ -74,7 +45,7 @@ export const usersRouter = new Hono<{ Bindings: Bindings }>()
     return c.json({
       publicId: row.publicId,
       name: row.name,
-      iconUrl: getIconUrl(row.publicId, row.iconObjectKey),
+      icon: row.icon,
     });
   })
   .patch("/me", authMiddleware, vValidator("json", userSchema), async (c) => {
@@ -82,7 +53,7 @@ export const usersRouter = new Hono<{ Bindings: Bindings }>()
     const values = c.req.valid("json");
     const db = getDb(c.env);
     const [profile] = await db
-      .select({ userId: profiles.userId, iconObjectKey: profiles.iconObjectKey })
+      .select({ userId: profiles.userId, icon: profiles.icon })
       .from(profiles)
       .where(eq(profiles.userId, userId));
 
@@ -94,27 +65,12 @@ export const usersRouter = new Hono<{ Bindings: Bindings }>()
       return c.json({ message: "User ID already exists" } as const, 409);
     }
 
-    let iconObjectKey = profile?.iconObjectKey ?? null;
-    const shouldKeepExistingIcon = isExistingIconUrl(values.iconUrl);
-    const shouldUploadIcon = isInlineIconImage(values.iconUrl);
-    const shouldRemoveIcon = values.iconUrl === "";
-
-    if (shouldUploadIcon) {
-      const uploadedIconObjectKey = await uploadIcon(c.env.R2_BUCKET, userId, values.iconUrl);
-      if (!uploadedIconObjectKey) {
-        return c.json({ message: "Invalid icon image" } as const, 400);
-      }
-      iconObjectKey = uploadedIconObjectKey;
-    } else if (shouldRemoveIcon) {
-      iconObjectKey = null;
-    } else if (!shouldKeepExistingIcon) {
-      return c.json({ message: "Invalid icon image" } as const, 400);
-    }
+    const icon = values.icon || null;
 
     const profileValues = {
       publicId: values.publicId,
       name: values.name,
-      iconObjectKey,
+      icon,
     };
 
     if (profile) {
@@ -126,8 +82,8 @@ export const usersRouter = new Hono<{ Bindings: Bindings }>()
       });
     }
 
-    if (profile?.iconObjectKey && profile.iconObjectKey !== iconObjectKey) {
-      await c.env.R2_BUCKET.delete(profile.iconObjectKey);
+    if (profile?.icon && profile.icon !== icon) {
+      await c.env.R2_BUCKET.delete(profile.icon);
     }
 
     return c.body(null, 204);

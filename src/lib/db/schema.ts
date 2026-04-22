@@ -16,7 +16,7 @@ export const profiles = sqliteTable("profile", {
     .references(() => users.id, { onDelete: "cascade" }),
   publicId: text("public_id").notNull().unique(),
   name: text("name").notNull(),
-  iconObjectKey: text("icon_object_key"),
+  icon: text("icon"),
 });
 
 export const accounts = sqliteTable(
