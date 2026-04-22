@@ -38,7 +38,7 @@ export const imagesRouter = new Hono<{ Bindings: Bindings }>()
     }
 
     const imageId = crypto.randomUUID();
-    await c.env.R2_BUCKET.put(imageId, image.stream(), {
+    await c.env.R2_BUCKET.put(imageId, await image.arrayBuffer(), {
       httpMetadata: {
         contentType: image.type,
       },
