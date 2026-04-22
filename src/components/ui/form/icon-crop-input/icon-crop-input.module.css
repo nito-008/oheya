@@ -42,7 +42,8 @@
     0 0,
     0.5rem 0.5rem;
   background-size: 1rem 1rem;
-  box-shadow: 2px 3px 0 #d8d2c2;
+  clip-path: circle(50%);
+  filter: drop-shadow(2px 3px 0 #d8d2c2);
   touch-action: none;
   user-select: none;
 }
@@ -54,9 +55,7 @@
 
 .cropBox:focus-within,
 .cropBox:hover {
-  box-shadow:
-    2px 3px 0 #d8d2c2,
-    0 0 0 3px rgb(17 17 17 / 10%);
+  filter: drop-shadow(2px 3px 0 #d8d2c2) drop-shadow(0 0 0.25rem rgb(17 17 17 / 20%));
 }
 
 .cropBox:focus-within .fileOverlay,
@@ -165,6 +164,7 @@
   opacity: 0;
   background: rgb(255 255 255 / 30%);
   backdrop-filter: blur(3px);
+  clip-path: circle(50%);
   transition: opacity 0.3s var(--ease-out-expo);
 }
 

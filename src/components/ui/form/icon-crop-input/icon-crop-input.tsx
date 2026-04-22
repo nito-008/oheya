@@ -11,7 +11,7 @@ import { getImageUrl } from "~/schema/image";
 import styles from "./icon-crop-input.module.css";
 
 const OUTPUT_SIZE = 256;
-const MAX_SOURCE_SIZE = 6 * 1024 * 1024;
+const MAX_SOURCE_SIZE = 20 * 1024 * 1024;
 const MIN_SCALE = 1;
 const MAX_SCALE = 3;
 const ICON_CONTENT_TYPE = "image/webp";
