@@ -17,56 +17,6 @@
   display: none;
 }
 
-.carouselControls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  min-height: 2.5rem;
-  padding-inline: clamp(0.75rem, 4vw, 2.5rem);
-}
-
-.carouselControl {
-  display: grid;
-  place-items: center;
-  width: 2.5rem;
-  height: 2.2rem;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-}
-
-.carouselControl:disabled {
-  cursor: default;
-  opacity: 0.28;
-}
-
-.carouselControl:focus-visible {
-  outline: 2px solid #3b332d;
-  outline-offset: 0.2rem;
-}
-
-.carouselControlIcon {
-  display: block;
-  width: 1.875rem;
-  height: 2rem;
-  overflow: visible;
-  pointer-events: none;
-  transition: transform 180ms var(--ease-out-expo);
-}
-
-.carouselControlIconNext {
-  transform: scaleX(-1);
-}
-
-.carouselControlPrevious:is(:hover, :active):not(:disabled) .carouselControlIcon {
-  transform: translateX(-0.15rem);
-}
-
-.carouselControlNext:is(:hover, :active):not(:disabled) .carouselControlIconNext {
-  transform: translateX(0.15rem) scaleX(-1);
-}
-
 .carouselSlide {
   display: grid;
   flex: 0 0 100%;
@@ -74,11 +24,24 @@
   scroll-snap-align: center;
 }
 
-.roomFloorLine {
+.carouselProgress {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.4rem;
+  width: min(16rem, calc(100% - 3rem));
+  height: 0.25rem;
+  margin: 0.6rem auto 1.65rem;
+}
+
+.carouselProgressSegment {
   display: block;
-  width: 100%;
-  height: 1.5rem;
-  pointer-events: none;
+  border-radius: 999px;
+  background: #d7d2cb;
+  transition: background-color 220ms var(--ease-out-expo);
+}
+
+.carouselProgressSegmentActive {
+  background: #5c554f;
 }
 
 .profileSlide {

@@ -1,11 +1,11 @@
-import { $, component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
-import carouselArrowSvg from "~/media/carousel-arrow.svg";
-import floorLineSvg from "~/media/floor-line.svg";
+import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import iconFrameSvg from "~/media/icon-frame.svg";
 import iconPlaceholderSvg from "~/media/icon-placeholder.svg";
 import profilePlusSvg from "~/media/profile-plus.svg";
 import { getImageUrl } from "~/schema/image";
 import styles from "./profile-carousel.module.css";
+
+const SLIDE_COUNT = 3;
 
 type ProfileCarouselProps = {
   profile: {
@@ -17,29 +17,7 @@ type ProfileCarouselProps = {
 
 export const ProfileCarousel = component$<ProfileCarouselProps>(({ profile }) => {
   const carouselRef = useSignal<HTMLDivElement>();
-  const canScrollPrevious = useSignal(false);
-  const canScrollNext = useSignal(true);
-
-  const updateCarouselButtons$ = $(() => {
-    const carousel = carouselRef.value;
-    if (!carousel) return;
-
-    const edgeThreshold = 2;
-    const maxScrollLeft = carousel.scrollWidth - carousel.clientWidth;
-    canScrollPrevious.value = carousel.scrollLeft > edgeThreshold;
-    canScrollNext.value = carousel.scrollLeft < maxScrollLeft - edgeThreshold;
-  });
-
-  const scrollCarousel$ = $((direction: -1 | 1) => {
-    const carousel = carouselRef.value;
-    if (!carousel) return;
-
-    const panel = carousel.querySelector<HTMLElement>(`.${styles.carouselSlide}`);
-    carousel.scrollBy({
-      left: direction * (panel?.offsetWidth ?? carousel.clientWidth),
-      behavior: "smooth",
-    });
-  });
+  const currentSlide = useSignal(1);
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ cleanup }) => {
@@ -47,7 +25,10 @@ export const ProfileCarousel = component$<ProfileCarouselProps>(({ profile }) =>
     if (!carousel) return;
 
     const update = () => {
-      void updateCarouselButtons$();
+      const panel = carousel.querySelector<HTMLElement>(`.${styles.carouselSlide}`);
+      const slideWidth = panel?.offsetWidth ?? carousel.clientWidth;
+      const slideIndex = slideWidth > 0 ? Math.round(carousel.scrollLeft / slideWidth) + 1 : 1;
+      currentSlide.value = Math.min(Math.max(slideIndex, 1), SLIDE_COUNT);
     };
 
     update();
@@ -116,47 +97,23 @@ export const ProfileCarousel = component$<ProfileCarouselProps>(({ profile }) =>
         <section class={styles.carouselSlide} aria-label="プロフィール左側" />
         <section class={styles.carouselSlide} aria-label="プロフィール右側" />
       </div>
-      <img
-        class={styles.roomFloorLine}
-        src={floorLineSvg}
-        width={260}
-        height={36}
-        alt=""
-        aria-hidden="true"
-      />
-      <div class={styles.carouselControls} role="group" aria-label="プロフィールの切り替え">
-        <button
-          class={`${styles.carouselControl} ${styles.carouselControlPrevious}`}
-          type="button"
-          aria-label="前へ"
-          disabled={!canScrollPrevious.value}
-          onClick$={() => scrollCarousel$(-1)}
-        >
-          <img
-            class={styles.carouselControlIcon}
-            src={carouselArrowSvg}
-            width={38}
-            height={40}
-            alt=""
-            aria-hidden="true"
+      <div
+        class={styles.carouselProgress}
+        role="progressbar"
+        aria-label="プロフィールの表示位置"
+        aria-valuemin={1}
+        aria-valuemax={SLIDE_COUNT}
+        aria-valuenow={currentSlide.value}
+      >
+        {Array.from({ length: SLIDE_COUNT }, (_, index) => (
+          <span
+            key={index}
+            class={{
+              [styles.carouselProgressSegment]: true,
+              [styles.carouselProgressSegmentActive]: index < currentSlide.value,
+            }}
           />
-        </button>
-        <button
-          class={`${styles.carouselControl} ${styles.carouselControlNext}`}
-          type="button"
-          aria-label="次へ"
-          disabled={!canScrollNext.value}
-          onClick$={() => scrollCarousel$(1)}
-        >
-          <img
-            class={`${styles.carouselControlIcon} ${styles.carouselControlIconNext}`}
-            src={carouselArrowSvg}
-            width={38}
-            height={40}
-            alt=""
-            aria-hidden="true"
-          />
-        </button>
+        ))}
       </div>
     </div>
   );
