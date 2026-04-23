@@ -111,3 +111,18 @@
   font-size: 1.25rem;
   line-height: 1.35;
 }
+
+.appleMusicBadgeLink {
+  display: inline-grid;
+  place-items: center;
+  width: fit-content;
+  margin-top: 3rem;
+  line-height: 0;
+}
+
+.appleMusicBadge {
+  display: block;
+  width: auto;
+  height: 2.5rem;
+  object-fit: contain;
+}

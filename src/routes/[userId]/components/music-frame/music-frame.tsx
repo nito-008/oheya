@@ -4,7 +4,11 @@ import musicPauseSvg from "~/media/music-pause.svg";
 import musicPlaySvg from "~/media/music-play.svg";
 import styles from "./music-frame.module.css";
 
-const SEARCH_TERM = "Virtual Insanity";
+const SEARCH_TERM = "ルピラ";
+const APPLE_MUSIC_URL =
+  "https://music.apple.com/jp/album/the-idolm-ster-shiny-colors-%E5%86%86%E7%92%B0-halo-around-03-ep/1825101865?itscg=30200&itsct=music_box_badge&ls=1&app=music&mttnsubad=1825101865";
+const APPLE_MUSIC_BADGE_URL =
+  "https://toolbox.marketingtools.apple.com/api/v2/badges/listen-on-apple-music/mono-black/en-us?releaseDate=1754438400";
 
 type AppleMusicTrack = {
   artistName: string;
@@ -108,6 +112,15 @@ export const MusicFrame = component$(() => {
         </p>
         <p class={styles.trackArtist}>{track.value?.artistName ?? "Apple Music"}</p>
       </div>
+      <a href={APPLE_MUSIC_URL} class={styles.appleMusicBadgeLink} aria-label="Apple Musicで開く">
+        <img
+          src={APPLE_MUSIC_BADGE_URL}
+          alt="Listen on Apple Music"
+          width={282}
+          height={82}
+          class={styles.appleMusicBadge}
+        />
+      </a>
       {track.value?.previewUrl ? (
         <audio
           ref={audioRef}
