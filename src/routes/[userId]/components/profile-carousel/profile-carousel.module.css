@@ -49,9 +49,11 @@
 }
 
 .profileSlide {
-  place-items: center;
-  align-content: center;
-  padding: 2rem;
+  grid-template-rows: 1fr auto;
+  gap: 3rem;
+  justify-items: center;
+  align-content: stretch;
+  padding: 2rem 2rem 4.5rem;
   text-align: center;
 }
 
@@ -69,6 +71,7 @@
   width: 100%;
   max-width: 22rem;
   padding: 1rem 1.4rem;
+  align-self: center;
 }
 
 .cornerPlus {
@@ -138,4 +141,12 @@
   font-size: 1.35rem;
   line-height: 1.4;
   overflow-wrap: anywhere;
+}
+
+.scrollHint {
+  align-self: end;
+  justify-self: center;
+  width: 7rem;
+  height: auto;
+  pointer-events: none;
 }

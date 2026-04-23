@@ -2,6 +2,7 @@ import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import iconFrameSvg from "~/media/icon-frame.svg";
 import iconPlaceholderSvg from "~/media/icon-placeholder.svg";
 import profilePlusSvg from "~/media/profile-plus.svg";
+import scrollSvg from "~/media/scroll-hint.svg";
 import { SongJacket } from "~/routes/[userId]/components/song-jacket/song-jacket";
 import { getImageUrl } from "~/schema/image";
 import styles from "./profile-carousel.module.css";
@@ -94,6 +95,7 @@ export const ProfileCarousel = component$<ProfileCarouselProps>(({ profile }) =>
               aria-hidden="true"
             />
           </div>
+          <img class={styles.scrollHint} src={scrollSvg} width={88} height={32} alt="スクロール" />
         </section>
         <section class={`${styles.carouselSlide} ${styles.musicSlide}`} aria-label="音楽">
           <SongJacket />
