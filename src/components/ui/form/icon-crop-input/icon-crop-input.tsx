@@ -4,9 +4,8 @@ import type { FieldElement, FieldEvent } from "@modular-forms/qwik";
 import { Button } from "~/components/ui/button/button";
 import { FormErrorMessage } from "~/components/ui/form/form-error-message/form-error-message";
 import { Modal } from "~/components/ui/modal/modal";
-import clickSvg from "~/media/click.svg";
+import { TapClickIcon } from "~/components/ui/tap-click-icon/tap-click-icon";
 import iconPlaceholderSvg from "~/media/icon-placeholder.svg";
-import tapSvg from "~/media/tap.svg";
 import { getImageUrl } from "~/schema/image";
 import styles from "./icon-crop-input.module.css";
 
@@ -346,10 +345,7 @@ export const IconCropInput = component$<IconCropInputProps>(({ field, fieldProps
               />
             </label>
           </div>
-          <picture>
-            <source media="(hover: none) and (pointer: coarse)" srcset={tapSvg} />
-            <img class={styles.clickCue} src={clickSvg} alt="" width={256} height={146} />
-          </picture>
+          <TapClickIcon class={styles.clickCue} />
         </div>
       </div>
       <FormErrorMessage message={field.error || localError.value} />

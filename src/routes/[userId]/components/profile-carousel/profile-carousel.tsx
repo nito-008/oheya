@@ -2,6 +2,7 @@ import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import iconFrameSvg from "~/media/icon-frame.svg";
 import iconPlaceholderSvg from "~/media/icon-placeholder.svg";
 import profilePlusSvg from "~/media/profile-plus.svg";
+import { MusicFrame } from "~/routes/[userId]/components/music-frame/music-frame";
 import { getImageUrl } from "~/schema/image";
 import styles from "./profile-carousel.module.css";
 
@@ -94,7 +95,9 @@ export const ProfileCarousel = component$<ProfileCarouselProps>(({ profile }) =>
             />
           </div>
         </section>
-        <section class={styles.carouselSlide} aria-label="プロフィール左側" />
+        <section class={`${styles.carouselSlide} ${styles.musicSlide}`} aria-label="音楽プレビュー">
+          <MusicFrame />
+        </section>
         <section class={styles.carouselSlide} aria-label="プロフィール右側" />
       </div>
       <div
