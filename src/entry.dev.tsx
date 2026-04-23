@@ -13,5 +13,7 @@ import { render, type RenderOptions } from "@builder.io/qwik";
 import Root from "./root";
 
 export default function (opts: RenderOptions) {
+  document.documentElement.lang = "ja";
+
   return render(document, <Root />, opts);
 }
