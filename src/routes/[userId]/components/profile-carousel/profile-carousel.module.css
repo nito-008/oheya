@@ -25,12 +25,16 @@
 }
 
 .carouselProgress {
+  position: fixed;
+  right: 50%;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  z-index: 10;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.4rem;
   width: min(16rem, calc(100% - 3rem));
   height: 0.25rem;
-  margin: 0.6rem auto 1.65rem;
+  transform: translateX(50%);
 }
 
 .carouselProgressSegment {
@@ -62,7 +66,8 @@
   display: grid;
   place-items: center;
   gap: 0.8rem;
-  max-width: min(100%, 22rem);
+  width: 100%;
+  max-width: 22rem;
   padding: 1rem 1.4rem;
 }
 
@@ -74,8 +79,8 @@
 }
 
 .cornerPlusTopLeft {
-  top: -1.4rem;
-  left: -1rem;
+  top: -2rem;
+  left: -0.8rem;
 }
 
 .cornerPlusBottomRight {

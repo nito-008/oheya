@@ -1,8 +1,8 @@
 import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
-import imageFrameSvg from "~/media/image-frame.svg";
 import musicPauseSvg from "~/media/music-pause.svg";
 import musicPlaySvg from "~/media/music-play.svg";
-import styles from "./music-frame.module.css";
+import songJacketFrameSvg from "~/media/song-jacket-frame.svg";
+import styles from "./song-jacket.module.css";
 
 const SEARCH_TERM = "ルピラ";
 const APPLE_MUSIC_URL =
@@ -17,7 +17,7 @@ type AppleMusicTrack = {
   trackName: string;
 };
 
-export const MusicFrame = component$(() => {
+export const SongJacket = component$(() => {
   const track = useSignal<AppleMusicTrack>();
   const hasError = useSignal(false);
   const isPlaying = useSignal(false);
@@ -52,7 +52,7 @@ export const MusicFrame = component$(() => {
   const artworkUrl = track.value?.artworkUrl100.replace("100x100bb", "600x600bb");
 
   return (
-    <article class={styles.musicFrame} aria-label="音楽プレビュー">
+    <article class={styles.songJacket} aria-label="音楽プレビュー">
       <div class={styles.frameShell}>
         {artworkUrl ? (
           <img
@@ -66,7 +66,7 @@ export const MusicFrame = component$(() => {
           <div class={styles.jacketFallback} aria-hidden="true" />
         )}
         <img
-          src={imageFrameSvg}
+          src={songJacketFrameSvg}
           alt=""
           width={360}
           height={400}
@@ -110,7 +110,7 @@ export const MusicFrame = component$(() => {
             ? "音楽を読み込めませんでした"
             : (track.value?.trackName ?? "読み込み中...")}
         </p>
-        <p class={styles.trackArtist}>{track.value?.artistName ?? "Apple Music"}</p>
+        <p class={styles.trackArtist}>{track.value?.artistName ?? "読み込み中..."}</p>
       </div>
       <a href={APPLE_MUSIC_URL} class={styles.appleMusicBadgeLink} aria-label="Apple Musicで開く">
         <img
