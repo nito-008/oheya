@@ -1,4 +1,6 @@
 .header {
+  position: relative;
+  z-index: 20;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -23,13 +25,7 @@
   width: 1.8rem;
   height: 1.8rem;
   flex: 0 0 auto;
-}
-
-.titleIcon svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
+  object-fit: contain;
 }
 
 .button {
@@ -37,37 +33,137 @@
   border: none;
 }
 
-.header > form,
-.actionLink {
-  display: none;
+.menuButton {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.menuOverlay {
+  position: fixed;
+  inset: 0;
+  padding: 1rem;
+  overflow-y: auto;
+  background: #fff;
+}
+
+.menuSurface {
+  z-index: 1;
+  width: min(100%, 32rem);
+  margin: 0 auto;
+  padding: 5.5rem 1.5rem 3rem;
+}
+
+.menuContent {
+  --menu-row-columns: max-content minmax(0, 1fr);
+  --menu-row-gap: 0.7rem;
+  display: grid;
+  gap: 3.25rem;
+  width: max-content;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.profileLink,
+.actionLink,
+.actionButton {
+  display: grid;
+  grid-template-columns: var(--menu-row-columns);
+  align-items: center;
+  column-gap: var(--menu-row-gap);
+  width: 100%;
+}
+
+.profileLabel {
+  display: grid;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.profileName {
+  font-size: 1.25rem;
+}
+
+.profileMeta {
+  color: rgb(47 47 47 / 64%);
+  font-size: 0.95rem;
+}
+
+.actionBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.9rem;
+  width: max-content;
+  max-width: 100%;
+  margin-inline: auto;
+}
+
+.actionList {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.actionButton {
+  font-size: 1.1rem;
+  font-weight: 400;
+  text-align: left;
+}
+
+.actionIcon,
+.userIcon {
+  display: inline-flex;
+  justify-self: center;
+  object-fit: contain;
+}
+
+.actionIcon {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex: 0 0 auto;
+}
+
+.signOutForm {
+  display: flex;
+  justify-content: center;
+  width: 100%;
 }
 
 .userIcon {
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 3.5rem;
+  height: 3.5rem;
   border: 1.5px solid #2f2f2f;
   border-radius: 999px;
-  object-fit: cover;
   background: #fffef8;
+  object-fit: cover;
 }
 
+.actionButton {
+  cursor: pointer;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+}
+
+.menuButton:hover,
+.profileLink:hover,
 .actionLink:hover,
+.actionButton:hover,
 .button:hover {
   text-decoration: underline;
 }
 
+.menuButton:active,
+.profileLink:active,
+.actionLink:active,
+.actionButton:active,
 .button:active {
   color: #cdcdcd;
-}
-
-@media (min-width: 32rem) {
-  .header > form {
-    display: block;
-  }
-
-  .actionLink {
-    display: inline-flex;
-  }
 }
