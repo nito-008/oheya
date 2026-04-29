@@ -2,8 +2,7 @@ import { component$ } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { routeLoader$ } from "@builder.io/qwik-city";
 import { createApiClient } from "~/lib/api";
-import { ProfileCarousel } from "./components/profile-carousel/profile-carousel";
-import styles from "./index.module.css";
+import { ProfileRoomPage } from "~/routes/[userId]/components/profile-room-page/profile-room-page";
 
 export const useProfile = routeLoader$(async (event) => {
   const client = createApiClient(event);
@@ -25,11 +24,7 @@ export const useProfile = routeLoader$(async (event) => {
 export default component$(() => {
   const profile = useProfile();
 
-  return (
-    <main class={styles.main}>
-      <ProfileCarousel profile={profile.value} />
-    </main>
-  );
+  return <ProfileRoomPage profile={profile.value} initialSlide={1} />;
 });
 
 export const head: DocumentHead = ({ resolveValue }) => {

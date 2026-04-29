@@ -10,6 +10,7 @@ import styles from "./profile-carousel.module.css";
 const SLIDE_COUNT = 3;
 
 type ProfileCarouselProps = {
+  initialSlide?: number;
   profile: {
     icon: string | null;
     name: string;
@@ -17,29 +18,63 @@ type ProfileCarouselProps = {
   };
 };
 
-export const ProfileCarousel = component$<ProfileCarouselProps>(({ profile }) => {
+export const ProfileCarousel = component$<ProfileCarouselProps>(({ initialSlide = 1, profile }) => {
   const carouselRef = useSignal<HTMLDivElement>();
-  const currentSlide = useSignal(1);
+  const currentSlide = useSignal(Math.min(Math.max(initialSlide, 1), SLIDE_COUNT));
 
   // eslint-disable-next-line qwik/no-use-visible-task
-  useVisibleTask$(({ cleanup }) => {
+  useVisibleTask$(({ cleanup, track }) => {
+    track(() => initialSlide);
     const carousel = carouselRef.value;
     if (!carousel) return;
 
-    const update = () => {
+    const slidePaths = [
+      `/${profile.publicId}/profile`,
+      `/${profile.publicId}/music`,
+      null,
+    ] as const;
+    const requestedSlide = Math.min(Math.max(initialSlide, 1), SLIDE_COUNT);
+
+    const syncPath = (slideIndex: number) => {
+      const nextPath = slidePaths[slideIndex - 1];
+      if (!nextPath || window.location.pathname === nextPath) return;
+      window.history.replaceState(window.history.state, "", nextPath);
+    };
+
+    const update = (options?: { syncPath?: boolean }) => {
       const panel = carousel.querySelector<HTMLElement>(`.${styles.carouselSlide}`);
       const slideWidth = panel?.offsetWidth ?? carousel.clientWidth;
       const slideIndex = slideWidth > 0 ? Math.round(carousel.scrollLeft / slideWidth) + 1 : 1;
-      currentSlide.value = Math.min(Math.max(slideIndex, 1), SLIDE_COUNT);
+      const nextSlide = Math.min(Math.max(slideIndex, 1), SLIDE_COUNT);
+      const changed = nextSlide !== currentSlide.value;
+      currentSlide.value = nextSlide;
+      if (changed && options?.syncPath) syncPath(nextSlide);
     };
 
+    const scrollToSlide = (slideIndex: number) => {
+      const slides = carousel.querySelectorAll<HTMLElement>(`.${styles.carouselSlide}`);
+      const slide = slides[slideIndex - 1];
+      if (!slide) return;
+      carousel.scrollTo({ left: slide.offsetLeft, behavior: "auto" });
+      currentSlide.value = slideIndex;
+    };
+
+    scrollToSlide(requestedSlide);
     update();
-    carousel.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
+
+    const handleScroll = () => {
+      update({ syncPath: true });
+    };
+    const handleResize = () => {
+      update();
+    };
+
+    carousel.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleResize as EventListener);
 
     cleanup(() => {
-      carousel.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
+      carousel.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleResize as EventListener);
     });
   });
 
