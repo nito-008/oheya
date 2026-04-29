@@ -29,8 +29,8 @@ export const ProfileCarousel = component$<ProfileCarouselProps>(({ initialSlide 
     if (!carousel) return;
 
     const slidePaths = [
-      `/${profile.publicId}/profile`,
-      `/${profile.publicId}/music`,
+      `/${profile.publicId}/profile/`,
+      `/${profile.publicId}/music/`,
       null,
     ] as const;
     const requestedSlide = Math.min(Math.max(initialSlide, 1), SLIDE_COUNT);
