@@ -1,22 +1,22 @@
-# CSS の方針
+# CSS Guidelines
 
-## モバイル対応
+## Mobile Support
 
-- CSS はモバイルファーストで書く。
-- `min()`、`max()`、`clamp()`、`auto-fit` などで自然に伸縮できる場合は、メディアクエリを使わない。
-- レイアウトの構造を切り替える必要がある場合だけ、`@media (min-width: 32rem)` を使う。
+- Write CSS mobile-first.
+- Do not use media queries when `min()`, `max()`, `clamp()`, `auto-fit`, or similar tools can handle responsive sizing naturally.
+- Use `@media (min-width: 32rem)` only when the layout structure itself needs to change.
 
-## グローバル CSS 変数
+## Global CSS Variables
 
-- `--ease-out-expo` がグローバルに使える。
-- transition の easing は、特別な理由がなければ `var(--ease-out-expo)` を使う。
+- `--ease-out-expo` is available globally.
+- Use `var(--ease-out-expo)` for transition easing unless there is a specific reason not to.
 
-## 長さの単位
+## Length Units
 
-- 長さは基本的に `rem` で指定する。
-- `px` は 1px の border や shadow など、デバイスピクセル単位で表現したい場合にだけ使う。
+- Use `rem` for lengths by default.
+- Use `px` only when you need device-pixel precision, such as a `1px` border or shadow.
 
-## フォント
+## Fonts
 
-- 基本はうずらフォントを使う。`html` に設定済み。
-- タイトルには Caveat を使う。
+- Use the Uzura font by default. It is already configured on `html`.
+- Use Caveat for titles.
