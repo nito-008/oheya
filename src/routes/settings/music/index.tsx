@@ -1,13 +1,9 @@
 import { component$ } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
-import styles from "~/routes/settings/components/settings-tabs/settings-tabs.module.css";
+import { MusicSettingsForm } from "~/routes/settings/music/components/music-settings-form";
 
 export default component$(() => {
-  return (
-    <section class={styles.content}>
-      <p>音楽設定は準備中です。</p>
-    </section>
-  );
+  return <MusicSettingsForm />;
 });
 
 export const head: DocumentHead = {
