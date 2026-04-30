@@ -20,7 +20,7 @@
     "fmt": "vp fmt",
     "fmt.check": "vp fmt --check",
     "lint": "tsc --noEmit && vp lint src/",
-    "preview": "npm run qwik build preview && vp preview --open",
+    "preview": "npm run qwik build preview && vp preview",
     "serve": "wrangler dev",
     "start": "vp dev --open --mode ssr",
     "qwik": "qwik",

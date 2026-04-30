@@ -19,10 +19,16 @@ errorOnDuplicatesPkgDeps(devDependencies, dependencies);
 /**
  * Note that Vite normally starts from `index.html` but the qwikCity plugin makes start at `src/entry.ssr.tsx` instead.
  */
-const needsPlatform = process.argv.some((a) => a === "dev" || a === "serve");
+const needsPlatform = process.argv.some(
+  (a) => a === "dev" || a === "serve" || a === "preview",
+);
 const platform = needsPlatform
   ? await getPlatformProxy<Env>({ persist: { path: ".wrangler/state/v3" } })
   : undefined;
+
+if (platform) {
+  globalThis.__OHEYA_PLATFORM__ = platform;
+}
 
 export default defineConfig({
   staged: {

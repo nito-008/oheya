@@ -1,5 +1,6 @@
 import type { RequestHandler } from "@builder.io/qwik-city";
 import * as v from "valibot";
+import { getPlatformEnv } from "~/lib/platform-env";
 
 const EnvSchema = v.object({
   ASSET: v.custom<Fetcher>(
@@ -31,7 +32,7 @@ true satisfies [InferredEnv] extends [Env]
   : { message: "EnvSchema has keys missing from Env" };
 
 export const onRequest: RequestHandler = (event) => {
-  const result = v.safeParse(EnvSchema, event.platform.env);
+  const result = v.safeParse(EnvSchema, getPlatformEnv(event));
   if (!result.success) {
     console.error("Invalid platform.env:", result.issues);
     throw event.error(500, "Server misconfigured");
