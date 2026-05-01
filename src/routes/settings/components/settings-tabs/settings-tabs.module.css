@@ -3,13 +3,13 @@
   flex-direction: column;
   align-items: center;
   gap: 2rem;
-  padding: 2rem 1rem 3rem;
+  padding: 3rem 1rem;
   color: #252525;
 }
 
 .settingsHeader {
   display: grid;
-  gap: 1.4rem;
+  gap: 2.5rem;
   width: min(100%, 28rem);
   text-align: center;
 }
@@ -25,6 +25,7 @@
   justify-content: flex-start;
   gap: 0.5rem;
   width: 100%;
+  overflow-x: auto;
   padding-bottom: 0.25rem;
   border-bottom: 1px solid #ddd6cb;
 }
@@ -33,10 +34,12 @@
   display: inline-flex;
   justify-content: center;
   align-items: center;
+  flex: 0 0 auto;
   min-height: 2.5rem;
   padding: 0.5rem 0.9rem 0.7rem;
   color: #6f6862;
   text-decoration: none;
+  white-space: nowrap;
   border-bottom: 2px solid transparent;
   transition:
     color 220ms var(--ease-out-expo),
