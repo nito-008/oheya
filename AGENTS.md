@@ -14,6 +14,7 @@
 
 - When adding a new document under `docs`, also add a corresponding reference here in `AGENTS.md` if future changes should consult it.
 - Read `docs/css.md` before making CSS-related changes.
+- Read `docs/design.md` before changing shared visual patterns or page-level layout treatments.
 - Read `docs/error.md` before making error-related changes.
 - Read `docs/form.md` before making form-related changes.
 - Read `docs/media.md` before adding or updating media assets such as SVG files.

@@ -1,5 +1,5 @@
 import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
-import { Button } from "~/components/ui/button/button";
+import { FormButton } from "~/components/ui/form/form-button/form-button";
 import inputStyles from "~/components/ui/form/form-text-input/form-text-input.module.css";
 import { useToast } from "~/components/ui/toast/toast";
 import type { MusicTrack } from "~/schema/music";
@@ -205,7 +205,7 @@ export const MusicSettingsForm = component$<MusicSettingsFormProps>(({ initialTr
       {saveError.value && <p class={styles.placeholder}>{saveError.value}</p>}
 
       <div class={formStyles.actions}>
-        <Button
+        <FormButton
           type="button"
           variant="accent"
           size="md"
@@ -244,7 +244,7 @@ export const MusicSettingsForm = component$<MusicSettingsFormProps>(({ initialTr
           }}
         >
           {isSaving.value ? "保存中..." : "保存する"}
-        </Button>
+        </FormButton>
       </div>
     </section>
   );

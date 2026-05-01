@@ -1,8 +1,8 @@
 import type { QRL } from "@builder.io/qwik";
 import { $, component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import type { FieldElement, FieldEvent } from "@modular-forms/qwik";
-import { Button } from "~/components/ui/button/button";
 import { FormErrorMessage } from "~/components/ui/form/form-error-message/form-error-message";
+import { FormButton } from "~/components/ui/form/form-button/form-button";
 import { Modal } from "~/components/ui/modal/modal";
 import { TapClickIcon } from "~/components/ui/tap-click-icon/tap-click-icon";
 import iconPlaceholderSvg from "~/media/icon-placeholder.svg";
@@ -387,17 +387,17 @@ export const IconCropInput = component$<IconCropInputProps>(({ field, fieldProps
             <span class={styles.mask} aria-hidden="true" />
           </div>
           <div class={styles.modalActions}>
-            <Button type="button" variant="secondary" onClick$={closeCropModal}>
+            <FormButton type="button" variant="secondary" onClick$={closeCropModal}>
               キャンセル
-            </Button>
-            <Button
+            </FormButton>
+            <FormButton
               type="button"
               variant="primary"
               disabled={!cropImageReady.value}
               onClick$={applyCrop}
             >
               これにする！
-            </Button>
+            </FormButton>
           </div>
         </div>
       </Modal>
