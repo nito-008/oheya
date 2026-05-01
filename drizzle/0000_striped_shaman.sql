@@ -19,6 +19,12 @@ CREATE TABLE `profile` (
 	`public_id` text NOT NULL,
 	`name` text NOT NULL,
 	`icon` text,
+	`music_track_id` text,
+	`music_title` text,
+	`music_artist` text,
+	`music_artwork_url` text,
+	`music_preview_url` text,
+	`music_track_view_url` text,
 	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint

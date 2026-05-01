@@ -2,6 +2,7 @@ import { vValidator } from "@hono/valibot-validator";
 import { Hono } from "hono";
 import * as v from "valibot";
 import type { Bindings } from "~/hono/types";
+import type { MusicTrack } from "~/schema/music";
 
 const musicSearchQuerySchema = v.object({
   term: v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(120)),
@@ -13,6 +14,7 @@ type ITunesTrack = {
   previewUrl?: string;
   trackId?: number;
   trackName?: string;
+  trackViewUrl?: string;
 };
 
 type ITunesSearchResponse = {
@@ -39,7 +41,7 @@ export const musicRouter = new Hono<{ Bindings: Bindings }>().get(
     }
 
     const data = (await response.json()) as ITunesSearchResponse;
-    const results = (data.results ?? [])
+    const results: MusicTrack[] = (data.results ?? [])
       .filter((track) => track.trackId && track.trackName && track.artistName)
       .map((track) => ({
         id: String(track.trackId),
@@ -48,6 +50,7 @@ export const musicRouter = new Hono<{ Bindings: Bindings }>().get(
         artworkUrl:
           track.artworkUrl100?.replace("100x100bb", "300x300bb") ?? track.artworkUrl100 ?? null,
         previewUrl: track.previewUrl ?? null,
+        trackViewUrl: track.trackViewUrl ?? null,
       }));
 
     return c.json({ results });

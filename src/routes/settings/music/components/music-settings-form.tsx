@@ -1,33 +1,32 @@
 import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import { Button } from "~/components/ui/button/button";
+import type { MusicTrack } from "~/schema/music";
 import formStyles from "~/routes/signup/index.module.css";
 import sharedStyles from "~/routes/settings/components/settings-tabs/settings-tabs.module.css";
 import inputStyles from "~/components/ui/form/form-text-input/form-text-input.module.css";
 import styles from "./music-settings-form.module.css";
 
-type MusicTrackOption = {
-  id: string;
-  title: string;
-  artist: string;
-  artworkUrl: string | null;
-  previewUrl: string | null;
-};
-
 type MusicSearchResponse = {
-  results: MusicTrackOption[];
+  results: MusicTrack[];
 };
 
-const getTrackLabel = (track: Pick<MusicTrackOption, "title" | "artist">) =>
+type MusicSettingsFormProps = {
+  initialTrack: MusicTrack | null;
+};
+
+const getTrackLabel = (track: Pick<MusicTrack, "title" | "artist">) =>
   `${track.title.slice(0, 1)}${track.artist.slice(0, 1)}`.toUpperCase();
 
-export const MusicSettingsForm = component$(() => {
+export const MusicSettingsForm = component$<MusicSettingsFormProps>(({ initialTrack }) => {
   const query = useSignal("");
-  const results = useSignal<MusicTrackOption[]>([]);
-  const selectedTrack = useSignal<MusicTrackOption | null>(null);
+  const results = useSignal<MusicTrack[]>([]);
+  const selectedTrack = useSignal<MusicTrack | null>(initialTrack);
   const isSearchActive = useSignal(false);
   const isComposing = useSignal(false);
   const isSearching = useSignal(false);
+  const isSaving = useSignal(false);
   const searchError = useSignal<string | null>(null);
+  const saveMessage = useSignal<string | null>(null);
 
   const normalizedQuery = query.value.trim().toLowerCase();
 
@@ -135,6 +134,7 @@ export const MusicSettingsForm = component$(() => {
             }}
             onInput$={(_, target) => {
               query.value = target.value;
+              saveMessage.value = null;
             }}
           />
         </label>
@@ -169,6 +169,7 @@ export const MusicSettingsForm = component$(() => {
                           query.value = "";
                           results.value = [];
                           searchError.value = null;
+                          saveMessage.value = null;
                           isSearchActive.value = false;
                         }}
                       >
@@ -199,15 +200,48 @@ export const MusicSettingsForm = component$(() => {
         )}
       </div>
 
+      {saveMessage.value && <p class={styles.placeholder}>{saveMessage.value}</p>}
+
       <div class={formStyles.actions}>
         <Button
           type="button"
           variant="accent"
           size="md"
           width="full"
-          disabled={!selectedTrack.value}
+          disabled={!selectedTrack.value || isSaving.value}
+          aria-busy={isSaving.value}
+          onClick$={async () => {
+            if (!selectedTrack.value || isSaving.value) return;
+
+            isSaving.value = true;
+            saveMessage.value = null;
+
+            try {
+              const response = await fetch("/api/users/me/music", {
+                method: "PATCH",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ track: selectedTrack.value }),
+              });
+
+              if (response.status === 401) {
+                throw new Error("ログインが必要です。");
+              }
+              if (response.status === 404) {
+                throw new Error("プロフィールが見つかりません。");
+              }
+              if (!response.ok) {
+                throw new Error("保存に失敗しました。");
+              }
+
+              saveMessage.value = "保存しました。";
+            } catch (error) {
+              saveMessage.value = error instanceof Error ? error.message : "保存に失敗しました。";
+            } finally {
+              isSaving.value = false;
+            }
+          }}
         >
-          保存する
+          {isSaving.value ? "保存中..." : "保存する"}
         </Button>
       </div>
     </section>

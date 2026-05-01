@@ -17,6 +17,12 @@ export const profiles = sqliteTable("profile", {
   publicId: text("public_id").notNull().unique(),
   name: text("name").notNull(),
   icon: text("icon"),
+  musicTrackId: text("music_track_id"),
+  musicTitle: text("music_title"),
+  musicArtist: text("music_artist"),
+  musicArtworkUrl: text("music_artwork_url"),
+  musicPreviewUrl: text("music_preview_url"),
+  musicTrackViewUrl: text("music_track_view_url"),
 });
 
 export const accounts = sqliteTable(

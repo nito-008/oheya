@@ -133,7 +133,7 @@ export const ProfileCarousel = component$<ProfileCarouselProps>(({ initialSlide 
           <img class={styles.scrollHint} src={scrollSvg} width={88} height={32} alt="スクロール" />
         </section>
         <section class={`${styles.carouselSlide} ${styles.musicSlide}`} aria-label="音楽">
-          <SongJacket />
+          <SongJacket publicId={profile.publicId} />
         </section>
         <section class={styles.carouselSlide} aria-label="プロフィール右側" />
       </div>
