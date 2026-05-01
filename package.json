@@ -51,13 +51,13 @@
     "typescript": "^6.0.2",
     "typescript-plugin-css-modules": "latest",
     "undici": "*",
-    "vite": "npm:@voidzero-dev/vite-plus-core@latest",
-    "vite-plus": "latest",
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.1.20",
+    "vite-plus": "0.1.20",
     "wrangler": "4.83.0"
   },
   "overrides": {
-    "vite": "npm:@voidzero-dev/vite-plus-core@latest",
-    "vitest": "npm:@voidzero-dev/vite-plus-test@latest"
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.1.20",
+    "vitest": "npm:@voidzero-dev/vite-plus-test@0.1.20"
   },
   "engines": {
     "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
