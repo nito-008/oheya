@@ -1,0 +1,1 @@
+C:/Users/hirod/repos/Nito/oheya/AGENTS.md

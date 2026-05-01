@@ -56,8 +56,6 @@ wrangler.jsonc
 # Agents
 .claude
 .codex
-AGENTS.md
-CLAUDE.md
 
 # Tmp
 tmp
