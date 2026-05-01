@@ -7,6 +7,7 @@
 # Development
 node_modules
 .env
+.envrc
 .dev.vars
 *.local
 
