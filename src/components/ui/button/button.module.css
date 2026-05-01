@@ -1,26 +1,27 @@
 .button {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  border: 2px solid #2f2f2f;
-  border-radius: 8px 0;
-  font: inherit;
-  line-height: 1.3;
+  gap: 0.5rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #d8d2c2;
+  border-radius: 999px;
+  background: #fff;
+  color: inherit;
+  text-decoration: none;
   cursor: pointer;
   transition:
-    background 0.16s var(--ease-out-expo),
-    box-shadow 0.16s var(--ease-out-expo),
-    transform 0.16s var(--ease-out-expo);
+    background 220ms var(--ease-out-expo),
+    border-color 220ms var(--ease-out-expo);
 }
 
 .button:hover {
-  background: var(--button-hover-background);
+  border-color: #6f6f6f;
+  background: #f5f5f5;
+  text-decoration: none;
 }
 
 .button:active {
-  box-shadow: var(--button-active-shadow);
-  transform: translate(1px, 1px);
+  color: #cdcdcd;
 }
 
 .button:focus-visible {
@@ -29,62 +30,26 @@
 }
 
 .button:disabled {
-  background: #f5f5f5;
-  color: #3a3a3a;
-  box-shadow: 1px 2px 0 #b8b8b8;
+  opacity: 0.55;
   cursor: not-allowed;
 }
 
-.button[aria-busy="true"]:disabled {
-  cursor: wait;
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex: 0 0 auto;
 }
 
-.button:disabled:active {
-  transform: none;
-}
-
-.variant-secondary {
-  --button-hover-background: #eee9dc;
-  --button-active-shadow: 1px 2px 0 #d8d2c2;
-
-  border-color: #6d6050;
-  background: #fffef8;
-  color: #5a4630;
-  box-shadow: 2px 3px 0 #d8d2c2;
-}
-
-.variant-primary {
-  --button-hover-background: #3a352d;
-  --button-active-shadow: 1px 2px 0 #d8d2c2;
-
-  background: #252525;
-  color: #fffef8;
-  box-shadow: 2px 3px 0 #d8d2c2;
-}
-
-.variant-accent {
-  --button-hover-background: #fff6d4;
-  --button-active-shadow: 1px 1px 0 #9b9688;
-
-  background: #fef1c4;
-  color: #252525;
-  box-shadow: 2px 3px 0 #2f2f2f;
-}
-
-.size-sm {
-  padding: 0.55rem 0.8rem;
-}
-
-.size-md {
-  min-height: 2.75rem;
-  padding: 0.65rem 1rem;
-  font-size: 1.05rem;
-}
-
-.width-fit {
-  width: fit-content;
-}
-
-.width-full {
+.icon :global(img),
+.icon :global(svg) {
   width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.label {
+  line-height: 1;
 }

@@ -3,8 +3,8 @@ import type { DocumentHead } from "@builder.io/qwik-city";
 import { routeLoader$ } from "@builder.io/qwik-city";
 import { FormError, type InitialValues, useForm, valiForm$ } from "@modular-forms/qwik";
 import type * as v from "valibot";
-import { Button } from "~/components/ui/button/button";
 import { FormErrorMessage } from "~/components/ui/form/form-error-message/form-error-message";
+import { FormButton } from "~/components/ui/form/form-button/form-button";
 import { FormTextInput } from "~/components/ui/form/form-text-input/form-text-input";
 import { IconCropInput } from "~/components/ui/form/icon-crop-input/icon-crop-input";
 import { useToast } from "~/components/ui/toast/toast";
@@ -116,7 +116,7 @@ export default component$(() => {
           )}
         </div>
         <div class={formStyles.actions}>
-          <Button
+          <FormButton
             type="submit"
             variant="accent"
             size="md"
@@ -125,7 +125,7 @@ export default component$(() => {
             aria-busy={profileForm.submitting}
           >
             {profileForm.submitting ? "保存中..." : "保存する"}
-          </Button>
+          </FormButton>
         </div>
       </Form>
     </>

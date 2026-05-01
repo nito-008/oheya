@@ -1,5 +1,4 @@
 .header {
-  position: relative;
   z-index: 20;
   display: flex;
   justify-content: space-between;
@@ -8,8 +7,15 @@
   padding: 0.8rem 1rem;
 }
 
-.header h1 {
+.heading {
+  display: flex;
+  align-items: center;
   margin-block: 0;
+}
+
+.authForm {
+  display: flex;
+  align-items: center;
 }
 
 .titleLink {
@@ -20,6 +26,15 @@
   line-height: 1;
 }
 
+.profileLink {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+  gap: 0.8rem;
+}
+
 .titleIcon {
   display: inline-flex;
   width: 1.8rem;
@@ -28,142 +43,62 @@
   object-fit: contain;
 }
 
-.button {
-  cursor: pointer;
-  border: none;
-}
-
-.menuButton {
-  position: relative;
-  z-index: 2;
-  display: inline-flex;
-  align-items: center;
-  padding: 0;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-}
-
-.menuOverlay {
-  position: fixed;
-  inset: 0;
-  padding: 1rem;
-  overflow-y: auto;
-  background: #fff;
-}
-
-.menuSurface {
-  z-index: 1;
-  width: min(100%, 32rem);
-  margin: 0 auto;
-  padding: 5.5rem 1.5rem 3rem;
-}
-
-.menuContent {
-  --menu-row-columns: max-content minmax(0, 1fr);
-  --menu-row-gap: 0.7rem;
-  display: grid;
-  gap: 3.25rem;
-  width: max-content;
-  max-width: 100%;
-  margin: 0 auto;
-}
-
-.profileLink,
-.actionLink,
-.actionButton {
-  display: grid;
-  grid-template-columns: var(--menu-row-columns);
-  align-items: center;
-  column-gap: var(--menu-row-gap);
-  width: 100%;
-}
-
-.profileLabel {
-  display: grid;
-  gap: 0.65rem;
-  min-width: 0;
-}
-
 .profileName {
-  font-size: 1.25rem;
+  min-width: 0;
+  font-size: 1rem;
+  font-weight: 500;
 }
 
-.profileMeta {
-  color: rgb(47 47 47 / 64%);
-  font-size: 0.95rem;
-}
-
-.actionBlock {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.9rem;
-  width: max-content;
-  max-width: 100%;
-  margin-inline: auto;
-}
-
-.actionList {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-
-.actionButton {
-  font-size: 1.1rem;
-  font-weight: 400;
-  text-align: left;
-}
-
-.actionIcon,
-.userIcon {
+.settingsIcon,
+.profileIcon {
   display: inline-flex;
-  justify-self: center;
+  flex: 0 0 auto;
   object-fit: contain;
 }
 
-.actionIcon {
+.settingsIcon {
   width: 1.5rem;
   height: 1.5rem;
-  flex: 0 0 auto;
 }
 
-.signOutForm {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-}
-
-.userIcon {
-  width: 3.5rem;
-  height: 3.5rem;
+.profileIcon {
+  width: 2.2rem;
+  height: 2.2rem;
   border: 1.5px solid #2f2f2f;
   border-radius: 999px;
   background: #fffef8;
   object-fit: cover;
 }
 
-.actionButton {
-  cursor: pointer;
-  padding: 0;
-  border: none;
-  background: transparent;
-  font: inherit;
+.profileIconFallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border: 1.5px solid #2f2f2f;
+  border-radius: 999px;
+  background: #fef1c4;
+  font-size: 1rem;
+  line-height: 1;
 }
 
-.menuButton:hover,
-.profileLink:hover,
-.actionLink:hover,
-.actionButton:hover,
+.button {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  border: none;
+}
+
 .button:hover {
+  text-decoration: none;
+}
+
+.profileLink:hover .profileName {
   text-decoration: underline;
 }
 
-.menuButton:active,
 .profileLink:active,
-.actionLink:active,
-.actionButton:active,
 .button:active {
   color: #cdcdcd;
 }
