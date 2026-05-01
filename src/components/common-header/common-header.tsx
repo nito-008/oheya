@@ -2,6 +2,7 @@ import { component$ } from "@builder.io/qwik";
 import { Form, Link } from "@builder.io/qwik-city";
 import { Button } from "~/components/ui/button/button";
 import houseSvg from "~/media/house.svg";
+import loginSvg from "~/media/icons/login.svg";
 import settingSvg from "~/media/icons/setting.svg";
 import { useSignIn } from "~/routes/plugin@auth";
 import { getImageUrl } from "~/schema/image";
@@ -61,9 +62,9 @@ export const CommonHeader = component$<CommonHeaderProps>(({ user, showAuthActio
         <Form action={signIn} class={styles.authForm}>
           <input type="hidden" name="providerId" value="google" />
           <input type="hidden" name="options.redirectTo" value="/signup" />
-          <button type="submit" class={styles.button}>
-            ログイン
-          </button>
+          <Button type="submit" label="ログイン">
+            <img class={styles.loginIcon} src={loginSvg} alt="" width={24} height={24} />
+          </Button>
         </Form>
       ) : null}
     </header>

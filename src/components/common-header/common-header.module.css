@@ -61,6 +61,7 @@
   white-space: nowrap;
 }
 
+.loginIcon,
 .settingsIcon,
 .profileIcon {
   display: inline-flex;
@@ -68,6 +69,7 @@
   object-fit: contain;
 }
 
+.loginIcon,
 .settingsIcon {
   width: 1.5rem;
   height: 1.5rem;
@@ -95,22 +97,10 @@
   line-height: 1;
 }
 
-.button {
-  display: inline-flex;
-  align-items: center;
-  cursor: pointer;
-  border: none;
-}
-
-.button:hover {
-  text-decoration: none;
-}
-
 .profileLink:hover .profileName {
   text-decoration: underline;
 }
 
-.profileLink:active,
-.button:active {
+.profileLink:active {
   color: #cdcdcd;
 }
