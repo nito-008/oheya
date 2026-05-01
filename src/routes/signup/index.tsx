@@ -3,10 +3,10 @@ import type { DocumentHead } from "@builder.io/qwik-city";
 import { routeLoader$ } from "@builder.io/qwik-city";
 import { FormError, type InitialValues, useForm, valiForm$ } from "@modular-forms/qwik";
 import type * as v from "valibot";
-import { IconCropInput } from "~/components/ui/form/icon-crop-input/icon-crop-input";
+import { Button } from "~/components/ui/button/button";
 import { FormErrorMessage } from "~/components/ui/form/form-error-message/form-error-message";
 import { FormTextInput } from "~/components/ui/form/form-text-input/form-text-input";
-import { Button } from "~/components/ui/button/button";
+import { IconCropInput } from "~/components/ui/form/icon-crop-input/icon-crop-input";
 import { createApiClient } from "~/lib/api";
 import { NAME_MAX_LENGTH, PUBLIC_ID_MAX_LENGTH, userSchema } from "~/schema/user";
 import styles from "./index.module.css";
@@ -72,10 +72,12 @@ export default component$(() => {
             throw new FormError<SignupForm>("ログインが必要です");
           }
           if (res.status === 409) {
-            throw new FormError<SignupForm>({ publicId: "このIDはもう誰かが使っています" });
+            throw new FormError<SignupForm>({
+              publicId: "このIDはすでに使用されています",
+            });
           }
           if (!res.ok) {
-            throw new FormError<SignupForm>("登録できませんでした");
+            throw new FormError<SignupForm>("登録に失敗しました");
           }
 
           window.location.href = `/${values.publicId}`;
@@ -85,7 +87,7 @@ export default component$(() => {
           <Field name="publicId">
             {(field, props) => (
               <FormTextInput
-                label={`ID（英数字とアンダースコア、最大${PUBLIC_ID_MAX_LENGTH}文字）`}
+                label={`ID（半角英数字とアンダースコア、最大${PUBLIC_ID_MAX_LENGTH}文字）`}
                 field={field}
                 fieldProps={props}
                 maxLength={PUBLIC_ID_MAX_LENGTH}

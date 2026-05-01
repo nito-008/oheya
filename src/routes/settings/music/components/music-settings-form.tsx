@@ -1,9 +1,9 @@
 import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import { Button } from "~/components/ui/button/button";
+import inputStyles from "~/components/ui/form/form-text-input/form-text-input.module.css";
 import type { MusicTrack } from "~/schema/music";
 import formStyles from "~/routes/signup/index.module.css";
 import sharedStyles from "~/routes/settings/components/settings-tabs/settings-tabs.module.css";
-import inputStyles from "~/components/ui/form/form-text-input/form-text-input.module.css";
 import styles from "./music-settings-form.module.css";
 
 type MusicSearchResponse = {
@@ -55,7 +55,7 @@ export const MusicSettingsForm = component$<MusicSettingsFormProps>(({ initialTr
         });
 
         if (!response.ok) {
-          throw new Error(`Search failed with status ${response.status}`);
+          throw new Error("音楽の検索に失敗しました");
         }
 
         const data = (await response.json()) as MusicSearchResponse;
@@ -64,7 +64,7 @@ export const MusicSettingsForm = component$<MusicSettingsFormProps>(({ initialTr
         if (controller.signal.aborted) return;
         console.error("Music search error:", error);
         results.value = [];
-        searchError.value = "検索に失敗しました。少し時間をおいてもう一度お試しください。";
+        searchError.value = error instanceof Error ? error.message : "音楽の検索に失敗しました";
       } finally {
         if (!controller.signal.aborted) {
           isSearching.value = false;
@@ -224,18 +224,18 @@ export const MusicSettingsForm = component$<MusicSettingsFormProps>(({ initialTr
               });
 
               if (response.status === 401) {
-                throw new Error("ログインが必要です。");
+                throw new Error("ログインが必要です");
               }
               if (response.status === 404) {
-                throw new Error("プロフィールが見つかりません。");
+                throw new Error("プロフィールが見つかりません");
               }
               if (!response.ok) {
-                throw new Error("保存に失敗しました。");
+                throw new Error("保存に失敗しました");
               }
 
               saveMessage.value = "保存しました。";
             } catch (error) {
-              saveMessage.value = error instanceof Error ? error.message : "保存に失敗しました。";
+              saveMessage.value = error instanceof Error ? error.message : "保存に失敗しました";
             } finally {
               isSaving.value = false;
             }

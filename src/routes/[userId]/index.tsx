@@ -28,15 +28,15 @@ export const useProfile = routeLoader$<ProfileLoaderData>(async (event) => {
   ]);
 
   if (profileRes.status === 404 || musicRes.status === 404) {
-    throw event.error(404, "Profile not found");
+    throw event.error(404, "プロフィールが見つかりません");
   }
 
   if (!profileRes.ok) {
-    throw new Error("Failed to load profile");
+    throw new Error("プロフィールの取得に失敗しました");
   }
 
   if (!musicRes.ok) {
-    throw new Error("Failed to load music");
+    throw new Error("音楽情報の取得に失敗しました");
   }
 
   const profile = await profileRes.json();

@@ -3,14 +3,14 @@ import type { DocumentHead } from "@builder.io/qwik-city";
 import { routeLoader$ } from "@builder.io/qwik-city";
 import { FormError, type InitialValues, useForm, valiForm$ } from "@modular-forms/qwik";
 import type * as v from "valibot";
-import { IconCropInput } from "~/components/ui/form/icon-crop-input/icon-crop-input";
+import { Button } from "~/components/ui/button/button";
 import { FormErrorMessage } from "~/components/ui/form/form-error-message/form-error-message";
 import { FormTextInput } from "~/components/ui/form/form-text-input/form-text-input";
-import { Button } from "~/components/ui/button/button";
+import { IconCropInput } from "~/components/ui/form/icon-crop-input/icon-crop-input";
 import { createApiClient } from "~/lib/api";
 import { NAME_MAX_LENGTH, PUBLIC_ID_MAX_LENGTH, userSchema } from "~/schema/user";
-import styles from "~/routes/settings/components/settings-tabs/settings-tabs.module.css";
 import formStyles from "~/routes/signup/index.module.css";
+import styles from "~/routes/settings/components/settings-tabs/settings-tabs.module.css";
 
 type ProfileSettingsForm = v.InferInput<typeof userSchema>;
 
@@ -70,11 +70,11 @@ export default component$(() => {
         }
         if (res.status === 409) {
           throw new FormError<ProfileSettingsForm>({
-            publicId: "このIDはもう誰かが使っています",
+            publicId: "このIDはすでに使用されています",
           });
         }
         if (!res.ok) {
-          throw new FormError<ProfileSettingsForm>("保存できませんでした");
+          throw new FormError<ProfileSettingsForm>("保存に失敗しました");
         }
       }}
     >
@@ -82,7 +82,7 @@ export default component$(() => {
         <Field name="publicId">
           {(field, props) => (
             <FormTextInput
-              label={`ID（英数字とアンダースコア、最大${PUBLIC_ID_MAX_LENGTH}文字）`}
+              label={`ID（半角英数字とアンダースコア、最大${PUBLIC_ID_MAX_LENGTH}文字）`}
               field={field}
               fieldProps={props}
               maxLength={PUBLIC_ID_MAX_LENGTH}
@@ -117,7 +117,7 @@ export default component$(() => {
           disabled={profileForm.submitting}
           aria-busy={profileForm.submitting}
         >
-          {profileForm.submitting ? "保存しています..." : "保存する"}
+          {profileForm.submitting ? "保存中..." : "保存する"}
         </Button>
       </div>
     </Form>
