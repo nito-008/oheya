@@ -99,8 +99,8 @@
 
 .clickCue {
   position: absolute;
-  top: -2rem;
-  right: -5.5rem;
+  top: -2.5rem;
+  right: -4rem;
   z-index: 2;
   width: 5.75rem;
   height: auto;
