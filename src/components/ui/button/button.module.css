@@ -35,11 +35,13 @@
 }
 
 .icon {
+  --button-icon-size: 1.25rem;
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.5rem;
-  height: 1.5rem;
+  width: var(--button-icon-size);
+  height: var(--button-icon-size);
   flex: 0 0 auto;
 }
 
