@@ -6,14 +6,8 @@ import loginSvg from "~/media/icons/login.svg";
 import settingSvg from "~/media/icons/setting.svg";
 import { useSignIn } from "~/routes/plugin@auth";
 import { getImageUrl } from "~/schema/image";
+import type { CommonHeaderUser } from "./common-header-state";
 import styles from "./common-header.module.css";
-
-export type CommonHeaderUser = {
-  authenticated: boolean;
-  publicId: string | null;
-  name: string | null;
-  icon: string | null;
-};
 
 type CommonHeaderProps = {
   user: CommonHeaderUser;

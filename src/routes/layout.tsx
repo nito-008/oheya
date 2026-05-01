@@ -1,6 +1,10 @@
-import { component$, Slot } from "@builder.io/qwik";
+import { component$, Slot, useContextProvider, useStore, useTask$ } from "@builder.io/qwik";
 import { routeLoader$, useLocation } from "@builder.io/qwik-city";
-import { CommonHeader, type CommonHeaderUser } from "~/components/common-header/common-header";
+import { CommonHeader } from "~/components/common-header/common-header";
+import {
+  CommonHeaderUserContext,
+  type CommonHeaderUser,
+} from "~/components/common-header/common-header-state";
 import { createApiClient } from "~/lib/api";
 
 export const useHeaderUser = routeLoader$<CommonHeaderUser>(async (event) => {
@@ -29,13 +33,24 @@ export const useHeaderUser = routeLoader$<CommonHeaderUser>(async (event) => {
 });
 
 export default component$(() => {
-  const headerUser = useHeaderUser();
+  const loadedHeaderUser = useHeaderUser();
+  const headerUser = useStore<CommonHeaderUser>({ ...loadedHeaderUser.value }, { deep: false });
   const location = useLocation();
   const showAuthActions = location.url.pathname !== "/signup/";
 
+  useContextProvider(CommonHeaderUserContext, headerUser);
+
+  useTask$(({ track }) => {
+    const nextHeaderUser = track(() => loadedHeaderUser.value);
+    headerUser.authenticated = nextHeaderUser.authenticated;
+    headerUser.publicId = nextHeaderUser.publicId;
+    headerUser.name = nextHeaderUser.name;
+    headerUser.icon = nextHeaderUser.icon;
+  });
+
   return (
     <>
-      <CommonHeader user={headerUser.value} showAuthActions={showAuthActions} />
+      <CommonHeader user={headerUser} showAuthActions={showAuthActions} />
       <main>
         <Slot />
       </main>
