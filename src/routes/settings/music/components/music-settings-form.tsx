@@ -83,6 +83,7 @@ export const MusicSettingsForm = component$(() => {
   const query = useSignal("");
   const selectedTrackId = useSignal<string | null>(null);
   const isSearchActive = useSignal(false);
+  const isComposing = useSignal(false);
 
   const normalizedQuery = query.value.trim().toLowerCase();
   const results = normalizedQuery
@@ -140,16 +141,20 @@ export const MusicSettingsForm = component$(() => {
             autoCapitalize="off"
             spellcheck={false}
             value={query.value}
+            onCompositionStart$={() => {
+              isComposing.value = true;
+            }}
+            onCompositionEnd$={() => {
+              isComposing.value = false;
+            }}
             onInput$={(_, target) => {
               query.value = target.value;
             }}
           />
         </label>
 
-        {isSearchActive.value && (
+        {isSearchActive.value && normalizedQuery && !isComposing.value && (
           <div class={styles.resultsCard} aria-live="polite">
-            {!normalizedQuery && <p class={styles.placeholder}>検索結果がここに表示されます。</p>}
-
             {normalizedQuery && results.length === 0 && (
               <p class={styles.placeholder}>該当する楽曲がありません。</p>
             )}

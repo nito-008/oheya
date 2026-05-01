@@ -12,6 +12,9 @@ vp install
 vp run dev
 ```
 
+> [!NOTE]
+> 初回起動時前に`vp run build`を実行してdistフォルダを生成する必要があります。
+
 ## Preview Server
 
 ```sh
