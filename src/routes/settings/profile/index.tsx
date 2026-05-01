@@ -3,6 +3,7 @@ import type { DocumentHead } from "@builder.io/qwik-city";
 import { routeLoader$ } from "@builder.io/qwik-city";
 import { FormError, type InitialValues, useForm, valiForm$ } from "@modular-forms/qwik";
 import type * as v from "valibot";
+import { useCommonHeaderUser } from "~/components/common-header/common-header-state";
 import { FormErrorMessage } from "~/components/ui/form/form-error-message/form-error-message";
 import { FormButton } from "~/components/ui/form/form-button/form-button";
 import { FormTextInput } from "~/components/ui/form/form-text-input/form-text-input";
@@ -38,6 +39,7 @@ export default component$(() => {
     validate: valiForm$(userSchema),
   });
   const toast = useToast();
+  const headerUser = useCommonHeaderUser();
 
   return (
     <>
@@ -82,6 +84,10 @@ export default component$(() => {
             throw new FormError<ProfileSettingsForm>("保存に失敗しました");
           }
 
+          headerUser.authenticated = true;
+          headerUser.publicId = values.publicId;
+          headerUser.name = values.name;
+          headerUser.icon = (uploadedIcon ?? values.icon) || null;
           await toast.success("保存しました");
         }}
       >
