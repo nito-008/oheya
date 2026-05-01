@@ -115,7 +115,7 @@ export const MusicSettingsForm = component$<MusicSettingsFormProps>(({ initialTr
         }}
       >
         <label class={inputStyles.field} for="music-search">
-          <span class={inputStyles.label}>曲名を検索</span>
+          <span class={inputStyles.label}>曲を検索</span>
           <input
             id="music-search"
             type="text"

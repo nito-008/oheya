@@ -5,7 +5,7 @@ import { head, useProfile } from "~/routes/[userId]/index";
 export { head, useProfile };
 
 export default component$(() => {
-  const profile = useProfile();
+  const data = useProfile();
 
-  return <ProfileRoomPage profile={profile.value} initialSlide={2} />;
+  return <ProfileRoomPage profile={data.value.profile} track={data.value.track} initialSlide={2} />;
 });
