@@ -1,6 +1,7 @@
 import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import { Button } from "~/components/ui/button/button";
 import inputStyles from "~/components/ui/form/form-text-input/form-text-input.module.css";
+import { useToast } from "~/components/ui/toast/toast";
 import type { MusicTrack } from "~/schema/music";
 import formStyles from "~/routes/signup/index.module.css";
 import sharedStyles from "~/routes/settings/components/settings-tabs/settings-tabs.module.css";
@@ -26,7 +27,8 @@ export const MusicSettingsForm = component$<MusicSettingsFormProps>(({ initialTr
   const isSearching = useSignal(false);
   const isSaving = useSignal(false);
   const searchError = useSignal<string | null>(null);
-  const saveMessage = useSignal<string | null>(null);
+  const saveError = useSignal<string | null>(null);
+  const toast = useToast();
 
   const normalizedQuery = query.value.trim().toLowerCase();
 
@@ -134,7 +136,7 @@ export const MusicSettingsForm = component$<MusicSettingsFormProps>(({ initialTr
             }}
             onInput$={(_, target) => {
               query.value = target.value;
-              saveMessage.value = null;
+              saveError.value = null;
             }}
           />
         </label>
@@ -169,7 +171,7 @@ export const MusicSettingsForm = component$<MusicSettingsFormProps>(({ initialTr
                           query.value = "";
                           results.value = [];
                           searchError.value = null;
-                          saveMessage.value = null;
+                          saveError.value = null;
                           isSearchActive.value = false;
                         }}
                       >
@@ -200,7 +202,7 @@ export const MusicSettingsForm = component$<MusicSettingsFormProps>(({ initialTr
         )}
       </div>
 
-      {saveMessage.value && <p class={styles.placeholder}>{saveMessage.value}</p>}
+      {saveError.value && <p class={styles.placeholder}>{saveError.value}</p>}
 
       <div class={formStyles.actions}>
         <Button
@@ -214,7 +216,7 @@ export const MusicSettingsForm = component$<MusicSettingsFormProps>(({ initialTr
             if (!selectedTrack.value || isSaving.value) return;
 
             isSaving.value = true;
-            saveMessage.value = null;
+            saveError.value = null;
 
             try {
               const response = await fetch("/api/users/me/music", {
@@ -233,9 +235,9 @@ export const MusicSettingsForm = component$<MusicSettingsFormProps>(({ initialTr
                 throw new Error("保存に失敗しました");
               }
 
-              saveMessage.value = "保存しました。";
+              await toast.success("保存しました");
             } catch (error) {
-              saveMessage.value = error instanceof Error ? error.message : "保存に失敗しました";
+              saveError.value = error instanceof Error ? error.message : "保存に失敗しました";
             } finally {
               isSaving.value = false;
             }

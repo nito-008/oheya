@@ -2,6 +2,7 @@ import { component$, useStyles$ } from "@builder.io/qwik";
 import { isDev } from "@builder.io/qwik";
 import { QwikCityProvider, RouterOutlet } from "@builder.io/qwik-city";
 import { RouterHead } from "./components/router-head/router-head";
+import { ToastProvider } from "./components/ui/toast/toast";
 
 import styles from "./global.css?inline";
 
@@ -22,7 +23,9 @@ export default component$(() => {
         <RouterHead />
       </head>
       <body>
-        <RouterOutlet />
+        <ToastProvider>
+          <RouterOutlet />
+        </ToastProvider>
       </body>
     </QwikCityProvider>
   );
