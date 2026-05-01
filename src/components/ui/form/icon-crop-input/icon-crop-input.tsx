@@ -396,7 +396,7 @@ export const IconCropInput = component$<IconCropInputProps>(({ field, fieldProps
               disabled={!cropImageReady.value}
               onClick$={applyCrop}
             >
-              これにする！
+              これにする
             </FormButton>
           </div>
         </div>
