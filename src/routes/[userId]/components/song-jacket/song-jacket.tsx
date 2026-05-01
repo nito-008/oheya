@@ -1,4 +1,4 @@
-import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
+import { component$, useSignal } from "@builder.io/qwik";
 import musicPauseSvg from "~/media/music-pause.svg";
 import musicPlaySvg from "~/media/music-play.svg";
 import songJacketFrameSvg from "~/media/song-jacket-frame.svg";
@@ -9,64 +9,23 @@ const APPLE_MUSIC_BADGE_URL =
   "https://toolbox.marketingtools.apple.com/api/v2/badges/listen-on-apple-music/mono-black/en-us?releaseDate=1754438400";
 
 type SongJacketProps = {
-  publicId: string;
+  track: MusicTrack | null;
 };
 
-export const SongJacket = component$<SongJacketProps>(({ publicId }) => {
-  const track = useSignal<MusicTrack | null>(null);
-  const hasError = useSignal(false);
-  const isLoading = useSignal(true);
+export const SongJacket = component$<SongJacketProps>(({ track }) => {
   const isPlaying = useSignal(false);
   const audioRef = useSignal<HTMLAudioElement>();
 
-  // eslint-disable-next-line qwik/no-use-visible-task
-  useVisibleTask$(({ track: trackSignal, cleanup }) => {
-    trackSignal(() => publicId);
-
-    const controller = new AbortController();
-    isLoading.value = true;
-    hasError.value = false;
-    track.value = null;
-
-    void (async () => {
-      try {
-        const response = await fetch(`/api/users/${encodeURIComponent(publicId)}/music`, {
-          signal: controller.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error(`Fetch failed with status ${response.status}`);
-        }
-
-        const data = (await response.json()) as { track: MusicTrack | null };
-        track.value = data.track;
-      } catch (error) {
-        if (controller.signal.aborted) return;
-        console.error("Music fetch error:", error);
-        hasError.value = true;
-      } finally {
-        if (!controller.signal.aborted) {
-          isLoading.value = false;
-        }
-      }
-    })();
-
-    cleanup(() => {
-      controller.abort();
-      audioRef.value?.pause();
-    });
-  });
-
   const artworkUrl =
-    track.value?.artworkUrl?.replace("300x300bb", "600x600bb") ?? track.value?.artworkUrl ?? null;
+    track?.artworkUrl?.replace("300x300bb", "600x600bb") ?? track?.artworkUrl ?? null;
 
   return (
-    <article class={styles.songJacket} aria-label="音楽プレビュー">
+    <article class={styles.songJacket} aria-label="選択中のプレビュー">
       <div class={styles.frameShell}>
         {artworkUrl ? (
           <img
             src={artworkUrl}
-            alt={`${track.value?.title ?? "選択中の曲"}のジャケット`}
+            alt={`${track?.title ?? "選択中の曲"}のジャケット`}
             width={600}
             height={600}
             class={styles.jacketImage}
@@ -89,7 +48,7 @@ export const SongJacket = component$<SongJacketProps>(({ publicId }) => {
             [styles.playButtonPlaying]: isPlaying.value,
           }}
           aria-label={isPlaying.value ? "プレビューを一時停止" : "プレビューを再生"}
-          disabled={!track.value?.previewUrl}
+          disabled={!track?.previewUrl}
           onClick$={async () => {
             const audio = audioRef.value;
             if (!audio) return;
@@ -114,22 +73,12 @@ export const SongJacket = component$<SongJacketProps>(({ publicId }) => {
         </button>
       </div>
       <div class={styles.trackInfo}>
-        <p class={styles.trackTitle}>
-          {hasError.value
-            ? "楽曲情報の取得に失敗しました"
-            : isLoading.value
-              ? "読み込み中..."
-              : (track.value?.title ?? "まだ曲が設定されていません")}
-        </p>
-        <p class={styles.trackArtist}>
-          {isLoading.value
-            ? "読み込み中..."
-            : (track.value?.artist ?? "プロフィール設定から曲を選択してください")}
-        </p>
+        <p class={styles.trackTitle}>{track?.title ?? "楽曲未設定"}</p>
+        <p class={styles.trackArtist}>{track?.artist ?? "設定から変更できます"}</p>
       </div>
-      {track.value?.trackViewUrl && (
+      {track?.trackViewUrl && (
         <a
-          href={track.value.trackViewUrl}
+          href={track.trackViewUrl}
           class={styles.appleMusicBadgeLink}
           aria-label="Apple Musicで開く"
         >
@@ -142,10 +91,10 @@ export const SongJacket = component$<SongJacketProps>(({ publicId }) => {
           />
         </a>
       )}
-      {track.value?.previewUrl ? (
+      {track?.previewUrl ? (
         <audio
           ref={audioRef}
-          src={track.value.previewUrl}
+          src={track.previewUrl}
           onEnded$={() => {
             isPlaying.value = false;
           }}

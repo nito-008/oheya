@@ -2,36 +2,63 @@ import { component$ } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { routeLoader$ } from "@builder.io/qwik-city";
 import { createApiClient } from "~/lib/api";
+import type { MusicTrack } from "~/schema/music";
 import { ProfileRoomPage } from "~/routes/[userId]/components/profile-room-page/profile-room-page";
 
-export const useProfile = routeLoader$(async (event) => {
+type ProfileLoaderData = {
+  profile: {
+    icon: string | null;
+    name: string;
+    publicId: string;
+  };
+  track: MusicTrack | null;
+};
+
+export const useProfile = routeLoader$<ProfileLoaderData>(async (event) => {
   const client = createApiClient(event);
-  const res = await client.api.users[":publicId"].$get({
-    param: { publicId: event.params.userId },
-  });
+  const publicId = event.params.userId;
 
-  if (res.status === 404) {
-    throw event.error(404, "部屋が見つかりません");
+  const [profileRes, musicRes] = await Promise.all([
+    client.api.users[":publicId"].$get({
+      param: { publicId },
+    }),
+    client.api.users[":publicId"].music.$get({
+      param: { publicId },
+    }),
+  ]);
+
+  if (profileRes.status === 404 || musicRes.status === 404) {
+    throw event.error(404, "Profile not found");
   }
 
-  if (!res.ok) {
-    throw new Error("部屋に入れませんでした");
+  if (!profileRes.ok) {
+    throw new Error("Failed to load profile");
   }
 
-  return res.json();
+  if (!musicRes.ok) {
+    throw new Error("Failed to load music");
+  }
+
+  const profile = await profileRes.json();
+  const music = (await musicRes.json()) as { track: MusicTrack | null };
+
+  return {
+    profile,
+    track: music.track,
+  };
 });
 
 export default component$(() => {
-  const profile = useProfile();
+  const data = useProfile();
 
-  return <ProfileRoomPage profile={profile.value} initialSlide={1} />;
+  return <ProfileRoomPage profile={data.value.profile} track={data.value.track} initialSlide={1} />;
 });
 
 export const head: DocumentHead = ({ resolveValue }) => {
-  const profile = resolveValue(useProfile);
+  const data = resolveValue(useProfile);
 
   return {
-    title: `${profile.name} | Oheya`,
-    meta: [{ name: "description", content: `${profile.name}のお部屋` }],
+    title: `${data.profile.name} | Oheya`,
+    meta: [{ name: "description", content: `${data.profile.name}のプロフィール` }],
   };
 };
