@@ -150,8 +150,8 @@
 .modalActions {
   display: flex;
   flex-wrap: wrap;
-  gap: clamp(2.5rem, 15.625vw, 5rem);
-  justify-content: center;
+  justify-content: space-between;
+  width: 100%;
 }
 
 .fileOverlay {
