@@ -82,7 +82,16 @@
   aspect-ratio: 1;
   width: 3.5rem;
   border-radius: 0.4rem;
+  overflow: hidden;
+  background: linear-gradient(135deg, #e8dcc8, #f6efe3);
+  color: #5a4734;
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 35%);
+}
+
+.albumArtImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .albumArt span {

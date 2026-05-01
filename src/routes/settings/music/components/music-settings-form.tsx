@@ -1,4 +1,4 @@
-import { component$, useSignal } from "@builder.io/qwik";
+import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import { Button } from "~/components/ui/button/button";
 import formStyles from "~/routes/signup/index.module.css";
 import sharedStyles from "~/routes/settings/components/settings-tabs/settings-tabs.module.css";
@@ -9,110 +9,96 @@ type MusicTrackOption = {
   id: string;
   title: string;
   artist: string;
-  albumArt: {
-    background: string;
-    accent: string;
-    label: string;
-  };
+  artworkUrl: string | null;
+  previewUrl: string | null;
 };
 
-const musicTrackOptions: MusicTrackOption[] = [
-  {
-    id: "1",
-    title: "After the Rain",
-    artist: "Maya Del Ray",
-    albumArt: {
-      background: "linear-gradient(135deg, #f86f6f, #ffd166)",
-      accent: "#fff6dd",
-      label: "AR",
-    },
-  },
-  {
-    id: "2",
-    title: "Midnight Echo",
-    artist: "The North Harbor",
-    albumArt: {
-      background: "linear-gradient(135deg, #2f4858, #5784ba)",
-      accent: "#e8f1ff",
-      label: "ME",
-    },
-  },
-  {
-    id: "3",
-    title: "Blue Citrus",
-    artist: "Luna Shibata",
-    albumArt: {
-      background: "linear-gradient(135deg, #ffb703, #219ebc)",
-      accent: "#083344",
-      label: "BC",
-    },
-  },
-  {
-    id: "4",
-    title: "Velvet Summer",
-    artist: "City Sunday",
-    albumArt: {
-      background: "linear-gradient(135deg, #9b5de5, #f15bb5)",
-      accent: "#fff3fc",
-      label: "VS",
-    },
-  },
-  {
-    id: "5",
-    title: "Paper Moonlight",
-    artist: "Aoi & The Lamps",
-    albumArt: {
-      background: "linear-gradient(135deg, #588157, #dad7cd)",
-      accent: "#183a1d",
-      label: "PM",
-    },
-  },
-  {
-    id: "6",
-    title: "Static Bloom",
-    artist: "Niki Kuroda",
-    albumArt: {
-      background: "linear-gradient(135deg, #0f172a, #22c55e)",
-      accent: "#dcfce7",
-      label: "SB",
-    },
-  },
-] as const;
+type MusicSearchResponse = {
+  results: MusicTrackOption[];
+};
+
+const getTrackLabel = (track: Pick<MusicTrackOption, "title" | "artist">) =>
+  `${track.title.slice(0, 1)}${track.artist.slice(0, 1)}`.toUpperCase();
 
 export const MusicSettingsForm = component$(() => {
   const query = useSignal("");
-  const selectedTrackId = useSignal<string | null>(null);
+  const results = useSignal<MusicTrackOption[]>([]);
+  const selectedTrack = useSignal<MusicTrackOption | null>(null);
   const isSearchActive = useSignal(false);
   const isComposing = useSignal(false);
+  const isSearching = useSignal(false);
+  const searchError = useSignal<string | null>(null);
 
   const normalizedQuery = query.value.trim().toLowerCase();
-  const results = normalizedQuery
-    ? musicTrackOptions.filter(
-        (track) =>
-          track.title.toLowerCase().includes(normalizedQuery) ||
-          track.artist.toLowerCase().includes(normalizedQuery),
-      )
-    : [];
-  const selectedTrack =
-    musicTrackOptions.find((track) => track.id === selectedTrackId.value) ?? null;
+
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(({ track, cleanup }) => {
+    track(() => query.value);
+    track(() => isComposing.value);
+
+    const currentQuery = query.value.trim();
+    if (!currentQuery || isComposing.value) {
+      results.value = [];
+      isSearching.value = false;
+      searchError.value = null;
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(async () => {
+      isSearching.value = true;
+      searchError.value = null;
+
+      try {
+        const params = new URLSearchParams({ term: currentQuery });
+        const response = await fetch(`/api/music/search?${params.toString()}`, {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Search failed with status ${response.status}`);
+        }
+
+        const data = (await response.json()) as MusicSearchResponse;
+        results.value = data.results;
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        console.error("Music search error:", error);
+        results.value = [];
+        searchError.value = "検索に失敗しました。少し時間をおいてもう一度お試しください。";
+      } finally {
+        if (!controller.signal.aborted) {
+          isSearching.value = false;
+        }
+      }
+    }, 250);
+
+    cleanup(() => {
+      controller.abort();
+      window.clearTimeout(timeoutId);
+    });
+  });
 
   return (
     <section class={`${formStyles.form} ${sharedStyles.content} ${styles.panel}`}>
-      {selectedTrack && (
+      {selectedTrack.value && (
         <div class={styles.selectedTrackRow}>
-          <div
-            class={styles.albumArt}
-            style={{
-              background: selectedTrack.albumArt.background,
-              color: selectedTrack.albumArt.accent,
-            }}
-            aria-hidden="true"
-          >
-            <span>{selectedTrack.albumArt.label}</span>
+          <div class={styles.albumArt} aria-hidden="true">
+            {selectedTrack.value.artworkUrl ? (
+              <img
+                src={selectedTrack.value.artworkUrl}
+                alt=""
+                width={56}
+                height={56}
+                class={styles.albumArtImage}
+              />
+            ) : (
+              <span>{getTrackLabel(selectedTrack.value)}</span>
+            )}
           </div>
           <div class={styles.selectedMeta}>
-            <strong>{selectedTrack.title}</strong>
-            <span>{selectedTrack.artist}</span>
+            <strong>{selectedTrack.value.title}</strong>
+            <span>{selectedTrack.value.artist}</span>
           </div>
         </div>
       )}
@@ -130,7 +116,7 @@ export const MusicSettingsForm = component$(() => {
         }}
       >
         <label class={inputStyles.field} for="music-search">
-          <span class={inputStyles.label}>楽曲を検索</span>
+          <span class={inputStyles.label}>曲名を検索</span>
           <input
             id="music-search"
             type="text"
@@ -155,14 +141,20 @@ export const MusicSettingsForm = component$(() => {
 
         {isSearchActive.value && normalizedQuery && !isComposing.value && (
           <div class={styles.resultsCard} aria-live="polite">
-            {normalizedQuery && results.length === 0 && (
-              <p class={styles.placeholder}>該当する楽曲がありません。</p>
+            {isSearching.value && <p class={styles.placeholder}>検索中...</p>}
+
+            {!isSearching.value && searchError.value && (
+              <p class={styles.placeholder}>{searchError.value}</p>
             )}
 
-            {results.length > 0 && (
+            {!isSearching.value && !searchError.value && results.value.length === 0 && (
+              <p class={styles.placeholder}>一致する曲が見つかりませんでした。</p>
+            )}
+
+            {results.value.length > 0 && (
               <ul class={styles.resultsList}>
-                {results.map((track) => {
-                  const isSelected = track.id === selectedTrackId.value;
+                {results.value.map((track) => {
+                  const isSelected = track.id === selectedTrack.value?.id;
 
                   return (
                     <li key={track.id}>
@@ -173,20 +165,25 @@ export const MusicSettingsForm = component$(() => {
                           [styles.resultButtonSelected]: isSelected,
                         }}
                         onClick$={() => {
-                          selectedTrackId.value = track.id;
+                          selectedTrack.value = track;
                           query.value = "";
+                          results.value = [];
+                          searchError.value = null;
                           isSearchActive.value = false;
                         }}
                       >
-                        <div
-                          class={styles.albumArt}
-                          style={{
-                            background: track.albumArt.background,
-                            color: track.albumArt.accent,
-                          }}
-                          aria-hidden="true"
-                        >
-                          <span>{track.albumArt.label}</span>
+                        <div class={styles.albumArt} aria-hidden="true">
+                          {track.artworkUrl ? (
+                            <img
+                              src={track.artworkUrl}
+                              alt=""
+                              width={56}
+                              height={56}
+                              class={styles.albumArtImage}
+                            />
+                          ) : (
+                            <span>{getTrackLabel(track)}</span>
+                          )}
                         </div>
                         <span class={styles.trackMeta}>
                           <span class={styles.trackTitle}>{track.title}</span>
@@ -203,7 +200,13 @@ export const MusicSettingsForm = component$(() => {
       </div>
 
       <div class={formStyles.actions}>
-        <Button type="button" variant="accent" size="md" width="full" disabled={!selectedTrack}>
+        <Button
+          type="button"
+          variant="accent"
+          size="md"
+          width="full"
+          disabled={!selectedTrack.value}
+        >
           保存する
         </Button>
       </div>
