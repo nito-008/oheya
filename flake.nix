@@ -17,13 +17,17 @@
       in
       {
         devShells.default = pkgs.mkShell {
-          packages =
-            with pkgs;
-            [
-              nodejs
-              corepack
-            ]
-            ++ [ vite-plus ];
+          packages = with pkgs; [
+            corepack
+            vite-plus
+            cacert
+          ]
+          ++ [ vite-plus ];
+          
+          shellHook = ''
+            export SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
+            export NODE_EXTRA_CA_CERTS=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
+          '';
         };
       }
     );
