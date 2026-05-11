@@ -15,7 +15,11 @@ const MIN_SCALE = 1;
 const MAX_SCALE = 3;
 const ICON_CONTENT_TYPE = "image/webp";
 const ICON_QUALITY = 0.86;
-const FALLBACK_ICON_CONTENT_TYPE = "image/png";
+const FALLBACK_ICON_CONTENT_TYPE = "image/jpeg";
+const ICON_OUTPUT_EXTENSIONS = {
+  [ICON_CONTENT_TYPE]: "webp",
+  [FALLBACK_ICON_CONTENT_TYPE]: "jpeg",
+} as const;
 const WHEEL_ZOOM_STEP = 0.12;
 
 type FieldProps = {
@@ -55,6 +59,8 @@ type CropLayout = {
 };
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+const isIconOutputContentType = (value: string): value is keyof typeof ICON_OUTPUT_EXTENSIONS =>
+  value in ICON_OUTPUT_EXTENSIONS;
 
 export const IconCropInput = component$<IconCropInputProps>(({ field, fieldProps, label }) => {
   const sourceImageUrl = useSignal("");
@@ -135,17 +141,17 @@ export const IconCropInput = component$<IconCropInputProps>(({ field, fieldProps
       new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, contentType, ICON_QUALITY));
 
     let blob = await toBlob(ICON_CONTENT_TYPE);
-    if (blob && blob.type !== ICON_CONTENT_TYPE && blob.type !== FALLBACK_ICON_CONTENT_TYPE) {
+    if (!blob || !isIconOutputContentType(blob.type)) {
       blob = await toBlob(FALLBACK_ICON_CONTENT_TYPE);
     }
 
-    if (!blob || (blob.type !== ICON_CONTENT_TYPE && blob.type !== FALLBACK_ICON_CONTENT_TYPE)) {
+    if (!blob || !isIconOutputContentType(blob.type)) {
       localError.value = "このブラウザはアイコン画像の保存形式に対応していません";
       return null;
     }
 
     localError.value = "";
-    const extension = blob.type === FALLBACK_ICON_CONTENT_TYPE ? "png" : "webp";
+    const extension = ICON_OUTPUT_EXTENSIONS[blob.type];
     return new File([blob], `icon.${extension}`, { type: blob.type });
   });
 
