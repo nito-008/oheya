@@ -24,3 +24,5 @@ export const albumSchema = v.object({
 
 export type AlbumPhoto = v.InferOutput<typeof albumPhotoSchema>;
 export type Album = v.InferOutput<typeof albumSchema>;
+export type UserAlbumPhoto = AlbumPhoto & { url: string };
+export type UserAlbum = { photos: UserAlbumPhoto[] };

@@ -1,10 +1,11 @@
 import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
+import type { UserAlbumPhoto } from "~/schema/album";
 import type { MusicTrack } from "~/schema/music";
 import iconFrameSvg from "~/media/icon-frame.svg";
 import iconPlaceholderSvg from "~/media/icon-placeholder.svg";
 import profilePlusSvg from "~/media/profile-plus.svg";
 import scrollSvg from "~/media/scroll-hint.svg";
-import { AlbumPhotoFrame } from "~/routes/[userId]/components/album-photo-frame/album-photo-frame";
+import { AlbumGallery } from "~/routes/[userId]/components/album-gallery/album-gallery";
 import { SongJacket } from "~/routes/[userId]/components/song-jacket/song-jacket";
 import { getImageUrl } from "~/schema/image";
 import styles from "./profile-carousel.module.css";
@@ -12,12 +13,13 @@ import styles from "./profile-carousel.module.css";
 const profileSlides = [
   { path: (publicId: string) => `/${publicId}/profile/` },
   { path: (publicId: string) => `/${publicId}/music/` },
-  { path: null },
+  { path: (publicId: string) => `/${publicId}/album/` },
 ] as const;
 
 const SLIDE_COUNT = profileSlides.length;
 
 type ProfileCarouselProps = {
+  albumPhotos: UserAlbumPhoto[];
   initialSlide?: number;
   profile: {
     icon: string | null;
@@ -28,7 +30,7 @@ type ProfileCarouselProps = {
 };
 
 export const ProfileCarousel = component$<ProfileCarouselProps>(
-  ({ initialSlide = 1, profile, track }) => {
+  ({ albumPhotos, initialSlide = 1, profile, track }) => {
     const carouselRef = useSignal<HTMLDivElement>();
     const currentSlide = useSignal(Math.min(Math.max(initialSlide, 1), SLIDE_COUNT));
 
@@ -155,7 +157,7 @@ export const ProfileCarousel = component$<ProfileCarouselProps>(
             <SongJacket track={track} />
           </section>
           <section class={`${styles.carouselSlide} ${styles.albumSlide}`} aria-label="アルバム">
-            <AlbumPhotoFrame />
+            <AlbumGallery photos={albumPhotos} />
           </section>
         </div>
         <div
