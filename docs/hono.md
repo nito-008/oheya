@@ -7,9 +7,8 @@
 
 ## Routes and Shared Logic
 
-- Keep endpoint paths explicit in the router that owns them.
+- Keep endpoint paths explicit in the router that owns them instead of hiding them inside a shared router.
 - Prefer a route chain that shows the public API shape directly, such as `.get("/")`, `.get("/music")`, or `.patch("/")`.
-- Do not hide endpoint paths inside a shared router just to remove duplicated handler code.
 - Compose routers at boundary paths, such as `.route("/me", currentUserRouter)` and `.route("/:publicId", publicUserRouter)`.
 - Share duplicated behavior with plain functions instead of shared routers when each route should still show its own path.
 - Put data access and response-shaping helpers in `service.ts` near the router.
