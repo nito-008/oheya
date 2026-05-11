@@ -15,6 +15,8 @@
   - `perf`: performance improvements
   - `test`: test-related changes
   - `chore`: build, auxiliary tooling, and library-related changes
+- Do not change commits that have already been pushed.
+- Do not force push.
 
 ## GitHub
 
