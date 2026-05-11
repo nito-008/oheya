@@ -25,6 +25,7 @@
 - Read `docs/design.md` before changing shared visual patterns or page-level layout treatments.
 - Read `docs/error.md` before making error-related changes.
 - Read `docs/form.md` before making form-related changes.
+- Read `docs/hono.md` before adding or updating Hono routes.
 - Read `docs/media.md` before adding or updating media assets such as SVG files.
 - Read `docs/qwik.md` before using Qwik-specific features such as `routeLoader` and `use**` APIs.
 
