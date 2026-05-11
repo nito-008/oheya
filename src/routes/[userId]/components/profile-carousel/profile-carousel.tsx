@@ -4,11 +4,18 @@ import iconFrameSvg from "~/media/icon-frame.svg";
 import iconPlaceholderSvg from "~/media/icon-placeholder.svg";
 import profilePlusSvg from "~/media/profile-plus.svg";
 import scrollSvg from "~/media/scroll-hint.svg";
+import { AlbumPhotoFrame } from "~/routes/[userId]/components/album-photo-frame/album-photo-frame";
 import { SongJacket } from "~/routes/[userId]/components/song-jacket/song-jacket";
 import { getImageUrl } from "~/schema/image";
 import styles from "./profile-carousel.module.css";
 
-const SLIDE_COUNT = 3;
+const profileSlides = [
+  { path: (publicId: string) => `/${publicId}/profile/` },
+  { path: (publicId: string) => `/${publicId}/music/` },
+  { path: null },
+] as const;
+
+const SLIDE_COUNT = profileSlides.length;
 
 type ProfileCarouselProps = {
   initialSlide?: number;
@@ -31,15 +38,11 @@ export const ProfileCarousel = component$<ProfileCarouselProps>(
       const carousel = carouselRef.value;
       if (!carousel) return;
 
-      const slidePaths = [
-        `/${profile.publicId}/profile/`,
-        `/${profile.publicId}/music/`,
-        null,
-      ] as const;
       const requestedSlide = Math.min(Math.max(initialSlide, 1), SLIDE_COUNT);
 
       const syncPath = (slideIndex: number) => {
-        const nextPath = slidePaths[slideIndex - 1];
+        const slidePath = profileSlides[slideIndex - 1]?.path;
+        const nextPath = typeof slidePath === "function" ? slidePath(profile.publicId) : null;
         if (!nextPath || window.location.pathname === nextPath) return;
         window.history.replaceState(window.history.state, "", nextPath);
       };
@@ -151,7 +154,9 @@ export const ProfileCarousel = component$<ProfileCarouselProps>(
           <section class={`${styles.carouselSlide} ${styles.musicSlide}`} aria-label="音楽">
             <SongJacket track={track} />
           </section>
-          <section class={styles.carouselSlide} aria-label="プロフィール詳細" />
+          <section class={`${styles.carouselSlide} ${styles.albumSlide}`} aria-label="アルバム">
+            <AlbumPhotoFrame />
+          </section>
         </div>
         <div
           class={styles.carouselProgress}
