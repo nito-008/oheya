@@ -2,25 +2,20 @@ import { vValidator } from "@hono/valibot-validator";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { authMiddleware } from "~/hono/middleware/auth";
-import type { Bindings } from "~/hono/types";
 import { deleteOwnedImage } from "~/hono/utils/image";
 import { getDb } from "~/lib/db";
 import { images, profiles } from "~/lib/db/schema";
 import { musicSelectionSchema } from "~/schema/music";
 import { userSchema } from "~/schema/user";
+import { userNotFound, type UsersEnv } from ".";
 import { getUserMusic, getUserProfile } from "./service";
 
-type CurrentUserEnv = {
-  Bindings: Bindings;
-  Variables: { userId: string };
-};
-
-export const currentUserRouter = new Hono<CurrentUserEnv>()
+export const currentUserRouter = new Hono<UsersEnv>()
   .use(authMiddleware)
   .get("/", async (c) => {
     const profile = await getUserProfile(c.env, c.var.userId);
     if (!profile) {
-      return c.json({ message: "User not found" } as const, 404);
+      return c.json(userNotFound, 404);
     }
 
     return c.json(profile);
@@ -28,7 +23,7 @@ export const currentUserRouter = new Hono<CurrentUserEnv>()
   .get("/music", async (c) => {
     const music = await getUserMusic(c.env, c.var.userId);
     if (!music) {
-      return c.json({ message: "User not found" } as const, 404);
+      return c.json(userNotFound, 404);
     }
 
     return c.json(music);
@@ -43,7 +38,7 @@ export const currentUserRouter = new Hono<CurrentUserEnv>()
       .where(eq(profiles.userId, userId));
 
     if (!profile) {
-      return c.json({ message: "User not found" } as const, 404);
+      return c.json(userNotFound, 404);
     }
 
     await db
