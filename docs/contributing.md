@@ -18,7 +18,6 @@
 
 ## GitHub
 
-- When addressing an issue, create a new branch and open a pull request for the change.
 - Write pull request titles in Japanese.
 - Keep pull request comments in Japanese.
 - Keep pull request comments limited to a brief summary so they are easy to read.

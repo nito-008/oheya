@@ -32,3 +32,7 @@
 
 - Structure components in folders like `[component_name]/[component_name].{tsx,module.css}` by default.
 - For route-specific components, create a `components` folder under each route and place them there.
+
+## GitHub
+
+- When addressing an issue, create a new branch and open a pull request for the change.
