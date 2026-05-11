@@ -1,14 +1,15 @@
 .albumPhotoFrame {
   display: grid;
   place-items: center;
-  width: min(100%, 24rem);
+  box-sizing: border-box;
+  width: min(100%, 34rem);
   margin: 0;
   padding: 1rem;
 }
 
 .frameShell {
   position: relative;
-  width: min(100%, 22rem);
+  width: min(100%, 32rem);
   aspect-ratio: 4 / 3;
   transform: rotate(-2.5deg);
   --photo-left: 15.4%;
