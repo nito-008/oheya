@@ -10,9 +10,10 @@
   position: relative;
   width: min(100%, 22rem);
   aspect-ratio: 4 / 3;
-  --photo-left: 8.5%;
-  --photo-top: 8.5%;
-  --photo-width: 83%;
+  transform: rotate(-2.5deg);
+  --photo-left: 15.4%;
+  --photo-top: 15.4%;
+  --photo-width: 69.2%;
 }
 
 .photoImage,
