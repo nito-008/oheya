@@ -1,13 +1,16 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { authMiddleware } from "~/hono/middleware/auth";
 import type { Bindings } from "~/hono/types";
 import { applyR2HttpMetadata, deleteOwnedImage } from "~/hono/utils/image";
 import { getDb } from "~/lib/db";
 import { images } from "~/lib/db/schema";
-import { imageIdPattern, isImageContentType } from "~/schema/image";
-
-const MAX_IMAGE_SIZE = 6 * 1024 * 1024;
+import {
+  imageIdPattern,
+  isImageContentType,
+  maxImageSizeBytes,
+  maxUserImageStorageBytes,
+} from "~/schema/image";
 
 export const imagesRouter = new Hono<{ Bindings: Bindings }>()
   .get("/:imageId", async (c) => {
@@ -37,20 +40,40 @@ export const imagesRouter = new Hono<{ Bindings: Bindings }>()
     if (!isImageContentType(image.type)) {
       return c.json({ message: "Unsupported image type" } as const, 400);
     }
-    if (image.size > MAX_IMAGE_SIZE) {
+    if (image.size > maxImageSizeBytes) {
       return c.json({ message: "Image is too large" } as const, 400);
     }
 
     const imageId = crypto.randomUUID();
-    await c.env.R2_BUCKET.put(imageId, await image.arrayBuffer(), {
-      httpMetadata: {
-        contentType: image.type,
-      },
+    const db = getDb(c.env);
+
+    const isImageStorageReserved = await db.transaction(async (tx) => {
+      const [usage] = await tx
+        .select({
+          byteSize: sql<number>`coalesce(sum(${images.byteSize}), 0)`,
+        })
+        .from(images)
+        .where(eq(images.userId, userId));
+      const usedByteSize = Number(usage.byteSize);
+      if (usedByteSize + image.size > maxUserImageStorageBytes) {
+        return false;
+      }
+
+      await tx.insert(images).values({ id: imageId, userId, byteSize: image.size });
+      return true;
     });
+    if (!isImageStorageReserved) {
+      return c.json({ message: "Image storage limit exceeded" } as const, 400);
+    }
+
     try {
-      await getDb(c.env).insert(images).values({ id: imageId, userId });
+      await c.env.R2_BUCKET.put(imageId, await image.arrayBuffer(), {
+        httpMetadata: {
+          contentType: image.type,
+        },
+      });
     } catch (error) {
-      await c.env.R2_BUCKET.delete(imageId);
+      await db.delete(images).where(eq(images.id, imageId));
       throw error;
     }
 
