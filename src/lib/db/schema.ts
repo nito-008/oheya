@@ -1,4 +1,4 @@
-import { integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const users = sqliteTable("user", {
   id: text("id")
@@ -24,6 +24,20 @@ export const profiles = sqliteTable("profile", {
   musicPreviewUrl: text("music_preview_url"),
   musicTrackViewUrl: text("music_track_view_url"),
 });
+
+export const images = sqliteTable(
+  "image",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (image) => [index("image_user_id_idx").on(image.userId)],
+);
 
 export const accounts = sqliteTable(
   "account",
