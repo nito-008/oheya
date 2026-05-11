@@ -1,7 +1,9 @@
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import type { Bindings } from "~/hono/types";
 import { getDb } from "~/lib/db";
-import { profiles } from "~/lib/db/schema";
+import { albumPhotos, images, profiles } from "~/lib/db/schema";
+import type { AlbumPhoto } from "~/schema/album";
+import { getImageUrl } from "~/schema/image";
 import type { MusicTrack } from "~/schema/music";
 
 export const getUserIdByPublicId = async (env: Bindings, publicId: string) => {
@@ -72,3 +74,51 @@ export const getUserMusic = async (env: Bindings, userId: string) => {
 
   return profile ? { track: toMusicTrack(profile) } : null;
 };
+
+export const getUserAlbum = async (env: Bindings, userId: string) => {
+  const db = getDb(env);
+  const [profile] = await db
+    .select({ userId: profiles.userId })
+    .from(profiles)
+    .where(eq(profiles.userId, userId));
+  if (!profile) return null;
+
+  const photos = await db
+    .select({
+      imageId: albumPhotos.imageId,
+      title: albumPhotos.title,
+      subtitle: albumPhotos.subtitle,
+    })
+    .from(albumPhotos)
+    .where(eq(albumPhotos.userId, userId))
+    .orderBy(albumPhotos.position);
+
+  return {
+    photos: photos.map((photo) => ({
+      ...photo,
+      url: getImageUrl(photo.imageId)!,
+    })),
+  };
+};
+
+export const getImageOwners = async (env: Bindings, imageIds: readonly string[]) => {
+  const uniqueImageIds = [...new Set(imageIds)];
+  if (uniqueImageIds.length === 0) return new Map<string, string>();
+
+  const db = getDb(env);
+  const imageOwners = await db
+    .select({ id: images.id, userId: images.userId })
+    .from(images)
+    .where(inArray(images.id, uniqueImageIds));
+
+  return new Map(imageOwners.map((image) => [image.id, image.userId]));
+};
+
+export const toAlbumPhotoRows = (userId: string, photos: readonly AlbumPhoto[]) =>
+  photos.map((photo, index) => ({
+    userId,
+    imageId: photo.imageId,
+    title: photo.title,
+    subtitle: photo.subtitle,
+    position: index,
+  }));
