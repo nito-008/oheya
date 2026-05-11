@@ -2,15 +2,20 @@ import { vValidator } from "@hono/valibot-validator";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { authMiddleware } from "~/hono/middleware/auth";
+import type { Bindings } from "~/hono/types";
 import { deleteOwnedImage } from "~/hono/utils/image";
 import { getDb } from "~/lib/db";
 import { images, profiles } from "~/lib/db/schema";
 import { musicSelectionSchema } from "~/schema/music";
 import { userSchema } from "~/schema/user";
 import { getUserMusic, getUserProfile } from "./service";
-import type { UsersEnv } from "./types";
 
-export const currentUserRouter = new Hono<UsersEnv>()
+type CurrentUserEnv = {
+  Bindings: Bindings;
+  Variables: { userId: string };
+};
+
+export const currentUserRouter = new Hono<CurrentUserEnv>()
   .use(authMiddleware)
   .get("/", async (c) => {
     const profile = await getUserProfile(c.env, c.var.userId);

@@ -1,8 +1,13 @@
 import { Hono, type MiddlewareHandler } from "hono";
+import type { Bindings } from "~/hono/types";
 import { getUserIdByPublicId, getUserMusic, getUserProfile } from "./service";
-import type { UsersEnv } from "./types";
 
-const publicUserMiddleware: MiddlewareHandler<UsersEnv> = async (c, next) => {
+type PublicUserEnv = {
+  Bindings: Bindings;
+  Variables: { userId: string };
+};
+
+const publicUserMiddleware: MiddlewareHandler<PublicUserEnv> = async (c, next) => {
   const publicId = c.req.param("publicId");
   if (!publicId) {
     return c.json({ message: "User not found" } as const, 404);
@@ -17,7 +22,7 @@ const publicUserMiddleware: MiddlewareHandler<UsersEnv> = async (c, next) => {
   await next();
 };
 
-export const publicUserRouter = new Hono<UsersEnv>()
+export const publicUserRouter = new Hono<PublicUserEnv>()
   .use(publicUserMiddleware)
   .get("/", async (c) => {
     const profile = await getUserProfile(c.env, c.var.userId);
