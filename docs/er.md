@@ -21,6 +21,7 @@ erDiagram
   image {
     text id PK
     text user_id FK
+    integer byte_size
     integer created_at
   }
   profile {

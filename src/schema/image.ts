@@ -1,5 +1,8 @@
 const imageContentTypes = ["image/png", "image/webp"] as const;
 
+export const maxImageSizeBytes = 1 * 1024 * 1024;
+export const maxUserImageStorageBytes = 50 * 1024 * 1024;
+
 export const isImageContentType = (value: string): value is (typeof imageContentTypes)[number] =>
   imageContentTypes.some((contentType) => contentType === value);
 
