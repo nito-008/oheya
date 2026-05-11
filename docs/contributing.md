@@ -18,7 +18,6 @@
 
 ## GitHub
 
-- Use the GitHub CLI for GitHub-related operations.
 - Write pull request titles in Japanese.
 - Keep pull request comments in Japanese.
 - Keep pull request comments limited to a brief summary so they are easy to read.
