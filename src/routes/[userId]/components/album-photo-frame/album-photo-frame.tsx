@@ -18,8 +18,8 @@ export const AlbumPhotoFrame = component$<AlbumPhotoFrameProps>(({ imageUrl, alt
       <img
         src={albumPhotoFrameSvg}
         alt=""
-        width={400}
-        height={300}
+        width={480}
+        height={360}
         class={styles.frameImage}
         aria-hidden="true"
       />
