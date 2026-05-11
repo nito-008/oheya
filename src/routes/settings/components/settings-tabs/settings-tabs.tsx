@@ -5,6 +5,7 @@ import styles from "./settings-tabs.module.css";
 const tabs = [
   { href: "/settings/profile/", label: "プロフィール" },
   { href: "/settings/music/", label: "音楽" },
+  { href: "/settings/album/", label: "アルバム" },
   { href: "/settings/account/", label: "アカウント" },
 ] as const;
 

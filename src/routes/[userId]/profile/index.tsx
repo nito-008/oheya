@@ -7,5 +7,12 @@ export { head, useProfile };
 export default component$(() => {
   const data = useProfile();
 
-  return <ProfileRoomPage profile={data.value.profile} track={data.value.track} initialSlide={1} />;
+  return (
+    <ProfileRoomPage
+      profile={data.value.profile}
+      albumPhotos={data.value.albumPhotos}
+      track={data.value.track}
+      initialSlide={1}
+    />
+  );
 });
