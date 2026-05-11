@@ -18,11 +18,22 @@ erDiagram
     text id_token "nullable"
     text session_state "nullable"
   }
+  image {
+    text id PK
+    text user_id FK
+    integer created_at
+  }
   profile {
     text user_id PK,FK
     text public_id UK
     text name
     text icon "nullable"
+    text music_track_id "nullable"
+    text music_title "nullable"
+    text music_artist "nullable"
+    text music_artwork_url "nullable"
+    text music_preview_url "nullable"
+    text music_track_view_url "nullable"
   }
   session {
     text sessionToken PK
@@ -42,6 +53,7 @@ erDiagram
     integer expires
   }
   user ||--o{ account : "userId"
+  user ||--o{ image : "user_id"
   user ||--o{ profile : "user_id"
   user ||--o{ session : "userId"
 ```
