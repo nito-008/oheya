@@ -3,8 +3,9 @@ import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { authMiddleware } from "~/hono/middleware/auth";
 import type { Bindings } from "~/hono/types";
+import { deleteOwnedImage } from "~/hono/utils/image";
 import { getDb } from "~/lib/db";
-import { profiles } from "~/lib/db/schema";
+import { images, profiles } from "~/lib/db/schema";
 import { type MusicTrack, musicSelectionSchema } from "~/schema/music";
 import { userSchema } from "~/schema/user";
 
@@ -148,6 +149,18 @@ export const usersRouter = new Hono<{ Bindings: Bindings }>()
     }
 
     const icon = values.icon || null;
+    if (icon) {
+      const [image] = await db
+        .select({ userId: images.userId })
+        .from(images)
+        .where(eq(images.id, icon));
+      if (!image) {
+        return c.json({ message: "Image not found" } as const, 404);
+      }
+      if (image.userId !== userId) {
+        return c.json({ message: "Forbidden" } as const, 403);
+      }
+    }
 
     const profileValues = {
       publicId: values.publicId,
@@ -165,7 +178,7 @@ export const usersRouter = new Hono<{ Bindings: Bindings }>()
     }
 
     if (profile?.icon && profile.icon !== icon) {
-      await c.env.R2_BUCKET.delete(profile.icon);
+      await deleteOwnedImage(c.env, profile.icon, userId);
     }
 
     return c.body(null, 204);
