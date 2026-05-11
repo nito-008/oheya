@@ -20,7 +20,7 @@
 ## References
 
 - When adding a new document under `docs`, also add a corresponding reference here in `AGENTS.md` if future changes should consult it.
-- Read `docs/contributing.md` before making Git commits or GitHub pull requests.
+- Read `docs/contributing.md` before making Git commits or GitHub-related operations.
 - Read `docs/css.md` before making CSS-related changes.
 - Read `docs/design.md` before changing shared visual patterns or page-level layout treatments.
 - Read `docs/error.md` before making error-related changes.
