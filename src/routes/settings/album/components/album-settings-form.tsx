@@ -373,6 +373,13 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
     saveError.value = null;
   });
 
+  const addPhoto$ = $(() => {
+    if (photos.value.length >= maxAlbumPhotoCount) return;
+
+    photos.value = [...photos.value, createEmptyPhoto()];
+    saveError.value = null;
+  });
+
   const handleSourceFileChange = $(async (event: Event, photoId: string) => {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -497,6 +504,8 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
     track(() => sourceImageUrl.value);
     await updateCropLayout();
   });
+
+  const canAddPhoto = photos.value.length < maxAlbumPhotoCount;
 
   return (
     <form
@@ -638,22 +647,20 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
 
       {saveError.value && <p class={styles.errorMessage}>{saveError.value}</p>}
 
-      <div class={styles.actions}>
-        <FormButton
-          type="button"
-          variant="accent"
-          size="md"
-          width="full"
-          disabled={photos.value.length >= maxAlbumPhotoCount || isSaving.value}
-          onClick$={() => {
-            if (photos.value.length >= maxAlbumPhotoCount) return;
-            photos.value = [...photos.value, createEmptyPhoto()];
-            saveError.value = null;
-          }}
-        >
-          写真を追加
-        </FormButton>
-      </div>
+      {canAddPhoto && (
+        <div class={styles.actions}>
+          <FormButton
+            type="button"
+            variant="accent"
+            size="md"
+            width="full"
+            disabled={isSaving.value}
+            onClick$={addPhoto$}
+          >
+            写真を追加
+          </FormButton>
+        </div>
+      )}
       <Modal open={cropModalOpen.value} title="写真を調整" onClose$={closeCropModal}>
         <div class={styles.modalEditor}>
           <div
