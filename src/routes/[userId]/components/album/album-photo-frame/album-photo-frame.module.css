@@ -2,9 +2,8 @@
   display: grid;
   place-items: center;
   box-sizing: border-box;
-  width: min(100%, 34rem);
+  width: min(100%, 32rem);
   margin: 0;
-  padding: 1rem;
 }
 
 .frameShell {
