@@ -1,9 +1,10 @@
 .header {
-  z-index: 20;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 2rem;
+  min-height: var(--common-header-height);
+  box-sizing: border-box;
   padding: 0.8rem 1rem;
 }
 

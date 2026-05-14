@@ -1,4 +1,4 @@
 .main {
-  min-height: 0;
+  min-height: calc(100svh - var(--common-header-height));
   overflow-x: hidden;
 }

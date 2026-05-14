@@ -1,6 +1,6 @@
 import { component$ } from "@builder.io/qwik";
 import type { UserAlbumPhoto } from "~/schema/album";
-import { AlbumPhotoFrame } from "~/routes/[userId]/components/album-photo-frame/album-photo-frame";
+import { AlbumPhotoFrame } from "~/routes/[userId]/components/album/album-photo-frame/album-photo-frame";
 import styles from "./album-gallery.module.css";
 
 type AlbumGalleryProps = {

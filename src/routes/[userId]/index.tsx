@@ -4,7 +4,10 @@ import { routeLoader$ } from "@builder.io/qwik-city";
 import { createApiClient } from "~/lib/api";
 import type { UserAlbumPhoto } from "~/schema/album";
 import type { MusicTrack } from "~/schema/music";
-import { ProfileRoomPage } from "~/routes/[userId]/components/profile-room-page/profile-room-page";
+import { Album } from "~/routes/[userId]/components/album/album";
+import { Music } from "~/routes/[userId]/components/music/music";
+import { Profile } from "~/routes/[userId]/components/profile/profile";
+import styles from "./index.module.css";
 
 type ProfileLoaderData = {
   profile: {
@@ -62,12 +65,11 @@ export default component$(() => {
   const data = useProfile();
 
   return (
-    <ProfileRoomPage
-      profile={data.value.profile}
-      albumPhotos={data.value.albumPhotos}
-      track={data.value.track}
-      initialSlide={1}
-    />
+    <div class={styles.main} aria-label={`${data.value.profile.name}のプロフィール`}>
+      <Profile profile={data.value.profile} />
+      <Music track={data.value.track} />
+      <Album photos={data.value.albumPhotos} />
+    </div>
   );
 });
 

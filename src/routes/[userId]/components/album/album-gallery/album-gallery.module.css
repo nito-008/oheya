@@ -2,7 +2,7 @@
   display: grid;
   gap: 2rem;
   width: min(100%, 34rem);
-  padding: 1rem 1.25rem 4.5rem;
+  padding: 0;
 }
 
 .emptyAlbum {
