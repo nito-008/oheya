@@ -1,11 +1,16 @@
 import { component$ } from "@builder.io/qwik";
 import type { UserAlbumPhoto } from "~/schema/album";
-import { AlbumPhotoFrame } from "~/routes/[userId]/components/album/album-photo-frame/album-photo-frame";
+import {
+  AlbumPhotoFrame,
+  albumPhotoFrameVariantCount,
+} from "~/routes/[userId]/components/album/album-photo-frame/album-photo-frame";
 import styles from "./album-gallery.module.css";
 
 type AlbumGalleryProps = {
   photos: UserAlbumPhoto[];
 };
+
+const getPhotoAlt = (photo: UserAlbumPhoto) => photo.title.trim() || "アルバム写真";
 
 export const AlbumGallery = component$<AlbumGalleryProps>(({ photos }) => {
   if (photos.length === 0) {
@@ -18,9 +23,13 @@ export const AlbumGallery = component$<AlbumGalleryProps>(({ photos }) => {
 
   return (
     <div class={styles.albumGallery} aria-label="アルバム">
-      {photos.map((photo) => (
+      {photos.map((photo, index) => (
         <article key={photo.imageId} class={styles.photoCard}>
-          <AlbumPhotoFrame imageUrl={photo.url} alt={photo.title || "アルバム写真"} />
+          <AlbumPhotoFrame
+            imageUrl={photo.url}
+            alt={getPhotoAlt(photo)}
+            variant={index % albumPhotoFrameVariantCount}
+          />
           {(photo.title || photo.subtitle) && (
             <div class={styles.photoMeta}>
               {photo.title && <h2>{photo.title}</h2>}

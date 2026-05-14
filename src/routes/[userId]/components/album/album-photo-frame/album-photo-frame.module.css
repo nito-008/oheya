@@ -11,10 +11,57 @@
   position: relative;
   width: min(100%, 32rem);
   aspect-ratio: 4 / 3;
-  transform: rotate(-2.5deg);
   --photo-left: 15.4%;
   --photo-top: 15.4%;
   --photo-width: 69.2%;
+  --frame-x: 0%;
+  --frame-y: 0%;
+  --frame-rotate: -2.5deg;
+  --frame-scale: 1;
+
+  transform: translate(var(--frame-x), var(--frame-y)) rotate(var(--frame-rotate))
+    scale(var(--frame-scale));
+  transform-origin: center;
+}
+
+.frameVariantA {
+  --frame-x: -0.8%;
+  --frame-y: 0.3%;
+  --frame-rotate: -2.5deg;
+  --frame-scale: 1;
+  --photo-left: 15.4%;
+  --photo-top: 15.4%;
+  --photo-width: 69.2%;
+}
+
+.frameVariantB {
+  --frame-x: 1%;
+  --frame-y: -0.6%;
+  --frame-rotate: 1.8deg;
+  --frame-scale: 0.97;
+  --photo-left: 16%;
+  --photo-top: 14.8%;
+  --photo-width: 68.6%;
+}
+
+.frameVariantC {
+  --frame-x: -1.2%;
+  --frame-y: -0.4%;
+  --frame-rotate: -1.1deg;
+  --frame-scale: 1.03;
+  --photo-left: 14.9%;
+  --photo-top: 16%;
+  --photo-width: 69.8%;
+}
+
+.frameVariantD {
+  --frame-x: 0.6%;
+  --frame-y: 0.7%;
+  --frame-rotate: 2.6deg;
+  --frame-scale: 0.99;
+  --photo-left: 15.8%;
+  --photo-top: 15.1%;
+  --photo-width: 69%;
 }
 
 .photoImage,

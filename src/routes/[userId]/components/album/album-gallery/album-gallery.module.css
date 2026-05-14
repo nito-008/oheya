@@ -1,7 +1,9 @@
 .albumGallery {
   display: grid;
-  gap: 2rem;
-  width: min(100%, 34rem);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 34rem), 34rem));
+  justify-content: center;
+  gap: 4rem;
+  width: min(100%, 72rem);
   padding: 0;
 }
 
