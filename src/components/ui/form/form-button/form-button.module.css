@@ -10,7 +10,6 @@
   cursor: pointer;
   transition:
     background 0.16s var(--ease-out-expo),
-    box-shadow 0.16s var(--ease-out-expo),
     transform 0.16s var(--ease-out-expo);
 }
 
@@ -19,7 +18,6 @@
 }
 
 .button:active {
-  box-shadow: var(--button-active-shadow);
   transform: translate(1px, 1px);
 }
 
@@ -31,7 +29,6 @@
 .button:disabled {
   background: #f5f5f5;
   color: #3a3a3a;
-  box-shadow: 1px 2px 0 #b8b8b8;
   cursor: not-allowed;
 }
 
@@ -45,30 +42,24 @@
 
 .variant-secondary {
   --button-hover-background: #eee9dc;
-  --button-active-shadow: 1px 2px 0 #d8d2c2;
 
   border-color: #6d6050;
   background: #fffef8;
   color: #5a4630;
-  box-shadow: 2px 3px 0 #d8d2c2;
 }
 
 .variant-primary {
   --button-hover-background: #3a352d;
-  --button-active-shadow: 1px 2px 0 #d8d2c2;
 
   background: #252525;
   color: #fffef8;
-  box-shadow: 2px 3px 0 #d8d2c2;
 }
 
 .variant-accent {
   --button-hover-background: #fff6d4;
-  --button-active-shadow: 1px 1px 0 #9b9688;
 
   background: #fef1c4;
   color: #252525;
-  box-shadow: 2px 3px 0 #2f2f2f;
 }
 
 .size-sm {
