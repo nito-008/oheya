@@ -103,6 +103,7 @@
 .placeholderImage {
   width: 62%;
   height: 62%;
+  opacity: 0.8;
   pointer-events: none;
 }
 

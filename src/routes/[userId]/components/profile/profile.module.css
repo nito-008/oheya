@@ -59,6 +59,7 @@
 .avatarPlaceholder {
   box-sizing: border-box;
   object-fit: contain;
+  opacity: 0.8;
   padding: 0.85rem;
 }
 
