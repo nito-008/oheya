@@ -1,0 +1,9 @@
+.appShell {
+  display: grid;
+  min-height: 100svh;
+  grid-template-rows: auto 1fr auto;
+}
+
+.pageContent {
+  min-width: 0;
+}

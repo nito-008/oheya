@@ -2,13 +2,14 @@ import { component$ } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { Introduction } from "~/components/introduction/introduction";
 import { Door } from "~/components/svg/door/door";
+import styles from "./index.module.css";
 
 export default component$(() => {
   return (
-    <main style={{ padding: "2rem" }}>
+    <div class={styles.home}>
       <Introduction />
       <Door />
-    </main>
+    </div>
   );
 });
 
