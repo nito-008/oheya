@@ -1,4 +1,4 @@
-import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
+import { component$, useVisibleTask$ } from "@builder.io/qwik";
 import type { UserAlbumPhoto } from "~/schema/album";
 import type { MusicTrack } from "~/schema/music";
 import iconFrameSvg from "~/media/icon-frame.svg";
@@ -18,11 +18,6 @@ const profileSectionIds = {
   album: "album",
 } satisfies Record<ProfileRoomSection, string>;
 
-const sectionOrder = Object.values(profileSectionIds);
-const WHEEL_DELTA_THRESHOLD = 6;
-const TOUCH_DELTA_THRESHOLD = 18;
-const SECTION_CHANGE_LOCK_MS = 520;
-
 type ProfileRoomProps = {
   albumPhotos: UserAlbumPhoto[];
   initialSection?: ProfileRoomSection;
@@ -36,91 +31,16 @@ type ProfileRoomProps = {
 
 export const ProfileRoom = component$<ProfileRoomProps>(
   ({ albumPhotos, initialSection = "profile", profile, track }) => {
-    const roomRef = useSignal<HTMLDivElement>();
-
     // eslint-disable-next-line qwik/no-use-visible-task
     useVisibleTask$(({ track }) => {
       const section = track(() => initialSection);
       const sectionId = profileSectionIds[section];
-      const room = roomRef.value;
       const target = document.getElementById(sectionId);
-      if (!room || !target) return;
-      room.scrollTo({ top: target.offsetTop, behavior: "auto" });
-    });
-
-    // eslint-disable-next-line qwik/no-use-visible-task
-    useVisibleTask$(({ cleanup }) => {
-      const room = roomRef.value;
-      if (!room) return;
-
-      let locked = false;
-      let touchStartY: number | null = null;
-
-      const getCurrentSectionIndex = () => {
-        const sections = sectionOrder
-          .map((sectionId) => document.getElementById(sectionId))
-          .filter((section): section is HTMLElement => Boolean(section));
-        const closestSection = sections.reduce(
-          (closest, section, index) => {
-            const distance = Math.abs(section.offsetTop - room.scrollTop);
-            return distance < closest.distance ? { distance, index } : closest;
-          },
-          { distance: Number.POSITIVE_INFINITY, index: 0 },
-        );
-        return closestSection.index;
-      };
-
-      const moveSection = (direction: 1 | -1) => {
-        if (locked) return;
-        const nextIndex = Math.min(
-          Math.max(getCurrentSectionIndex() + direction, 0),
-          sectionOrder.length - 1,
-        );
-        const target = document.getElementById(sectionOrder[nextIndex]);
-        if (!target) return;
-
-        locked = true;
-        room.scrollTo({ top: target.offsetTop, behavior: "smooth" });
-        window.setTimeout(() => {
-          locked = false;
-        }, SECTION_CHANGE_LOCK_MS);
-      };
-
-      const handleWheel = (event: WheelEvent) => {
-        if (Math.abs(event.deltaY) < WHEEL_DELTA_THRESHOLD) return;
-        event.preventDefault();
-        moveSection(event.deltaY > 0 ? 1 : -1);
-      };
-
-      const handleTouchStart = (event: TouchEvent) => {
-        touchStartY = event.touches[0]?.clientY ?? null;
-      };
-
-      const handleTouchMove = (event: TouchEvent) => {
-        if (touchStartY === null) return;
-        const touchY = event.touches[0]?.clientY;
-        if (touchY === undefined) return;
-
-        const deltaY = touchStartY - touchY;
-        if (Math.abs(deltaY) < TOUCH_DELTA_THRESHOLD) return;
-        event.preventDefault();
-        touchStartY = null;
-        moveSection(deltaY > 0 ? 1 : -1);
-      };
-
-      room.addEventListener("wheel", handleWheel, { passive: false });
-      room.addEventListener("touchstart", handleTouchStart, { passive: true });
-      room.addEventListener("touchmove", handleTouchMove, { passive: false });
-
-      cleanup(() => {
-        room.removeEventListener("wheel", handleWheel);
-        room.removeEventListener("touchstart", handleTouchStart);
-        room.removeEventListener("touchmove", handleTouchMove);
-      });
+      target?.scrollIntoView({ block: "start", behavior: "auto" });
     });
 
     return (
-      <div ref={roomRef} class={styles.profileRoom} aria-label={`${profile.name}のプロフィール`}>
+      <div class={styles.profileRoom} aria-label={`${profile.name}のプロフィール`}>
         <section
           id={profileSectionIds.profile}
           class={`${styles.profileSection} ${styles.profileIntro}`}
