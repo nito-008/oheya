@@ -1,16 +1,11 @@
 .profileRoom {
-  height: 100%;
+  min-height: 100%;
   overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior-y: contain;
-  scroll-snap-type: y mandatory;
 }
 
 .profileSection {
   display: grid;
   min-height: 100%;
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
 }
 
 .profileIntro {

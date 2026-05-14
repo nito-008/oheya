@@ -1,5 +1,5 @@
 .main {
   height: calc(100svh - var(--common-header-height));
   overflow-x: hidden;
-  overflow-y: hidden;
+  overflow-y: auto;
 }
