@@ -17,11 +17,13 @@
   gap: 1rem;
   align-items: center;
   justify-items: center;
+  padding-top: 1.8rem;
 }
 
 .cropBoxFrame {
   position: relative;
   width: fit-content;
+  border-radius: 999px;
 }
 
 .cropBox {
@@ -53,9 +55,16 @@
   max-width: 100%;
 }
 
-.cropBox:focus-within,
 .cropBox:hover {
   filter: drop-shadow(2px 3px 0 #d8d2c2) drop-shadow(0 0 0.25rem rgb(17 17 17 / 20%));
+}
+
+.cropBoxFrame:focus-within {
+  outline: 3px solid rgb(17 17 17 / 18%);
+}
+
+.cropBoxFrame:active {
+  outline: 0;
 }
 
 .cropBox:focus-within .fileOverlay,
