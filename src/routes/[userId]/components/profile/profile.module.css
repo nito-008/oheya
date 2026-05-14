@@ -5,7 +5,8 @@
   gap: 3rem;
   justify-items: center;
   align-content: stretch;
-  padding: 8rem 2rem;
+  margin-block: 6rem 10rem;
+  padding-inline: 2rem;
   text-align: center;
 }
 
