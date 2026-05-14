@@ -45,6 +45,16 @@
 }
 
 .frameVariantC {
+  --frame-x: 0.6%;
+  --frame-y: 0.7%;
+  --frame-rotate: 0.4deg;
+  --frame-scale: 0.99;
+  --photo-left: 15.8%;
+  --photo-top: 15.1%;
+  --photo-width: 69%;
+}
+
+.frameVariantD {
   --frame-x: -1.2%;
   --frame-y: -0.4%;
   --frame-rotate: -1.1deg;
@@ -52,16 +62,6 @@
   --photo-left: 14.9%;
   --photo-top: 16%;
   --photo-width: 69.8%;
-}
-
-.frameVariantD {
-  --frame-x: 0.6%;
-  --frame-y: 0.7%;
-  --frame-rotate: 2.6deg;
-  --frame-scale: 0.99;
-  --photo-left: 15.8%;
-  --photo-top: 15.1%;
-  --photo-width: 69%;
 }
 
 .photoImage,
