@@ -17,18 +17,15 @@
   --frame-x: 0%;
   --frame-y: 0%;
   --frame-rotate: -2.5deg;
-  --frame-scale: 1;
 
-  transform: translate(var(--frame-x), var(--frame-y)) rotate(var(--frame-rotate))
-    scale(var(--frame-scale));
+  transform: translate(var(--frame-x), var(--frame-y)) rotate(var(--frame-rotate));
   transform-origin: center;
 }
 
 .frameVariantA {
   --frame-x: -0.8%;
   --frame-y: 0.3%;
-  --frame-rotate: -2.5deg;
-  --frame-scale: 1;
+  --frame-rotate: -0.5deg;
   --photo-left: 15.4%;
   --photo-top: 15.4%;
   --photo-width: 69.2%;
@@ -38,30 +35,27 @@
   --frame-x: 1%;
   --frame-y: -0.6%;
   --frame-rotate: 1.8deg;
-  --frame-scale: 0.97;
   --photo-left: 16%;
   --photo-top: 14.8%;
   --photo-width: 68.6%;
 }
 
 .frameVariantC {
-  --frame-x: -1.2%;
-  --frame-y: -0.4%;
-  --frame-rotate: -1.1deg;
-  --frame-scale: 1.03;
-  --photo-left: 14.9%;
-  --photo-top: 16%;
-  --photo-width: 69.8%;
-}
-
-.frameVariantD {
   --frame-x: 0.6%;
   --frame-y: 0.7%;
-  --frame-rotate: 2.6deg;
-  --frame-scale: 0.99;
+  --frame-rotate: 1.2deg;
   --photo-left: 15.8%;
   --photo-top: 15.1%;
   --photo-width: 69%;
+}
+
+.frameVariantD {
+  --frame-x: -1.2%;
+  --frame-y: -0.4%;
+  --frame-rotate: -1.1deg;
+  --photo-left: 14.9%;
+  --photo-top: 16%;
+  --photo-width: 69.8%;
 }
 
 .photoImage,
@@ -78,9 +72,22 @@
 }
 
 .photoFallback {
+  display: grid;
+  place-items: center;
   background:
-    linear-gradient(145deg, rgb(255 254 248 / 90%), rgb(232 226 214 / 70%)),
-    repeating-linear-gradient(-24deg, rgb(34 34 34 / 9%) 0 0.08rem, transparent 0.08rem 0.65rem);
+    linear-gradient(45deg, rgb(47 47 47 / 8%) 25%, transparent 25% 75%, rgb(47 47 47 / 8%) 75%),
+    linear-gradient(45deg, rgb(47 47 47 / 8%) 25%, transparent 25% 75%, rgb(47 47 47 / 8%) 75%),
+    #fffef8;
+  background-position:
+    0 0,
+    0.65rem 0.65rem;
+  background-size: 1.3rem 1.3rem;
+}
+
+.placeholderImage {
+  width: min(34%, 7rem);
+  height: auto;
+  opacity: 0.8;
 }
 
 .frameImage {

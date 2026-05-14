@@ -1,8 +1,10 @@
 import { $, component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
+import { Button } from "~/components/ui/button/button";
 import { FormButton } from "~/components/ui/form/form-button/form-button";
 import inputStyles from "~/components/ui/form/form-text-input/form-text-input.module.css";
 import { Modal } from "~/components/ui/modal/modal";
 import { useToast } from "~/components/ui/toast/toast";
+import deleteSvg from "~/media/icons/delete.svg";
 import {
   albumPhotoSubtitleMaxLength,
   albumPhotoTitleMaxLength,
@@ -12,6 +14,7 @@ import {
 import { isImageContentType, maxImageSizeBytes } from "~/schema/image";
 import formStyles from "~/routes/signup/index.module.css";
 import sharedStyles from "~/routes/settings/components/settings-tabs/settings-tabs.module.css";
+import photoPlaceholderSvg from "~/media/photo-placeholder.svg";
 import styles from "./album-settings-form.module.css";
 
 type AlbumSettingsPhoto = {
@@ -47,6 +50,13 @@ const createEmptyPhoto = (): AlbumSettingsPhoto => ({
 
 const getPhotoImageName = (photo: Pick<AlbumSettingsPhoto, "localId">) =>
   `photoImage-${photo.localId}`;
+
+const toSavedPhotos = (photos: AlbumSettingsPhoto[]) =>
+  photos.map((photo) => ({
+    ...photo,
+    previewUrl: null,
+    url: photo.imageId ? `/api/images/${photo.imageId}` : photo.url,
+  }));
 
 const CROP_OUTPUT_WIDTH = 800;
 const CROP_OUTPUT_HEIGHT = 600;
@@ -87,6 +97,7 @@ const isPhotoOutputContentType = (value: string): value is keyof typeof PHOTO_OU
 export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPhotos }) => {
   const formRef = useSignal<HTMLFormElement>();
   const photos = useSignal<AlbumSettingsPhoto[]>(initialPhotos.map(toSettingsPhoto));
+  const savedPhotos = useSignal<AlbumSettingsPhoto[]>(initialPhotos.map(toSettingsPhoto));
   const isSaving = useSignal(false);
   const saveError = useSignal<string | null>(null);
   const cropPhotoId = useSignal<string | null>(null);
@@ -110,6 +121,90 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
       reader.addEventListener("error", () => reject(reader.error));
       reader.readAsDataURL(file);
     });
+  });
+
+  const uploadPhoto$ = $(async (file: File) => {
+    if (!isImageContentType(file.type)) {
+      throw new Error("JPEGまたはWebPの画像を選択してください");
+    }
+    if (file.size > maxImageSizeBytes) {
+      throw new Error("画像は1MB以下にしてください");
+    }
+
+    const imageFormData = new FormData();
+    imageFormData.set("image", file, file.name);
+    const uploadRes = await fetch("/api/images", { method: "POST", body: imageFormData });
+    if (!uploadRes.ok) {
+      throw new Error("画像をアップロードできませんでした");
+    }
+
+    return (await uploadRes.json()) as { imageId: string; url: string };
+  });
+
+  const saveAlbum$ = $(
+    async (nextPhotos: AlbumSettingsPhoto[], uploadedImageIds: string[] = []) => {
+      if (isSaving.value) return false;
+
+      isSaving.value = true;
+      saveError.value = null;
+
+      try {
+        const payloadPhotos = nextPhotos.flatMap((photo) =>
+          photo.imageId
+            ? [
+                {
+                  imageId: photo.imageId,
+                  title: photo.title,
+                  subtitle: photo.subtitle,
+                },
+              ]
+            : [],
+        );
+
+        const response = await fetch("/api/users/me/album", {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ photos: payloadPhotos }),
+        });
+
+        if (!response.ok && uploadedImageIds.length > 0) {
+          await Promise.all(
+            uploadedImageIds.map((imageId) =>
+              fetch(`/api/images/${imageId}`, { method: "DELETE" }),
+            ),
+          );
+        }
+        if (response.status === 401) {
+          throw new Error("ログインが必要です");
+        }
+        if (response.status === 404) {
+          throw new Error("画像またはプロフィールが見つかりません");
+        }
+        if (!response.ok) {
+          throw new Error("保存に失敗しました");
+        }
+
+        const savedPhotoValues = toSavedPhotos(nextPhotos);
+        photos.value = savedPhotoValues;
+        savedPhotos.value = savedPhotoValues;
+        await toast.success("保存しました");
+        return true;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "保存に失敗しました";
+        saveError.value = message;
+        await toast.error(message);
+        return false;
+      } finally {
+        isSaving.value = false;
+      }
+    },
+  );
+
+  const updatePhotoText = $((photoId: string, fieldName: "subtitle" | "title", value: string) => {
+    photos.value = photos.value.map((item) =>
+      item.localId === photoId ? { ...item, [fieldName]: value } : item,
+    );
+    saveError.value = null;
   });
 
   const updateCropLayout = $((): CropLayout | null => {
@@ -211,16 +306,71 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
       input.files = files.files;
     }
 
-    photos.value = photos.value.map((item) => {
+    const nextPreviewUrl = URL.createObjectURL(croppedPhoto);
+    const previewPhotos = photos.value.map((item) => {
       if (item.localId !== photoId) return item;
       if (item.previewUrl?.startsWith("blob:")) URL.revokeObjectURL(item.previewUrl);
       return {
         ...item,
-        previewUrl: URL.createObjectURL(croppedPhoto),
+        previewUrl: nextPreviewUrl,
       };
     });
+
+    photos.value = previewPhotos;
     saveError.value = null;
     await closeCropModal();
+  });
+
+  const savePhoto$ = $(async (photo: AlbumSettingsPhoto) => {
+    const form = formRef.value;
+    const input = form?.elements.namedItem(getPhotoImageName(photo));
+    const croppedPhoto = input instanceof HTMLInputElement ? input.files?.[0] : null;
+    if (!croppedPhoto && !photo.imageId) {
+      const message = "写真を選択してください";
+      saveError.value = message;
+      await toast.error(message);
+      return;
+    }
+
+    let uploadedImageId: string | null = null;
+    try {
+      if (croppedPhoto) {
+        const uploaded = await uploadPhoto$(croppedPhoto);
+        uploadedImageId = uploaded.imageId;
+        const uploadedPhotos = photos.value.map((item) =>
+          item.localId === photo.localId
+            ? { ...item, imageId: uploaded.imageId, previewUrl: null, url: uploaded.url }
+            : item,
+        );
+        const saved = await saveAlbum$(uploadedPhotos, [uploaded.imageId]);
+        if (saved) {
+          if (photo.previewUrl?.startsWith("blob:")) URL.revokeObjectURL(photo.previewUrl);
+          if (input instanceof HTMLInputElement) input.value = "";
+        }
+        return;
+      }
+
+      await saveAlbum$(photos.value);
+    } catch (error) {
+      if (uploadedImageId) {
+        await fetch(`/api/images/${uploadedImageId}`, { method: "DELETE" });
+      }
+      const message = error instanceof Error ? error.message : "保存に失敗しました";
+      saveError.value = message;
+      await toast.error(message);
+    }
+  });
+
+  const cancelPhoto$ = $((photo: AlbumSettingsPhoto) => {
+    if (photo.previewUrl?.startsWith("blob:")) URL.revokeObjectURL(photo.previewUrl);
+    const savedPhoto = savedPhotos.value.find((item) => item.localId === photo.localId);
+    photos.value = savedPhoto
+      ? photos.value.map((item) => (item.localId === photo.localId ? savedPhoto : item))
+      : photos.value.filter((item) => item.localId !== photo.localId);
+
+    const input = formRef.value?.elements.namedItem(getPhotoImageName(photo));
+    if (input instanceof HTMLInputElement) input.value = "";
+    saveError.value = null;
   });
 
   const handleSourceFileChange = $(async (event: Event, photoId: string) => {
@@ -354,163 +504,136 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
       preventdefault:submit
       class={`${formStyles.form} ${sharedStyles.content} ${styles.panel}`}
       onSubmit$={async () => {
-        if (isSaving.value) return;
-
-        const form = formRef.value;
-        if (!form) return;
-
-        isSaving.value = true;
-        saveError.value = null;
-        const uploadedImageIds: string[] = [];
-
-        try {
-          const formData = new FormData(form);
-          const payloadPhotos = [];
-
-          for (const photo of photos.value) {
-            let imageId = photo.imageId;
-            const file = formData.get(getPhotoImageName(photo));
-
-            if (file instanceof File && file.size > 0) {
-              if (!isImageContentType(file.type)) {
-                throw new Error("JPEGまたはWebPの画像を選択してください");
-              }
-              if (file.size > maxImageSizeBytes) {
-                throw new Error("画像は1MB以下にしてください");
-              }
-
-              const imageFormData = new FormData();
-              imageFormData.set("image", file, file.name);
-              const uploadRes = await fetch("/api/images", { method: "POST", body: imageFormData });
-              if (!uploadRes.ok) {
-                throw new Error("画像をアップロードできませんでした");
-              }
-              const uploaded = (await uploadRes.json()) as { imageId: string; url: string };
-              imageId = uploaded.imageId;
-              uploadedImageIds.push(uploaded.imageId);
-            }
-
-            if (!imageId) {
-              throw new Error("写真を選択してください");
-            }
-
-            payloadPhotos.push({
-              imageId,
-              title: photo.title,
-              subtitle: photo.subtitle,
-            });
-          }
-
-          const response = await fetch("/api/users/me/album", {
-            method: "PATCH",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ photos: payloadPhotos }),
-          });
-
-          if (!response.ok) {
-            await Promise.all(
-              uploadedImageIds.map((imageId) =>
-                fetch(`/api/images/${imageId}`, { method: "DELETE" }),
-              ),
-            );
-          }
-          if (response.status === 401) {
-            throw new Error("ログインが必要です");
-          }
-          if (response.status === 404) {
-            throw new Error("画像またはプロフィールが見つかりません");
-          }
-          if (!response.ok) {
-            throw new Error("保存に失敗しました");
-          }
-
-          const savedPhotos = payloadPhotos.map((photo, index) => ({
-            ...photos.value[index],
-            imageId: photo.imageId,
-            previewUrl: null,
-            url: `/api/images/${photo.imageId}`,
-          }));
-          photos.value = savedPhotos;
-          form.reset();
-          await toast.success("保存しました");
-        } catch (error) {
-          const message = error instanceof Error ? error.message : "保存に失敗しました";
-          saveError.value = message;
-          await toast.error(message);
-        } finally {
-          isSaving.value = false;
-        }
+        await saveAlbum$(photos.value);
       }}
     >
       <div class={styles.photoList}>
-        {photos.value.map((photo, index) => (
-          <section key={photo.localId} class={styles.photoEditor}>
-            <div class={styles.photoHeader}>
-              <h2>写真 {index + 1}</h2>
-              <button
-                type="button"
-                class={styles.removeButton}
-                onClick$={() => {
-                  photos.value = photos.value.filter((item) => item.localId !== photo.localId);
-                  saveError.value = null;
-                }}
-              >
-                削除
-              </button>
-            </div>
+        {photos.value.map((photo, index) => {
+          const savedPhoto = savedPhotos.value.find((item) => item.localId === photo.localId);
+          const titleChanged = photo.title !== (savedPhoto?.title ?? "");
+          const subtitleChanged = photo.subtitle !== (savedPhoto?.subtitle ?? "");
+          const isInitialPhoto = !savedPhoto;
+          const hasUnsavedChanges =
+            isInitialPhoto || titleChanged || subtitleChanged || !!photo.previewUrl;
 
-            <label class={styles.imagePicker} aria-label="写真を選ぶ">
-              <span class={styles.previewFrame}>
-                {photo.previewUrl || photo.url ? (
-                  <img src={photo.previewUrl ?? photo.url ?? ""} alt="" width={320} height={240} />
-                ) : (
-                  <span>写真を選択</span>
+          return (
+            <section key={photo.localId} class={styles.photoEditor}>
+              <div class={styles.photoHeader}>
+                <h2>写真 {index + 1}</h2>
+                {!isInitialPhoto && (
+                  <Button
+                    type="button"
+                    label="削除"
+                    onClick$={async () => {
+                      if (!confirm("本当に削除しますか？")) return;
+
+                      const previousPhotos = photos.value;
+                      const nextPhotos = photos.value.filter(
+                        (item) => item.localId !== photo.localId,
+                      );
+                      photos.value = nextPhotos;
+                      saveError.value = null;
+
+                      const saved = await saveAlbum$(nextPhotos);
+                      if (!saved) {
+                        photos.value = previousPhotos;
+                      }
+                    }}
+                  >
+                    <img src={deleteSvg} alt="" width={24} height={24} />
+                  </Button>
                 )}
-                <span class={styles.fileOverlay} aria-hidden="true">
-                  <span>+</span>
+              </div>
+
+              <label class={styles.imagePicker} aria-label="写真を選ぶ">
+                <span class={styles.previewFrame}>
+                  {photo.previewUrl || photo.url ? (
+                    <img
+                      class={styles.previewImage}
+                      src={photo.previewUrl ?? photo.url ?? ""}
+                      alt=""
+                      width={320}
+                      height={240}
+                    />
+                  ) : (
+                    <img
+                      class={styles.placeholderImage}
+                      src={photoPlaceholderSvg}
+                      alt=""
+                      width={96}
+                      height={96}
+                    />
+                  )}
+                  <span class={styles.fileOverlay} aria-hidden="true">
+                    <span>+</span>
+                  </span>
                 </span>
-              </span>
-              <input
-                type="file"
-                name={getPhotoImageName(photo)}
-                accept="image/png,image/jpeg,image/webp,image/avif"
-                onChange$={(event) => handleSourceFileChange(event, photo.localId)}
-              />
-            </label>
+                <input
+                  type="file"
+                  name={getPhotoImageName(photo)}
+                  accept="image/png,image/jpeg,image/webp,image/avif"
+                  onChange$={(event) => handleSourceFileChange(event, photo.localId)}
+                />
+              </label>
 
-            <label class={inputStyles.field}>
-              <span class={inputStyles.label}>タイトル</span>
-              <input
-                type="text"
-                class={inputStyles.input}
-                value={photo.title}
-                maxLength={albumPhotoTitleMaxLength}
-                onInput$={(_, target) => {
-                  photos.value = photos.value.map((item) =>
-                    item.localId === photo.localId ? { ...item, title: target.value } : item,
-                  );
-                  saveError.value = null;
-                }}
-              />
-            </label>
+              <label class={inputStyles.field}>
+                <span class={inputStyles.label}>
+                  タイトル（任意・最大{albumPhotoTitleMaxLength}文字）
+                </span>
+                <input
+                  type="text"
+                  class={inputStyles.input}
+                  value={photo.title}
+                  maxLength={albumPhotoTitleMaxLength}
+                  onInput$={(_, target) => {
+                    updatePhotoText(photo.localId, "title", target.value);
+                  }}
+                />
+              </label>
 
-            <label class={inputStyles.field}>
-              <span class={inputStyles.label}>サブタイトル</span>
-              <input
-                type="text"
-                class={inputStyles.input}
-                value={photo.subtitle}
-                maxLength={albumPhotoSubtitleMaxLength}
-                onInput$={(_, target) => {
-                  photos.value = photos.value.map((item) =>
-                    item.localId === photo.localId ? { ...item, subtitle: target.value } : item,
-                  );
-                  saveError.value = null;
-                }}
-              />
-            </label>
-          </section>
-        ))}
+              <label class={inputStyles.field}>
+                <span class={inputStyles.label}>
+                  サブタイトル（任意・最大{albumPhotoSubtitleMaxLength}文字）
+                </span>
+                <input
+                  type="text"
+                  class={inputStyles.input}
+                  value={photo.subtitle}
+                  maxLength={albumPhotoSubtitleMaxLength}
+                  onInput$={(_, target) => {
+                    updatePhotoText(photo.localId, "subtitle", target.value);
+                  }}
+                />
+              </label>
+
+              {hasUnsavedChanges && (
+                <div class={styles.photoActions}>
+                  <FormButton
+                    type="button"
+                    variant="secondary"
+                    size="md"
+                    disabled={isSaving.value}
+                    onClick$={() => cancelPhoto$(photo)}
+                  >
+                    キャンセル
+                  </FormButton>
+                  <FormButton
+                    type="button"
+                    variant="primary"
+                    size="md"
+                    disabled={
+                      isSaving.value || (isInitialPhoto && !photo.previewUrl && !photo.imageId)
+                    }
+                    aria-busy={isSaving.value}
+                    onClick$={() => savePhoto$(photo)}
+                  >
+                    {isSaving.value ? "保存中..." : "保存する"}
+                  </FormButton>
+                </div>
+              )}
+            </section>
+          );
+        })}
       </div>
 
       {saveError.value && <p class={styles.errorMessage}>{saveError.value}</p>}
@@ -518,7 +641,7 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
       <div class={styles.actions}>
         <FormButton
           type="button"
-          variant="secondary"
+          variant="accent"
           size="md"
           width="full"
           disabled={photos.value.length >= maxAlbumPhotoCount || isSaving.value}
@@ -529,16 +652,6 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
           }}
         >
           写真を追加
-        </FormButton>
-        <FormButton
-          type="submit"
-          variant="accent"
-          size="md"
-          width="full"
-          disabled={isSaving.value}
-          aria-busy={isSaving.value}
-        >
-          {isSaving.value ? "保存中..." : "保存する"}
         </FormButton>
       </div>
       <Modal open={cropModalOpen.value} title="写真を調整" onClose$={closeCropModal}>

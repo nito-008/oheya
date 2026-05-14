@@ -13,7 +13,6 @@
   border-radius: 999px;
   background: var(--toast-background);
   color: var(--toast-foreground);
-  box-shadow: 0 0.2rem 0.6rem rgb(47 47 47 / 8%);
   transform: translateX(-50%);
   backdrop-filter: blur(0.4rem);
   animation: toast-slide-in 280ms var(--ease-out-expo);
