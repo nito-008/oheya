@@ -1,8 +1,8 @@
 .albumGallery {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 34rem), 34rem));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 32rem), 32rem));
   justify-content: center;
-  gap: 4rem;
+  gap: 4rem 7rem;
   width: min(100%, 72rem);
   padding: 0;
 }
@@ -18,15 +18,10 @@
   gap: 0.45rem;
 }
 
-.photoCard :global(.albumPhotoFrame) {
-  width: 100%;
-  padding: 0;
-}
-
 .photoMeta {
   display: grid;
   gap: 0.7rem;
-  padding-inline: 0.35rem;
+  padding-inline: 1rem;
   text-align: center;
 }
 
