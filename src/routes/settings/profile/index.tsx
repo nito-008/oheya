@@ -1,4 +1,4 @@
-import { component$ } from "@builder.io/qwik";
+import { $, component$, useSignal } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { routeLoader$ } from "@builder.io/qwik-city";
 import { FormError, type InitialValues, useForm, valiForm$ } from "@modular-forms/qwik";
@@ -13,6 +13,7 @@ import { createApiClient } from "~/lib/api";
 import { NAME_MAX_LENGTH, PUBLIC_ID_MAX_LENGTH, userSchema } from "~/schema/user";
 import formStyles from "~/routes/signup/index.module.css";
 import styles from "~/routes/settings/components/settings-tabs/settings-tabs.module.css";
+import profileStyles from "./index.module.css";
 
 type ProfileSettingsForm = v.InferInput<typeof userSchema>;
 
@@ -34,12 +35,59 @@ export const useProfileSettingsLoader = routeLoader$<InitialValues<ProfileSettin
 );
 
 export default component$(() => {
+  const initialProfile = useProfileSettingsLoader();
   const [profileForm, { Form, Field }] = useForm<ProfileSettingsForm>({
-    loader: useProfileSettingsLoader(),
+    loader: initialProfile,
     validate: valiForm$(userSchema),
   });
   const toast = useToast();
   const headerUser = useCommonHeaderUser();
+  const savedPublicId = useSignal<string>(initialProfile.value.publicId ?? "");
+  const savedName = useSignal<string>(initialProfile.value.name ?? "");
+  const publicIdValue = useSignal(savedPublicId.value);
+  const nameValue = useSignal(savedName.value);
+
+  const uploadIcon$ = $(async (iconImage: File) => {
+    const imageFormData = new FormData();
+    imageFormData.set("image", iconImage, iconImage.name);
+    const uploadRes = await fetch("/api/images", { method: "POST", body: imageFormData });
+    if (!uploadRes.ok) {
+      throw new Error("アイコン画像をアップロードできませんでした");
+    }
+
+    const uploaded = (await uploadRes.json()) as { imageId: string };
+    return uploaded.imageId;
+  });
+
+  const saveProfile$ = $(async (values: ProfileSettingsForm) => {
+    const res = await fetch("/api/users/me", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(values),
+    });
+
+    if (res.status === 401) {
+      throw new FormError<ProfileSettingsForm>("ログインが必要です");
+    }
+    if (res.status === 409) {
+      throw new FormError<ProfileSettingsForm>({
+        publicId: "このIDはすでに使用されています",
+      });
+    }
+    if (!res.ok) {
+      throw new FormError<ProfileSettingsForm>("保存に失敗しました");
+    }
+  });
+
+  const setFormFieldValue$ = $((button: HTMLButtonElement, fieldName: string, value: string) => {
+    const form = button.form;
+    const input = form?.elements.namedItem(fieldName);
+    if (!(input instanceof HTMLInputElement)) return;
+
+    input.value = value;
+    input.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  });
 
   return (
     <>
@@ -51,87 +99,161 @@ export default component$(() => {
           let uploadedIcon: string | null = null;
 
           if (iconImage instanceof File && iconImage.size > 0) {
-            const imageFormData = new FormData();
-            imageFormData.set("image", iconImage, iconImage.name);
-            const uploadRes = await fetch("/api/images", { method: "POST", body: imageFormData });
-            if (!uploadRes.ok) {
+            try {
+              uploadedIcon = await uploadIcon$(iconImage);
+            } catch (error) {
               throw new FormError<ProfileSettingsForm>(
-                "アイコン画像をアップロードできませんでした",
+                error instanceof Error
+                  ? error.message
+                  : "アイコン画像をアップロードできませんでした",
               );
             }
-            const uploaded = (await uploadRes.json()) as { imageId: string };
-            uploadedIcon = uploaded.imageId;
           }
 
-          const res = await fetch("/api/users/me", {
-            method: "PATCH",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ ...values, icon: uploadedIcon ?? values.icon }),
-          });
+          const nextValues = { ...values, icon: uploadedIcon ?? values.icon };
 
-          if (!res.ok && uploadedIcon) {
-            await fetch(`/api/images/${uploadedIcon}`, { method: "DELETE" });
-          }
-          if (res.status === 401) {
-            throw new FormError<ProfileSettingsForm>("ログインが必要です");
-          }
-          if (res.status === 409) {
-            throw new FormError<ProfileSettingsForm>({
-              publicId: "このIDはすでに使用されています",
-            });
-          }
-          if (!res.ok) {
-            throw new FormError<ProfileSettingsForm>("保存に失敗しました");
+          try {
+            await saveProfile$(nextValues);
+          } catch (error) {
+            if (uploadedIcon) {
+              await fetch(`/api/images/${uploadedIcon}`, { method: "DELETE" });
+            }
+            throw error;
           }
 
+          if (uploadedIcon) {
+            const iconImageInput = form.elements.namedItem("iconImage") as HTMLInputElement | null;
+            if (iconImageInput) iconImageInput.value = "";
+          }
+
+          savedPublicId.value = values.publicId;
+          savedName.value = values.name;
+          publicIdValue.value = values.publicId;
+          nameValue.value = values.name;
           headerUser.authenticated = true;
           headerUser.publicId = values.publicId;
           headerUser.name = values.name;
-          headerUser.icon = (uploadedIcon ?? values.icon) || null;
+          headerUser.icon = nextValues.icon || null;
           await toast.success("保存しました");
         }}
       >
         <div class={formStyles.fields}>
           <Field name="publicId">
             {(field, props) => (
-              <FormTextInput
-                label={`ID（半角英数字とアンダースコア、最大${PUBLIC_ID_MAX_LENGTH}文字）`}
-                field={field}
-                fieldProps={props}
-                maxLength={PUBLIC_ID_MAX_LENGTH}
-                required
-              />
+              <>
+                <FormTextInput
+                  label={`ID（半角英数字とアンダースコア、最大${PUBLIC_ID_MAX_LENGTH}文字）`}
+                  field={field}
+                  fieldProps={props}
+                  maxLength={PUBLIC_ID_MAX_LENGTH}
+                  onInput$={(value) => {
+                    publicIdValue.value = value;
+                  }}
+                  required
+                />
+                {publicIdValue.value !== savedPublicId.value && (
+                  <div class={profileStyles.fieldActions}>
+                    <FormButton
+                      type="button"
+                      variant="secondary"
+                      disabled={profileForm.submitting}
+                      onClick$={async (_, button) => {
+                        publicIdValue.value = savedPublicId.value;
+                        await setFormFieldValue$(button, "publicId", savedPublicId.value);
+                      }}
+                    >
+                      キャンセル
+                    </FormButton>
+                    <FormButton
+                      type="submit"
+                      variant="primary"
+                      disabled={profileForm.submitting}
+                      aria-busy={profileForm.submitting}
+                    >
+                      {profileForm.submitting ? "保存中..." : "保存する"}
+                    </FormButton>
+                  </div>
+                )}
+              </>
             )}
           </Field>
           <Field name="name">
             {(field, props) => (
-              <FormTextInput
-                label={`名前（最大${NAME_MAX_LENGTH}文字）`}
-                field={field}
-                fieldProps={props}
-                maxLength={NAME_MAX_LENGTH}
-                required
-              />
+              <>
+                <FormTextInput
+                  label={`名前（最大${NAME_MAX_LENGTH}文字）`}
+                  field={field}
+                  fieldProps={props}
+                  maxLength={NAME_MAX_LENGTH}
+                  onInput$={(value) => {
+                    nameValue.value = value;
+                  }}
+                  required
+                />
+                {nameValue.value !== savedName.value && (
+                  <div class={profileStyles.fieldActions}>
+                    <FormButton
+                      type="button"
+                      variant="secondary"
+                      disabled={profileForm.submitting}
+                      onClick$={async (_, button) => {
+                        nameValue.value = savedName.value;
+                        await setFormFieldValue$(button, "name", savedName.value);
+                      }}
+                    >
+                      キャンセル
+                    </FormButton>
+                    <FormButton
+                      type="submit"
+                      variant="primary"
+                      disabled={profileForm.submitting}
+                      aria-busy={profileForm.submitting}
+                    >
+                      {profileForm.submitting ? "保存中..." : "保存する"}
+                    </FormButton>
+                  </div>
+                )}
+              </>
             )}
           </Field>
           <Field name="icon">
-            {(field, props) => <IconCropInput label="アイコン" field={field} fieldProps={props} />}
+            {(field, props) => (
+              <IconCropInput
+                label="アイコン"
+                field={field}
+                fieldProps={props}
+                onApply$={async (iconImage) => {
+                  let uploadedIcon: string | null = null;
+                  try {
+                    uploadedIcon = await uploadIcon$(iconImage);
+                    await saveProfile$({
+                      publicId: savedPublicId.value,
+                      name: savedName.value,
+                      icon: uploadedIcon,
+                    });
+                  } catch (error) {
+                    if (uploadedIcon) {
+                      await fetch(`/api/images/${uploadedIcon}`, { method: "DELETE" });
+                    }
+                    await toast.error(
+                      error instanceof Error ? error.message : "アイコンの保存に失敗しました",
+                    );
+                    throw error;
+                  }
+
+                  headerUser.authenticated = true;
+                  headerUser.publicId = savedPublicId.value;
+                  headerUser.name = savedName.value;
+                  headerUser.icon = uploadedIcon;
+                  await toast.success("保存しました");
+                  return uploadedIcon;
+                }}
+              />
+            )}
           </Field>
           {profileForm.response.status === "error" && profileForm.response.message && (
             <FormErrorMessage message={profileForm.response.message} />
           )}
-        </div>
-        <div class={formStyles.actions}>
-          <FormButton
-            type="submit"
-            variant="accent"
-            size="md"
-            width="full"
-            disabled={profileForm.submitting}
-            aria-busy={profileForm.submitting}
-          >
-            {profileForm.submitting ? "保存中..." : "保存する"}
-          </FormButton>
         </div>
       </Form>
     </>
