@@ -1,6 +1,7 @@
-import { component$, useSignal } from "@builder.io/qwik";
+import { $, component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import { FormButton } from "~/components/ui/form/form-button/form-button";
 import inputStyles from "~/components/ui/form/form-text-input/form-text-input.module.css";
+import { Modal } from "~/components/ui/modal/modal";
 import { useToast } from "~/components/ui/toast/toast";
 import {
   albumPhotoSubtitleMaxLength,
@@ -47,12 +48,305 @@ const createEmptyPhoto = (): AlbumSettingsPhoto => ({
 const getPhotoImageName = (photo: Pick<AlbumSettingsPhoto, "localId">) =>
   `photoImage-${photo.localId}`;
 
+const CROP_OUTPUT_WIDTH = 800;
+const CROP_OUTPUT_HEIGHT = 600;
+const CROP_ASPECT_RATIO = CROP_OUTPUT_WIDTH / CROP_OUTPUT_HEIGHT;
+const MAX_SOURCE_SIZE = 20 * 1024 * 1024;
+const MIN_SCALE = 1;
+const MAX_SCALE = 3;
+const PHOTO_CONTENT_TYPE = "image/webp";
+const PHOTO_QUALITY = 0.86;
+const FALLBACK_PHOTO_CONTENT_TYPE = "image/jpeg";
+const PHOTO_OUTPUT_EXTENSIONS = {
+  [PHOTO_CONTENT_TYPE]: "webp",
+  [FALLBACK_PHOTO_CONTENT_TYPE]: "jpeg",
+} as const;
+const WHEEL_ZOOM_STEP = 0.12;
+
+type CropDragState = {
+  pointerId: number;
+  startClientX: number;
+  startClientY: number;
+  startPositionX: number;
+  startPositionY: number;
+};
+
+type CropLayout = {
+  viewWidth: number;
+  viewHeight: number;
+  imageWidth: number;
+  imageHeight: number;
+  maxPositionX: number;
+  maxPositionY: number;
+};
+
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+const isPhotoOutputContentType = (value: string): value is keyof typeof PHOTO_OUTPUT_EXTENSIONS =>
+  value in PHOTO_OUTPUT_EXTENSIONS;
+
 export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPhotos }) => {
   const formRef = useSignal<HTMLFormElement>();
   const photos = useSignal<AlbumSettingsPhoto[]>(initialPhotos.map(toSettingsPhoto));
   const isSaving = useSignal(false);
   const saveError = useSignal<string | null>(null);
+  const cropPhotoId = useSignal<string | null>(null);
+  const sourceImageUrl = useSignal("");
+  const sourceImageRef = useSignal<HTMLImageElement>();
+  const cropBoxRef = useSignal<HTMLDivElement>();
+  const cropModalOpen = useSignal(false);
+  const cropImageReady = useSignal(false);
+  const cropZoom = useSignal(MIN_SCALE);
+  const cropPositionX = useSignal(0);
+  const cropPositionY = useSignal(0);
+  const cropImageWidth = useSignal(CROP_OUTPUT_WIDTH);
+  const cropImageHeight = useSignal(CROP_OUTPUT_HEIGHT);
+  const cropDrag = useSignal<CropDragState | null>(null);
   const toast = useToast();
+
+  const readFileAsDataUrl = $((file: File) => {
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.addEventListener("load", () => resolve(String(reader.result ?? "")));
+      reader.addEventListener("error", () => reject(reader.error));
+      reader.readAsDataURL(file);
+    });
+  });
+
+  const updateCropLayout = $((): CropLayout | null => {
+    const image = sourceImageRef.value;
+    const cropBox = cropBoxRef.value;
+    if (!image || !cropBox || !image.naturalWidth || !image.naturalHeight) return null;
+
+    const cropRect = cropBox.getBoundingClientRect();
+    const viewWidth = cropRect.width || CROP_OUTPUT_WIDTH;
+    const viewHeight = cropRect.height || viewWidth / CROP_ASPECT_RATIO;
+    const coverScale =
+      Math.max(viewWidth / image.naturalWidth, viewHeight / image.naturalHeight) * cropZoom.value;
+    const imageWidth = image.naturalWidth * coverScale;
+    const imageHeight = image.naturalHeight * coverScale;
+    const maxPositionX = Math.max(0, (imageWidth - viewWidth) / 2);
+    const maxPositionY = Math.max(0, (imageHeight - viewHeight) / 2);
+
+    cropImageWidth.value = imageWidth;
+    cropImageHeight.value = imageHeight;
+    cropPositionX.value = clamp(cropPositionX.value, -maxPositionX, maxPositionX);
+    cropPositionY.value = clamp(cropPositionY.value, -maxPositionY, maxPositionY);
+
+    return { viewWidth, viewHeight, imageWidth, imageHeight, maxPositionX, maxPositionY };
+  });
+
+  const drawCrop = $(async () => {
+    const image = sourceImageRef.value;
+    const cropBox = cropBoxRef.value;
+    if (!image || !cropBox || !image.naturalWidth || !image.naturalHeight) return null;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = CROP_OUTPUT_WIDTH;
+    canvas.height = CROP_OUTPUT_HEIGHT;
+    const context = canvas.getContext("2d");
+    if (!context) return null;
+
+    const cropRect = cropBox.getBoundingClientRect();
+    const viewWidth = cropRect.width || CROP_OUTPUT_WIDTH;
+    const viewHeight = cropRect.height || viewWidth / CROP_ASPECT_RATIO;
+    const viewToOutput = CROP_OUTPUT_WIDTH / viewWidth;
+    const drawScale =
+      Math.max(viewWidth / image.naturalWidth, viewHeight / image.naturalHeight) *
+      cropZoom.value *
+      viewToOutput;
+    const drawWidth = image.naturalWidth * drawScale;
+    const drawHeight = image.naturalHeight * drawScale;
+    const drawX = (CROP_OUTPUT_WIDTH - drawWidth) / 2 + cropPositionX.value * viewToOutput;
+    const drawY = (CROP_OUTPUT_HEIGHT - drawHeight) / 2 + cropPositionY.value * viewToOutput;
+
+    context.fillStyle = "#fffef8";
+    context.fillRect(0, 0, CROP_OUTPUT_WIDTH, CROP_OUTPUT_HEIGHT);
+    context.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+
+    const toBlob = (contentType: string) =>
+      new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, contentType, PHOTO_QUALITY));
+
+    let blob = await toBlob(PHOTO_CONTENT_TYPE);
+    if (!blob || !isPhotoOutputContentType(blob.type)) {
+      blob = await toBlob(FALLBACK_PHOTO_CONTENT_TYPE);
+    }
+
+    if (!blob || !isPhotoOutputContentType(blob.type)) {
+      saveError.value = "このブラウザは写真の保存形式に対応していません";
+      return null;
+    }
+
+    const extension = PHOTO_OUTPUT_EXTENSIONS[blob.type];
+    return new File([blob], `album-photo.${extension}`, { type: blob.type });
+  });
+
+  const resetCrop = $(async () => {
+    cropZoom.value = MIN_SCALE;
+    cropPositionX.value = 0;
+    cropPositionY.value = 0;
+    await updateCropLayout();
+  });
+
+  const closeCropModal = $(() => {
+    cropModalOpen.value = false;
+    cropPhotoId.value = null;
+    sourceImageUrl.value = "";
+    cropImageReady.value = false;
+    cropDrag.value = null;
+  });
+
+  const applyCrop = $(async () => {
+    const photoId = cropPhotoId.value;
+    const croppedPhoto = await drawCrop();
+    const form = formRef.value;
+    if (!photoId || !croppedPhoto || !form) {
+      await closeCropModal();
+      return;
+    }
+
+    const input = form.elements.namedItem(getPhotoImageName({ localId: photoId }));
+    if (input instanceof HTMLInputElement) {
+      const files = new DataTransfer();
+      files.items.add(croppedPhoto);
+      input.files = files.files;
+    }
+
+    photos.value = photos.value.map((item) => {
+      if (item.localId !== photoId) return item;
+      if (item.previewUrl?.startsWith("blob:")) URL.revokeObjectURL(item.previewUrl);
+      return {
+        ...item,
+        previewUrl: URL.createObjectURL(croppedPhoto),
+      };
+    });
+    saveError.value = null;
+    await closeCropModal();
+  });
+
+  const handleSourceFileChange = $(async (event: Event, photoId: string) => {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    saveError.value = null;
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      saveError.value = "画像ファイルを選択してください";
+      input.value = "";
+      return;
+    }
+
+    if (file.size > MAX_SOURCE_SIZE) {
+      saveError.value = "20MB以下の画像を選択してください";
+      input.value = "";
+      return;
+    }
+
+    try {
+      sourceImageUrl.value = await readFileAsDataUrl(file);
+      cropPhotoId.value = photoId;
+      cropImageReady.value = false;
+      cropDrag.value = null;
+      cropModalOpen.value = true;
+      input.value = "";
+    } catch {
+      saveError.value = "画像を読み込めませんでした";
+      input.value = "";
+    }
+  });
+
+  const handleCropPointerDown = $((event: PointerEvent, element: Element) => {
+    if (!sourceImageRef.value || (event.pointerType === "mouse" && event.button !== 0)) return;
+
+    const cropBox = element as HTMLDivElement;
+    cropBox.setPointerCapture(event.pointerId);
+    cropDrag.value = {
+      pointerId: event.pointerId,
+      startClientX: event.clientX,
+      startClientY: event.clientY,
+      startPositionX: cropPositionX.value,
+      startPositionY: cropPositionY.value,
+    };
+  });
+
+  const handleCropPointerMove = $(async (event: PointerEvent) => {
+    const drag = cropDrag.value;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    const layout = await updateCropLayout();
+    if (!layout) return;
+
+    cropPositionX.value = clamp(
+      drag.startPositionX + event.clientX - drag.startClientX,
+      -layout.maxPositionX,
+      layout.maxPositionX,
+    );
+    cropPositionY.value = clamp(
+      drag.startPositionY + event.clientY - drag.startClientY,
+      -layout.maxPositionY,
+      layout.maxPositionY,
+    );
+  });
+
+  const handleCropPointerEnd = $((event: PointerEvent, element: Element) => {
+    if (cropDrag.value?.pointerId !== event.pointerId) return;
+
+    const cropBox = element as HTMLDivElement;
+    if (cropBox.hasPointerCapture(event.pointerId)) {
+      cropBox.releasePointerCapture(event.pointerId);
+    }
+    cropDrag.value = null;
+  });
+
+  const handleCropWheel = $(async (event: WheelEvent) => {
+    const image = sourceImageRef.value;
+    const cropBox = cropBoxRef.value;
+    if (!image || !cropBox || !image.naturalWidth || !image.naturalHeight) return;
+
+    const cropRect = cropBox.getBoundingClientRect();
+    const viewWidth = cropRect.width || CROP_OUTPUT_WIDTH;
+    const viewHeight = cropRect.height || viewWidth / CROP_ASPECT_RATIO;
+    const oldZoom = cropZoom.value;
+    const newZoom = clamp(
+      oldZoom * (event.deltaY < 0 ? 1 + WHEEL_ZOOM_STEP : 1 - WHEEL_ZOOM_STEP),
+      MIN_SCALE,
+      MAX_SCALE,
+    );
+    if (newZoom === oldZoom) return;
+
+    const coverScale = Math.max(viewWidth / image.naturalWidth, viewHeight / image.naturalHeight);
+    const oldImageWidth = image.naturalWidth * coverScale * oldZoom;
+    const oldImageHeight = image.naturalHeight * coverScale * oldZoom;
+    const newImageWidth = image.naturalWidth * coverScale * newZoom;
+    const newImageHeight = image.naturalHeight * coverScale * newZoom;
+    const oldImageLeft = (viewWidth - oldImageWidth) / 2 + cropPositionX.value;
+    const oldImageTop = (viewHeight - oldImageHeight) / 2 + cropPositionY.value;
+    const zoomPointX = event.clientX - cropRect.left;
+    const zoomPointY = event.clientY - cropRect.top;
+    const imagePointX = (zoomPointX - oldImageLeft) / oldImageWidth;
+    const imagePointY = (zoomPointY - oldImageTop) / oldImageHeight;
+    const maxPositionX = Math.max(0, (newImageWidth - viewWidth) / 2);
+    const maxPositionY = Math.max(0, (newImageHeight - viewHeight) / 2);
+
+    cropZoom.value = newZoom;
+    cropPositionX.value = clamp(
+      zoomPointX - imagePointX * newImageWidth - (viewWidth - newImageWidth) / 2,
+      -maxPositionX,
+      maxPositionX,
+    );
+    cropPositionY.value = clamp(
+      zoomPointY - imagePointY * newImageHeight - (viewHeight - newImageHeight) / 2,
+      -maxPositionY,
+      maxPositionY,
+    );
+    await updateCropLayout();
+  });
+
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(async ({ track }) => {
+    track(() => cropModalOpen.value);
+    track(() => sourceImageUrl.value);
+    await updateCropLayout();
+  });
 
   return (
     <form
@@ -165,43 +459,22 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
               </button>
             </div>
 
-            <label class={styles.imagePicker}>
+            <label class={styles.imagePicker} aria-label="写真を選ぶ">
               <span class={styles.previewFrame}>
                 {photo.previewUrl || photo.url ? (
                   <img src={photo.previewUrl ?? photo.url ?? ""} alt="" width={320} height={240} />
                 ) : (
                   <span>写真を選択</span>
                 )}
+                <span class={styles.fileOverlay} aria-hidden="true">
+                  <span>+</span>
+                </span>
               </span>
               <input
                 type="file"
                 name={getPhotoImageName(photo)}
-                accept="image/jpeg,image/webp"
-                onChange$={(_, target) => {
-                  const file = target.files?.[0];
-                  if (!file) return;
-
-                  if (!isImageContentType(file.type)) {
-                    target.value = "";
-                    saveError.value = "JPEGまたはWebPの画像を選択してください";
-                    return;
-                  }
-                  if (file.size > maxImageSizeBytes) {
-                    target.value = "";
-                    saveError.value = "画像は1MB以下にしてください";
-                    return;
-                  }
-
-                  photos.value = photos.value.map((item) =>
-                    item.localId === photo.localId
-                      ? {
-                          ...item,
-                          previewUrl: URL.createObjectURL(file),
-                        }
-                      : item,
-                  );
-                  saveError.value = null;
-                }}
+                accept="image/png,image/jpeg,image/webp,image/avif"
+                onChange$={(event) => handleSourceFileChange(event, photo.localId)}
               />
             </label>
 
@@ -268,6 +541,58 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
           {isSaving.value ? "保存中..." : "保存する"}
         </FormButton>
       </div>
+      <Modal open={cropModalOpen.value} title="写真を調整" onClose$={closeCropModal}>
+        <div class={styles.modalEditor}>
+          <div
+            ref={cropBoxRef}
+            class={styles.cropBox}
+            preventdefault:touchmove
+            preventdefault:touchstart
+            preventdefault:wheel
+            onPointerDown$={handleCropPointerDown}
+            onPointerMove$={handleCropPointerMove}
+            onPointerUp$={handleCropPointerEnd}
+            onPointerCancel$={handleCropPointerEnd}
+            onWheel$={handleCropWheel}
+          >
+            {sourceImageUrl.value ? (
+              <img
+                ref={sourceImageRef}
+                class={styles.sourceImage}
+                src={sourceImageUrl.value}
+                alt=""
+                width={CROP_OUTPUT_WIDTH}
+                height={CROP_OUTPUT_HEIGHT}
+                draggable={false}
+                style={{
+                  height: `${cropImageHeight.value}px`,
+                  transform: `translate(calc(-50% + ${cropPositionX.value}px), calc(-50% + ${cropPositionY.value}px))`,
+                  width: `${cropImageWidth.value}px`,
+                }}
+                onLoad$={async () => {
+                  cropImageReady.value = true;
+                  await resetCrop();
+                }}
+              />
+            ) : null}
+            {sourceImageUrl.value && <span class={styles.guides} aria-hidden="true" />}
+            <span class={styles.cropMask} aria-hidden="true" />
+          </div>
+          <div class={styles.modalActions}>
+            <FormButton type="button" variant="secondary" onClick$={closeCropModal}>
+              キャンセル
+            </FormButton>
+            <FormButton
+              type="button"
+              variant="primary"
+              disabled={!cropImageReady.value}
+              onClick$={applyCrop}
+            >
+              これにする
+            </FormButton>
+          </div>
+        </div>
+      </Modal>
     </form>
   );
 });

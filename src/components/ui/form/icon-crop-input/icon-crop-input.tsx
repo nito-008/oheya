@@ -199,7 +199,7 @@ export const IconCropInput = component$<IconCropInputProps>(({ field, fieldProps
     }
 
     if (file.size > MAX_SOURCE_SIZE) {
-      localError.value = "6MB以下の画像を選んでください";
+      localError.value = "20MB以下の画像を選んでください";
       input.value = "";
       return;
     }

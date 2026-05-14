@@ -175,10 +175,6 @@
   line-height: 1;
 }
 
-.fileOverlay:active span {
-  scale: 0.96;
-}
-
 .fileOverlay input {
   position: absolute;
   width: 1px;
