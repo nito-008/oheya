@@ -2,13 +2,20 @@ import { vValidator } from "@hono/valibot-validator";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { authMiddleware } from "~/hono/middleware/auth";
-import { deleteOwnedImage } from "~/hono/utils/image";
+import { deleteUnusedUserImages } from "~/hono/utils/image";
 import { getDb } from "~/lib/db";
-import { images, profiles } from "~/lib/db/schema";
+import { albumPhotos, profiles } from "~/lib/db/schema";
+import { albumSchema } from "~/schema/album";
 import { musicSelectionSchema } from "~/schema/music";
 import { userSchema } from "~/schema/user";
 import { userNotFound, type UsersEnv } from ".";
-import { getUserMusic, getUserProfile } from "./service";
+import {
+  getImageOwners,
+  getUserAlbum,
+  getUserMusic,
+  getUserProfile,
+  toAlbumPhotoRows,
+} from "./service";
 
 export const currentUserRouter = new Hono<UsersEnv>()
   .use(authMiddleware)
@@ -27,6 +34,58 @@ export const currentUserRouter = new Hono<UsersEnv>()
     }
 
     return c.json(music);
+  })
+  .get("/album", async (c) => {
+    const album = await getUserAlbum(c.env, c.var.userId);
+    if (!album) {
+      return c.json(userNotFound, 404);
+    }
+
+    return c.json(album);
+  })
+  .patch("/album", vValidator("json", albumSchema), async (c) => {
+    const userId = c.var.userId;
+    const { photos } = c.req.valid("json");
+    const db = getDb(c.env);
+    const [profile] = await db
+      .select({ userId: profiles.userId })
+      .from(profiles)
+      .where(eq(profiles.userId, userId));
+
+    if (!profile) {
+      return c.json(userNotFound, 404);
+    }
+
+    const imageIds = photos.map((photo) => photo.imageId);
+    const imageOwners = await getImageOwners(c.env, imageIds);
+    const missingImageId = imageIds.find((imageId) => !imageOwners.has(imageId));
+    if (missingImageId) {
+      return c.json({ message: "Image not found" } as const, 404);
+    }
+    const forbiddenImageId = imageIds.find((imageId) => imageOwners.get(imageId) !== userId);
+    if (forbiddenImageId) {
+      return c.json({ message: "Forbidden" } as const, 403);
+    }
+
+    const previousPhotos = await db
+      .select({ imageId: albumPhotos.imageId })
+      .from(albumPhotos)
+      .where(eq(albumPhotos.userId, userId));
+    const nextImageIds = new Set(imageIds);
+    const removedImageIds = previousPhotos
+      .map((photo) => photo.imageId)
+      .filter((imageId) => !nextImageIds.has(imageId));
+
+    await db.transaction(async (tx) => {
+      await tx.delete(albumPhotos).where(eq(albumPhotos.userId, userId));
+      if (photos.length > 0) {
+        await tx.insert(albumPhotos).values(toAlbumPhotoRows(userId, photos));
+      }
+    });
+
+    await deleteUnusedUserImages(c.env, userId, removedImageIds);
+
+    return c.body(null, 204);
   })
   .patch("/music", vValidator("json", musicSelectionSchema), async (c) => {
     const userId = c.var.userId;
@@ -74,14 +133,11 @@ export const currentUserRouter = new Hono<UsersEnv>()
 
     const icon = values.icon || null;
     if (icon) {
-      const [image] = await db
-        .select({ userId: images.userId })
-        .from(images)
-        .where(eq(images.id, icon));
-      if (!image) {
+      const imageOwners = await getImageOwners(c.env, [icon]);
+      if (!imageOwners.has(icon)) {
         return c.json({ message: "Image not found" } as const, 404);
       }
-      if (image.userId !== userId) {
+      if (imageOwners.get(icon) !== userId) {
         return c.json({ message: "Forbidden" } as const, 403);
       }
     }
@@ -102,7 +158,7 @@ export const currentUserRouter = new Hono<UsersEnv>()
     }
 
     if (profile?.icon && profile.icon !== icon) {
-      await deleteOwnedImage(c.env, profile.icon, userId);
+      await deleteUnusedUserImages(c.env, userId, [profile.icon]);
     }
 
     return c.body(null, 204);

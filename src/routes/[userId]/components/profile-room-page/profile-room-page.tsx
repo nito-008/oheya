@@ -1,4 +1,5 @@
 import { component$ } from "@builder.io/qwik";
+import type { UserAlbumPhoto } from "~/schema/album";
 import type { MusicTrack } from "~/schema/music";
 import { ProfileCarousel } from "~/routes/[userId]/components/profile-carousel/profile-carousel";
 import styles from "~/routes/[userId]/index.module.css";
@@ -10,16 +11,22 @@ type RoomProfile = {
 };
 
 type ProfileRoomPageProps = {
+  albumPhotos: UserAlbumPhoto[];
   initialSlide?: number;
   profile: RoomProfile;
   track: MusicTrack | null;
 };
 
 export const ProfileRoomPage = component$<ProfileRoomPageProps>(
-  ({ initialSlide = 1, profile, track }) => {
+  ({ albumPhotos, initialSlide = 1, profile, track }) => {
     return (
       <main class={styles.main}>
-        <ProfileCarousel profile={profile} track={track} initialSlide={initialSlide} />
+        <ProfileCarousel
+          profile={profile}
+          albumPhotos={albumPhotos}
+          track={track}
+          initialSlide={initialSlide}
+        />
       </main>
     );
   },

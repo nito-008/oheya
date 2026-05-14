@@ -1,0 +1,49 @@
+.albumGallery {
+  display: grid;
+  gap: 2rem;
+  width: min(100%, 34rem);
+  padding: 1rem 1.25rem 4.5rem;
+}
+
+.emptyAlbum {
+  display: grid;
+  place-items: center;
+  width: min(100%, 32rem);
+}
+
+.photoCard {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.photoCard :global(.albumPhotoFrame) {
+  width: 100%;
+  padding: 0;
+}
+
+.photoMeta {
+  display: grid;
+  gap: 0.1rem;
+  padding-inline: 0.35rem;
+  text-align: center;
+}
+
+.photoMeta h2,
+.photoMeta p {
+  overflow-wrap: anywhere;
+}
+
+.photoMeta h2 {
+  margin: 0;
+  color: #252525;
+  font-size: 1.25rem;
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.photoMeta p {
+  margin: 0;
+  color: #6f6862;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}

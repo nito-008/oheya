@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "7e613639-3f92-4435-adc6-3682ba796f17",
+  "id": "a0964229-44aa-4776-89b7-99b43bb5d61f",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "account": {
@@ -103,6 +103,95 @@
           "name": "account_provider_providerAccountId_pk"
         }
       },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "album_photo": {
+      "name": "album_photo",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "image_id": {
+          "name": "image_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "subtitle": {
+          "name": "subtitle",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "album_photo_user_id_position_unique": {
+          "name": "album_photo_user_id_position_unique",
+          "columns": ["user_id", "position"],
+          "isUnique": true
+        },
+        "album_photo_image_id_idx": {
+          "name": "album_photo_image_id_idx",
+          "columns": ["image_id"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "album_photo_user_id_user_id_fk": {
+          "name": "album_photo_user_id_user_id_fk",
+          "tableFrom": "album_photo",
+          "tableTo": "user",
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "album_photo_image_id_image_id_fk": {
+          "name": "album_photo_image_id_image_id_fk",
+          "tableFrom": "album_photo",
+          "tableTo": "image",
+          "columnsFrom": ["image_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
     },

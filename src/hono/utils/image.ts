@@ -1,7 +1,7 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import type { Bindings } from "~/hono/types";
 import { getDb } from "~/lib/db";
-import { images } from "~/lib/db/schema";
+import { albumPhotos, images, profiles } from "~/lib/db/schema";
 
 export const applyR2HttpMetadata = (headers: Headers, metadata: R2HTTPMetadata | undefined) => {
   if (!metadata) return;
@@ -23,4 +23,34 @@ export const deleteOwnedImage = async (env: Bindings, imageId: string, userId: s
 
   await env.R2_BUCKET.delete(imageId);
   return true;
+};
+
+export const deleteUnusedUserImages = async (
+  env: Bindings,
+  userId: string,
+  imageIds: readonly string[],
+) => {
+  const uniqueImageIds = [...new Set(imageIds)];
+  if (uniqueImageIds.length === 0) return;
+
+  const db = getDb(env);
+  const [profile] = await db
+    .select({ icon: profiles.icon })
+    .from(profiles)
+    .where(eq(profiles.userId, userId));
+  const remainingAlbumPhotos = await db
+    .select({ imageId: albumPhotos.imageId })
+    .from(albumPhotos)
+    .where(and(eq(albumPhotos.userId, userId), inArray(albumPhotos.imageId, uniqueImageIds)));
+
+  const retainedImageIds = new Set([
+    ...(profile?.icon ? [profile.icon] : []),
+    ...remainingAlbumPhotos.map((photo) => photo.imageId),
+  ]);
+
+  await Promise.all(
+    uniqueImageIds
+      .filter((imageId) => !retainedImageIds.has(imageId))
+      .map((imageId) => deleteOwnedImage(env, imageId, userId)),
+  );
 };

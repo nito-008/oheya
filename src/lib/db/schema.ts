@@ -1,4 +1,4 @@
-import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const users = sqliteTable("user", {
   id: text("id")
@@ -38,6 +38,31 @@ export const images = sqliteTable(
       .$defaultFn(() => new Date()),
   },
   (image) => [index("image_user_id_idx").on(image.userId)],
+);
+
+export const albumPhotos = sqliteTable(
+  "album_photo",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    imageId: text("image_id")
+      .notNull()
+      .references(() => images.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    subtitle: text("subtitle").notNull(),
+    position: integer("position").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (albumPhoto) => [
+    uniqueIndex("album_photo_user_id_position_unique").on(albumPhoto.userId, albumPhoto.position),
+    index("album_photo_image_id_idx").on(albumPhoto.imageId),
+  ],
 );
 
 export const accounts = sqliteTable(

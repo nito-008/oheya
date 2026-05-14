@@ -1,6 +1,6 @@
 import { Hono, type MiddlewareHandler } from "hono";
 import { userNotFound, type UsersEnv } from ".";
-import { getUserIdByPublicId, getUserMusic, getUserProfile } from "./service";
+import { getUserAlbum, getUserIdByPublicId, getUserMusic, getUserProfile } from "./service";
 
 const publicUserMiddleware: MiddlewareHandler<UsersEnv> = async (c, next) => {
   const publicId = c.req.param("publicId");
@@ -34,4 +34,12 @@ export const publicUserRouter = new Hono<UsersEnv>()
     }
 
     return c.json(music);
+  })
+  .get("/album", async (c) => {
+    const album = await getUserAlbum(c.env, c.var.userId);
+    if (!album) {
+      return c.json(userNotFound, 404);
+    }
+
+    return c.json(album);
   });

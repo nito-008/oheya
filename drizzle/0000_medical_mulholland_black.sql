@@ -14,6 +14,20 @@ CREATE TABLE `account` (
 	FOREIGN KEY (`userId`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
+CREATE TABLE `album_photo` (
+	`id` text PRIMARY KEY NOT NULL,
+	`user_id` text NOT NULL,
+	`image_id` text NOT NULL,
+	`title` text NOT NULL,
+	`subtitle` text NOT NULL,
+	`position` integer NOT NULL,
+	`created_at` integer NOT NULL,
+	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`image_id`) REFERENCES `image`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `album_photo_user_id_position_unique` ON `album_photo` (`user_id`,`position`);--> statement-breakpoint
+CREATE INDEX `album_photo_image_id_idx` ON `album_photo` (`image_id`);--> statement-breakpoint
 CREATE TABLE `image` (
 	`id` text PRIMARY KEY NOT NULL,
 	`user_id` text NOT NULL,
