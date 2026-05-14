@@ -1,8 +1,6 @@
 .album {
   display: grid;
-  min-height: 100%;
   place-items: center;
   align-content: center;
-  margin-block: 0 12rem;
   padding-inline: 0;
 }
