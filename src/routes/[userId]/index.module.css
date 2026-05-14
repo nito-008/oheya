@@ -1,4 +1,6 @@
 .main {
-  min-height: calc(100svh - var(--common-header-height));
+  display: grid;
+  gap: 28svh;
   overflow-x: hidden;
+  padding-block: 20svh 32svh;
 }

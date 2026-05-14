@@ -1,11 +1,7 @@
 .profile {
   display: grid;
-  min-height: 100%;
-  grid-template-rows: 1fr auto;
-  gap: 5rem;
+  gap: max(5rem, 8svh);
   justify-items: center;
-  align-content: stretch;
-  margin-block: 6rem 12rem;
   padding-inline: 2rem;
   text-align: center;
 }
