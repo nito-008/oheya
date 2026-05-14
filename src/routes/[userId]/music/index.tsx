@@ -12,7 +12,7 @@ export default component$(() => {
       profile={data.value.profile}
       albumPhotos={data.value.albumPhotos}
       track={data.value.track}
-      initialSlide={2}
+      initialSection="music"
     />
   );
 });

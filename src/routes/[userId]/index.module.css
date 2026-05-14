@@ -1,4 +1,7 @@
 .main {
-  min-height: 0;
+  height: calc(100svh - var(--common-header-height));
   overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scroll-snap-type: y mandatory;
 }
