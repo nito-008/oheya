@@ -1,6 +1,7 @@
 .button {
   display: inline-flex;
   align-items: center;
+  min-width: 0;
   gap: 0.5rem;
   padding: 0.45rem 0.75rem;
   border: 1px solid #d8d2c2;
@@ -53,5 +54,9 @@
 }
 
 .label {
+  min-width: 0;
+  overflow: hidden;
   line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
