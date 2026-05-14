@@ -12,8 +12,8 @@ type AlbumPhotoFrameProps = {
 const frameVariantClassNames = [
   styles.frameVariantA,
   styles.frameVariantB,
-  styles.frameVariantD,
   styles.frameVariantC,
+  styles.frameVariantD,
 ];
 
 export const albumPhotoFrameVariantCount = frameVariantClassNames.length;
