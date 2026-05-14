@@ -14,7 +14,7 @@ type DrawFn = (
 
 const [, , inputArg, outputArg] = process.argv;
 if (!inputArg || !outputArg) {
-  console.error("Usage: node scripts/roughjs/rough-to-svg.ts <input.(ts|js)> <output.svg>");
+  console.error("Usage: node scripts/roughjs/roughjs-to-svg.ts <input.(ts|js)> <output.svg>");
   process.exit(1);
 }
 

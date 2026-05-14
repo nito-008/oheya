@@ -18,6 +18,15 @@ erDiagram
     text id_token "nullable"
     text session_state "nullable"
   }
+  album_photo {
+    text id PK
+    text user_id FK
+    text image_id FK
+    text title
+    text subtitle
+    integer position
+    integer created_at
+  }
   image {
     text id PK
     text user_id FK
@@ -54,6 +63,8 @@ erDiagram
     integer expires
   }
   user ||--o{ account : "userId"
+  user ||--o{ album_photo : "user_id"
+  image ||--o{ album_photo : "image_id"
   user ||--o{ image : "user_id"
   user ||--o{ profile : "user_id"
   user ||--o{ session : "userId"
