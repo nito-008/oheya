@@ -1,11 +1,13 @@
 import { component$, Slot, useContextProvider, useStore, useTask$ } from "@builder.io/qwik";
 import { routeLoader$, useLocation } from "@builder.io/qwik-city";
+import { CommonFooter } from "~/components/common-footer/common-footer";
 import { CommonHeader } from "~/components/common-header/common-header";
 import {
   CommonHeaderUserContext,
   type CommonHeaderUser,
 } from "~/components/common-header/common-header-state";
 import { createApiClient } from "~/lib/api";
+import styles from "./layout.module.css";
 
 export const useHeaderUser = routeLoader$<CommonHeaderUser>(async (event) => {
   const client = createApiClient(event);
@@ -49,11 +51,12 @@ export default component$(() => {
   });
 
   return (
-    <>
+    <div class={styles.appShell}>
       <CommonHeader user={headerUser} showAuthActions={showAuthActions} />
-      <main>
+      <main class={styles.pageContent}>
         <Slot />
       </main>
-    </>
+      <CommonFooter user={headerUser} showAuthActions={showAuthActions} />
+    </div>
   );
 });
