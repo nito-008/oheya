@@ -50,6 +50,13 @@ const createEmptyPhoto = (): AlbumSettingsPhoto => ({
 const getPhotoImageName = (photo: Pick<AlbumSettingsPhoto, "localId">) =>
   `photoImage-${photo.localId}`;
 
+const toSavedPhotos = (photos: AlbumSettingsPhoto[]) =>
+  photos.map((photo) => ({
+    ...photo,
+    previewUrl: null,
+    url: photo.imageId ? `/api/images/${photo.imageId}` : photo.url,
+  }));
+
 const CROP_OUTPUT_WIDTH = 800;
 const CROP_OUTPUT_HEIGHT = 600;
 const CROP_ASPECT_RATIO = CROP_OUTPUT_WIDTH / CROP_OUTPUT_HEIGHT;
@@ -114,6 +121,83 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
       reader.readAsDataURL(file);
     });
   });
+
+  const uploadPhoto$ = $(async (file: File) => {
+    if (!isImageContentType(file.type)) {
+      throw new Error("JPEGまたはWebPの画像を選択してください");
+    }
+    if (file.size > maxImageSizeBytes) {
+      throw new Error("画像は1MB以下にしてください");
+    }
+
+    const imageFormData = new FormData();
+    imageFormData.set("image", file, file.name);
+    const uploadRes = await fetch("/api/images", { method: "POST", body: imageFormData });
+    if (!uploadRes.ok) {
+      throw new Error("画像をアップロードできませんでした");
+    }
+
+    return (await uploadRes.json()) as { imageId: string; url: string };
+  });
+
+  const saveAlbum$ = $(
+    async (nextPhotos: AlbumSettingsPhoto[], uploadedImageIds: string[] = []) => {
+      if (isSaving.value) return false;
+
+      isSaving.value = true;
+      saveError.value = null;
+
+      try {
+        const payloadPhotos = nextPhotos.flatMap((photo) =>
+          photo.imageId
+            ? [
+                {
+                  imageId: photo.imageId,
+                  title: photo.title,
+                  subtitle: photo.subtitle,
+                },
+              ]
+            : [],
+        );
+
+        const response = await fetch("/api/users/me/album", {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ photos: payloadPhotos }),
+        });
+
+        if (!response.ok && uploadedImageIds.length > 0) {
+          await Promise.all(
+            uploadedImageIds.map((imageId) =>
+              fetch(`/api/images/${imageId}`, { method: "DELETE" }),
+            ),
+          );
+        }
+        if (response.status === 401) {
+          throw new Error("ログインが必要です");
+        }
+        if (response.status === 404) {
+          throw new Error("画像またはプロフィールが見つかりません");
+        }
+        if (!response.ok) {
+          throw new Error("保存に失敗しました");
+        }
+
+        const savedPhotoValues = toSavedPhotos(nextPhotos);
+        photos.value = savedPhotoValues;
+        savedPhotos.value = savedPhotoValues;
+        await toast.success("保存しました");
+        return true;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "保存に失敗しました";
+        saveError.value = message;
+        await toast.error(message);
+        return false;
+      } finally {
+        isSaving.value = false;
+      }
+    },
+  );
 
   const updatePhotoText = $((photoId: string, fieldName: "subtitle" | "title", value: string) => {
     photos.value = photos.value.map((item) =>
@@ -230,16 +314,43 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
       input.files = files.files;
     }
 
-    photos.value = photos.value.map((item) => {
+    const nextPreviewUrl = URL.createObjectURL(croppedPhoto);
+    const previewPhotos = photos.value.map((item) => {
       if (item.localId !== photoId) return item;
       if (item.previewUrl?.startsWith("blob:")) URL.revokeObjectURL(item.previewUrl);
       return {
         ...item,
-        previewUrl: URL.createObjectURL(croppedPhoto),
+        previewUrl: nextPreviewUrl,
       };
     });
+
+    photos.value = previewPhotos;
     saveError.value = null;
     await closeCropModal();
+
+    const previousPhotos = savedPhotos.value;
+    let uploadedImageId: string | null = null;
+    try {
+      const uploaded = await uploadPhoto$(croppedPhoto);
+      uploadedImageId = uploaded.imageId;
+      const nextPhotos = previewPhotos.map((item) =>
+        item.localId === photoId
+          ? { ...item, imageId: uploaded.imageId, previewUrl: null, url: uploaded.url }
+          : item,
+      );
+      const saved = await saveAlbum$(nextPhotos, [uploaded.imageId]);
+      if (!saved) {
+        photos.value = previousPhotos;
+      }
+    } catch (error) {
+      if (uploadedImageId) {
+        await fetch(`/api/images/${uploadedImageId}`, { method: "DELETE" });
+      }
+      photos.value = previousPhotos;
+      const message = error instanceof Error ? error.message : "保存に失敗しました";
+      saveError.value = message;
+      await toast.error(message);
+    }
   });
 
   const handleSourceFileChange = $(async (event: Event, photoId: string) => {
@@ -373,93 +484,7 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
       preventdefault:submit
       class={`${formStyles.form} ${sharedStyles.content} ${styles.panel}`}
       onSubmit$={async () => {
-        if (isSaving.value) return;
-
-        const form = formRef.value;
-        if (!form) return;
-
-        isSaving.value = true;
-        saveError.value = null;
-        const uploadedImageIds: string[] = [];
-
-        try {
-          const formData = new FormData(form);
-          const payloadPhotos = [];
-
-          for (const photo of photos.value) {
-            let imageId = photo.imageId;
-            const file = formData.get(getPhotoImageName(photo));
-
-            if (file instanceof File && file.size > 0) {
-              if (!isImageContentType(file.type)) {
-                throw new Error("JPEGまたはWebPの画像を選択してください");
-              }
-              if (file.size > maxImageSizeBytes) {
-                throw new Error("画像は1MB以下にしてください");
-              }
-
-              const imageFormData = new FormData();
-              imageFormData.set("image", file, file.name);
-              const uploadRes = await fetch("/api/images", { method: "POST", body: imageFormData });
-              if (!uploadRes.ok) {
-                throw new Error("画像をアップロードできませんでした");
-              }
-              const uploaded = (await uploadRes.json()) as { imageId: string; url: string };
-              imageId = uploaded.imageId;
-              uploadedImageIds.push(uploaded.imageId);
-            }
-
-            if (!imageId) {
-              throw new Error("写真を選択してください");
-            }
-
-            payloadPhotos.push({
-              imageId,
-              title: photo.title,
-              subtitle: photo.subtitle,
-            });
-          }
-
-          const response = await fetch("/api/users/me/album", {
-            method: "PATCH",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ photos: payloadPhotos }),
-          });
-
-          if (!response.ok) {
-            await Promise.all(
-              uploadedImageIds.map((imageId) =>
-                fetch(`/api/images/${imageId}`, { method: "DELETE" }),
-              ),
-            );
-          }
-          if (response.status === 401) {
-            throw new Error("ログインが必要です");
-          }
-          if (response.status === 404) {
-            throw new Error("画像またはプロフィールが見つかりません");
-          }
-          if (!response.ok) {
-            throw new Error("保存に失敗しました");
-          }
-
-          const savedPhotoValues = payloadPhotos.map((photo, index) => ({
-            ...photos.value[index],
-            imageId: photo.imageId,
-            previewUrl: null,
-            url: `/api/images/${photo.imageId}`,
-          }));
-          photos.value = savedPhotoValues;
-          savedPhotos.value = savedPhotoValues;
-          form.reset();
-          await toast.success("保存しました");
-        } catch (error) {
-          const message = error instanceof Error ? error.message : "保存に失敗しました";
-          saveError.value = message;
-          await toast.error(message);
-        } finally {
-          isSaving.value = false;
-        }
+        await saveAlbum$(photos.value);
       }}
     >
       <div class={styles.photoList}>
@@ -470,11 +495,18 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
               <Button
                 type="button"
                 label="削除"
-                onClick$={() => {
+                onClick$={async () => {
                   if (!confirm("本当に削除しますか？")) return;
 
-                  photos.value = photos.value.filter((item) => item.localId !== photo.localId);
+                  const previousPhotos = photos.value;
+                  const nextPhotos = photos.value.filter((item) => item.localId !== photo.localId);
+                  photos.value = nextPhotos;
                   saveError.value = null;
+
+                  const saved = await saveAlbum$(nextPhotos);
+                  if (!saved) {
+                    photos.value = previousPhotos;
+                  }
                 }}
               >
                 <img src={deleteSvg} alt="" width={24} height={24} />
@@ -501,7 +533,9 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
             </label>
 
             <label class={inputStyles.field}>
-              <span class={inputStyles.label}>タイトル</span>
+              <span class={inputStyles.label}>
+                タイトル（任意・最大{albumPhotoTitleMaxLength}文字）
+              </span>
               <input
                 type="text"
                 class={inputStyles.input}
@@ -523,19 +557,23 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
                 >
                   キャンセル
                 </FormButton>
-                <FormButton
-                  type="submit"
-                  variant="primary"
-                  disabled={isSaving.value}
-                  aria-busy={isSaving.value}
-                >
-                  {isSaving.value ? "保存中..." : "保存する"}
-                </FormButton>
+                {photo.imageId && (
+                  <FormButton
+                    type="submit"
+                    variant="primary"
+                    disabled={isSaving.value}
+                    aria-busy={isSaving.value}
+                  >
+                    {isSaving.value ? "保存中..." : "保存する"}
+                  </FormButton>
+                )}
               </div>
             )}
 
             <label class={inputStyles.field}>
-              <span class={inputStyles.label}>サブタイトル</span>
+              <span class={inputStyles.label}>
+                サブタイトル（任意・最大{albumPhotoSubtitleMaxLength}文字）
+              </span>
               <input
                 type="text"
                 class={inputStyles.input}
@@ -558,14 +596,16 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
                 >
                   キャンセル
                 </FormButton>
-                <FormButton
-                  type="submit"
-                  variant="primary"
-                  disabled={isSaving.value}
-                  aria-busy={isSaving.value}
-                >
-                  {isSaving.value ? "保存中..." : "保存する"}
-                </FormButton>
+                {photo.imageId && (
+                  <FormButton
+                    type="submit"
+                    variant="primary"
+                    disabled={isSaving.value}
+                    aria-busy={isSaving.value}
+                  >
+                    {isSaving.value ? "保存中..." : "保存する"}
+                  </FormButton>
+                )}
               </div>
             )}
           </section>
@@ -588,16 +628,6 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
           }}
         >
           写真を追加
-        </FormButton>
-        <FormButton
-          type="submit"
-          variant="accent"
-          size="md"
-          width="full"
-          disabled={isSaving.value}
-          aria-busy={isSaving.value}
-        >
-          {isSaving.value ? "保存中..." : "保存する"}
         </FormButton>
       </div>
       <Modal open={cropModalOpen.value} title="写真を調整" onClose$={closeCropModal}>
