@@ -108,6 +108,8 @@
 .actions {
   display: grid;
   gap: 0.85rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid #ddd6cb;
 }
 
 .fieldActions {
