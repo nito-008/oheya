@@ -2,7 +2,7 @@
   display: grid;
   place-items: center;
   gap: 0.85rem;
-  width: min(100%, 24rem);
+  width: min(100%, 30rem);
   padding: 1.2rem 1rem 1rem;
 }
 
@@ -11,7 +11,7 @@
   --artwork-left: 11.8%;
   --artwork-top: 20.5%;
   --artwork-size: 76.6%;
-  width: min(100%, 20rem);
+  width: min(100%, 26rem);
   aspect-ratio: 360 / 400;
 }
 
@@ -91,7 +91,7 @@
 .trackInfo {
   display: grid;
   gap: 0.25rem;
-  width: min(100%, 18rem);
+  width: min(100%, 22rem);
   text-align: center;
 }
 

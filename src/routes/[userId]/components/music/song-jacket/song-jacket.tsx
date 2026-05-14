@@ -2,6 +2,7 @@ import { component$, useSignal } from "@builder.io/qwik";
 import musicPauseSvg from "~/media/music-pause.svg";
 import musicPlaySvg from "~/media/music-play.svg";
 import songJacketFrameSvg from "~/media/song-jacket-frame.svg";
+import { getAppleMusicArtworkUrl } from "~/lib/music-artwork";
 import type { MusicTrack } from "~/schema/music";
 import styles from "./song-jacket.module.css";
 
@@ -16,8 +17,7 @@ export const SongJacket = component$<SongJacketProps>(({ track }) => {
   const isPlaying = useSignal(false);
   const audioRef = useSignal<HTMLAudioElement>();
 
-  const artworkUrl =
-    track?.artworkUrl?.replace("300x300bb", "600x600bb") ?? track?.artworkUrl ?? null;
+  const artworkUrl = getAppleMusicArtworkUrl(track?.artworkUrl, 1000);
 
   return (
     <article class={styles.songJacket} aria-label="選択中のプレビュー">
@@ -26,8 +26,8 @@ export const SongJacket = component$<SongJacketProps>(({ track }) => {
           <img
             src={artworkUrl}
             alt={`${track?.title ?? "選択中の曲"}のジャケット`}
-            width={600}
-            height={600}
+            width={1000}
+            height={1000}
             class={styles.jacketImage}
           />
         ) : (
