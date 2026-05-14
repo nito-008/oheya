@@ -65,7 +65,7 @@ export const Profile = component$<ProfileProps>(({ profile }) => {
           aria-hidden="true"
         />
       </div>
-      <img class={styles.nextHint} src={nextHintSvg} width={88} height={32} alt="スクロール" />
+      <img class={styles.nextHint} src={nextHintSvg} width={112} height={96} alt="スクロール" />
     </section>
   );
 });
