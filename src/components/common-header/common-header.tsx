@@ -15,18 +15,12 @@ type CommonHeaderProps = {
   showAuthActions?: boolean;
 };
 
-const getMyRoomHref = (publicId: string | null) => {
-  if (!publicId) return "/settings/profile/";
-
-  return `/${publicId}/`;
-};
-
 export const CommonHeader = component$<CommonHeaderProps>(
   ({ user, currentPath, showAuthActions = true }) => {
     const signIn = useSignIn();
     const isAuthenticated = showAuthActions && user.authenticated;
-    const isSettingsPath = currentPath.startsWith("/settings/");
-    const myRoomHref = getMyRoomHref(user.publicId);
+    const myRoomHref = user.publicId ? `/${user.publicId}/` : "/settings/profile/";
+    const isMyRoomPath = user.publicId ? currentPath === `/${user.publicId}/` : false;
     const accountName = user.name?.trim() || "アカウント";
     const accountInitial = accountName.slice(0, 1).toUpperCase();
 
@@ -38,8 +32,12 @@ export const CommonHeader = component$<CommonHeaderProps>(
             <img class={styles.titleIcon} src={houseSvg} alt="" width={29} height={29} />
           </Link>
         </h1>
-        {isAuthenticated && isSettingsPath ? (
-          <Button href={myRoomHref} label={accountName}>
+        {isAuthenticated && isMyRoomPath ? (
+          <Button href="/settings/profile/" label="設定">
+            <img class={styles.settingsIcon} src={settingSvg} alt="" width={24} height={24} />
+          </Button>
+        ) : isAuthenticated ? (
+          <Link href={myRoomHref} class={styles.accountLink}>
             {user.icon ? (
               <img
                 class={styles.accountButtonIcon}
@@ -51,11 +49,8 @@ export const CommonHeader = component$<CommonHeaderProps>(
             ) : (
               <span class={styles.accountButtonIconFallback}>{accountInitial}</span>
             )}
-          </Button>
-        ) : isAuthenticated ? (
-          <Button href="/settings/profile/" label="設定">
-            <img class={styles.settingsIcon} src={settingSvg} alt="" width={24} height={24} />
-          </Button>
+            <span class={styles.accountName}>{accountName}</span>
+          </Link>
         ) : showAuthActions ? (
           <Form action={signIn} class={styles.authForm}>
             <input type="hidden" name="providerId" value="google" />
