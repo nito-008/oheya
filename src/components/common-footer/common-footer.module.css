@@ -8,6 +8,7 @@
   justify-items: center;
   gap: 1.5rem;
   width: min(100%, 48rem);
+  min-width: 0;
   box-sizing: border-box;
   margin-inline: auto;
   padding: 3rem 1rem;
@@ -49,6 +50,7 @@
   align-items: center;
   min-width: 0;
   max-width: 100%;
+  box-sizing: border-box;
   margin-block-end: 1.7rem;
   color: #6f6862;
   text-decoration: none;
