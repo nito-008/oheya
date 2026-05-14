@@ -40,6 +40,7 @@ type IconCropInputProps = {
   field: FieldState;
   fieldProps: FieldProps;
   label: string;
+  onApply$?: QRL<(file: File) => Promise<string>>;
 };
 
 type CropDragState = {
@@ -62,16 +63,19 @@ const clamp = (value: number, min: number, max: number) => Math.min(Math.max(val
 const isIconOutputContentType = (value: string): value is keyof typeof ICON_OUTPUT_EXTENSIONS =>
   value in ICON_OUTPUT_EXTENSIONS;
 
-export const IconCropInput = component$<IconCropInputProps>(({ field, fieldProps, label }) => {
+export const IconCropInput = component$<IconCropInputProps>((props) => {
+  const { field, fieldProps, label, onApply$ } = props;
   const sourceImageUrl = useSignal("");
   const icon = useSignal(field.value ?? "");
   const previewImageUrl = useSignal(getImageUrl(icon.value) ?? "");
+  const hiddenIconInputRef = useSignal<HTMLInputElement>();
   const sourceImageRef = useSignal<HTMLImageElement>();
   const cropBoxRef = useSignal<HTMLDivElement>();
   const hiddenImageInputRef = useSignal<HTMLInputElement>();
   const localError = useSignal("");
   const cropModalOpen = useSignal(false);
   const cropImageReady = useSignal(false);
+  const isApplying = useSignal(false);
   const cropZoom = useSignal(MIN_SCALE);
   const cropPositionX = useSignal(0);
   const cropPositionY = useSignal(0);
@@ -169,18 +173,56 @@ export const IconCropInput = component$<IconCropInputProps>(({ field, fieldProps
     cropDrag.value = null;
   });
 
+  const updateIconValue = $(async (imageId: string) => {
+    icon.value = imageId;
+
+    const hiddenIconInput = hiddenIconInputRef.value;
+    if (!hiddenIconInput) return;
+
+    hiddenIconInput.value = imageId;
+    hiddenIconInput.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    hiddenIconInput.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+
+  const clearHiddenImageFile = $(() => {
+    if (hiddenImageInputRef.value) {
+      hiddenImageInputRef.value.value = "";
+    }
+  });
+
   const applyCrop = $(async () => {
+    if (isApplying.value) return;
+
     const croppedIcon = await drawCrop();
     if (croppedIcon) {
+      const previousPreviewImageUrl = previewImageUrl.value;
+      const nextPreviewImageUrl = URL.createObjectURL(croppedIcon);
       if (previewImageUrl.value.startsWith("blob:")) {
         URL.revokeObjectURL(previewImageUrl.value);
       }
-      previewImageUrl.value = URL.createObjectURL(croppedIcon);
+      previewImageUrl.value = nextPreviewImageUrl;
 
       if (hiddenImageInputRef.value) {
         const files = new DataTransfer();
         files.items.add(croppedIcon);
         hiddenImageInputRef.value.files = files.files;
+      }
+
+      if (onApply$) {
+        isApplying.value = true;
+        try {
+          const imageId = await onApply$(croppedIcon);
+          await updateIconValue(imageId);
+          await clearHiddenImageFile();
+        } catch (error) {
+          await clearHiddenImageFile();
+          URL.revokeObjectURL(nextPreviewImageUrl);
+          previewImageUrl.value = previousPreviewImageUrl;
+          localError.value =
+            error instanceof Error ? error.message : "アイコンの保存に失敗しました";
+        } finally {
+          isApplying.value = false;
+        }
       }
     }
     await closeCropModal();
@@ -315,6 +357,7 @@ export const IconCropInput = component$<IconCropInputProps>(({ field, fieldProps
       <input
         {...fieldProps}
         ref={async (element) => {
+          hiddenIconInputRef.value = element as HTMLInputElement;
           await fieldProps.ref(element);
         }}
         type="hidden"
@@ -399,10 +442,11 @@ export const IconCropInput = component$<IconCropInputProps>(({ field, fieldProps
             <FormButton
               type="button"
               variant="primary"
-              disabled={!cropImageReady.value}
+              disabled={!cropImageReady.value || isApplying.value}
+              aria-busy={isApplying.value}
               onClick$={applyCrop}
             >
-              これにする
+              {isApplying.value ? "保存中..." : "保存する"}
             </FormButton>
           </div>
         </div>

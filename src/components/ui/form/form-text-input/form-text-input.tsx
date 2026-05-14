@@ -22,12 +22,13 @@ type FormTextInputProps = {
   field: FieldState;
   fieldProps: FieldProps;
   maxLength?: number;
+  onInput$?: QRL<(value: string) => void>;
   required?: boolean;
   type?: "email" | "password" | "search" | "tel" | "text" | "url";
 };
 
 export const FormTextInput = component$<FormTextInputProps>(
-  ({ label, field, fieldProps, maxLength, required = false, type = "text" }) => {
+  ({ label, field, fieldProps, maxLength, onInput$, required = false, type = "text" }) => {
     return (
       <label class={styles.field}>
         <span class={styles.label}>{label}</span>
@@ -37,6 +38,10 @@ export const FormTextInput = component$<FormTextInputProps>(
           type={type}
           value={field.value}
           maxLength={maxLength}
+          onInput$={async (event, element) => {
+            await fieldProps.onInput$(event, element);
+            await onInput$?.(element.value);
+          }}
           required={required}
         />
         <FormErrorMessage message={field.error} />

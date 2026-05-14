@@ -1,5 +1,4 @@
-import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
-import { FormButton } from "~/components/ui/form/form-button/form-button";
+import { $, component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import inputStyles from "~/components/ui/form/form-text-input/form-text-input.module.css";
 import { useToast } from "~/components/ui/toast/toast";
 import type { MusicTrack } from "~/schema/music";
@@ -18,10 +17,14 @@ type MusicSettingsFormProps = {
 const getTrackLabel = (track: Pick<MusicTrack, "title" | "artist">) =>
   `${track.title.slice(0, 1)}${track.artist.slice(0, 1)}`.toUpperCase();
 
+const cloneTrack = (track: MusicTrack): MusicTrack => ({ ...track });
+
 export const MusicSettingsForm = component$<MusicSettingsFormProps>(({ initialTrack }) => {
   const query = useSignal("");
   const results = useSignal<MusicTrack[]>([]);
-  const selectedTrack = useSignal<MusicTrack | null>(initialTrack);
+  const selectedTrack = useSignal<MusicTrack | null>(
+    initialTrack ? cloneTrack(initialTrack) : null,
+  );
   const isSearchActive = useSignal(false);
   const isComposing = useSignal(false);
   const isSearching = useSignal(false);
@@ -31,6 +34,38 @@ export const MusicSettingsForm = component$<MusicSettingsFormProps>(({ initialTr
   const toast = useToast();
 
   const normalizedQuery = query.value.trim().toLowerCase();
+
+  const saveMusic$ = $(async (track: MusicTrack, previousTrack: MusicTrack | null) => {
+    if (isSaving.value) return;
+
+    isSaving.value = true;
+    saveError.value = null;
+
+    try {
+      const response = await fetch("/api/users/me/music", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ track }),
+      });
+
+      if (response.status === 401) {
+        throw new Error("ログインが必要です");
+      }
+      if (response.status === 404) {
+        throw new Error("プロフィールが見つかりません");
+      }
+      if (!response.ok) {
+        throw new Error("保存に失敗しました");
+      }
+
+      await toast.success("保存しました");
+    } catch (error) {
+      selectedTrack.value = previousTrack;
+      saveError.value = error instanceof Error ? error.message : "保存に失敗しました";
+    } finally {
+      isSaving.value = false;
+    }
+  });
 
   // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(({ track, cleanup }) => {
@@ -83,7 +118,7 @@ export const MusicSettingsForm = component$<MusicSettingsFormProps>(({ initialTr
   return (
     <section class={`${formStyles.form} ${sharedStyles.content} ${styles.panel}`}>
       {selectedTrack.value && (
-        <div class={styles.selectedTrackRow}>
+        <div key={selectedTrack.value.id} class={styles.selectedTrackRow}>
           <div class={styles.albumArt} aria-hidden="true">
             {selectedTrack.value.artworkUrl ? (
               <img
@@ -166,13 +201,25 @@ export const MusicSettingsForm = component$<MusicSettingsFormProps>(({ initialTr
                           [styles.resultButton]: true,
                           [styles.resultButtonSelected]: isSelected,
                         }}
-                        onClick$={() => {
-                          selectedTrack.value = track;
+                        disabled={isSaving.value}
+                        onClick$={async () => {
+                          if (isSaving.value) return;
+
+                          const previousTrack = selectedTrack.value
+                            ? cloneTrack(selectedTrack.value)
+                            : null;
+                          const nextTrack = cloneTrack(track);
+
+                          selectedTrack.value = nextTrack;
                           query.value = "";
                           results.value = [];
                           searchError.value = null;
                           saveError.value = null;
                           isSearchActive.value = false;
+
+                          if (nextTrack.id !== previousTrack?.id) {
+                            await saveMusic$(nextTrack, previousTrack);
+                          }
                         }}
                       >
                         <div class={styles.albumArt} aria-hidden="true">
@@ -202,50 +249,8 @@ export const MusicSettingsForm = component$<MusicSettingsFormProps>(({ initialTr
         )}
       </div>
 
+      {isSaving.value && <p class={styles.placeholder}>保存中...</p>}
       {saveError.value && <p class={styles.placeholder}>{saveError.value}</p>}
-
-      <div class={formStyles.actions}>
-        <FormButton
-          type="button"
-          variant="accent"
-          size="md"
-          width="full"
-          disabled={!selectedTrack.value || isSaving.value}
-          aria-busy={isSaving.value}
-          onClick$={async () => {
-            if (!selectedTrack.value || isSaving.value) return;
-
-            isSaving.value = true;
-            saveError.value = null;
-
-            try {
-              const response = await fetch("/api/users/me/music", {
-                method: "PATCH",
-                headers: { "content-type": "application/json" },
-                body: JSON.stringify({ track: selectedTrack.value }),
-              });
-
-              if (response.status === 401) {
-                throw new Error("ログインが必要です");
-              }
-              if (response.status === 404) {
-                throw new Error("プロフィールが見つかりません");
-              }
-              if (!response.ok) {
-                throw new Error("保存に失敗しました");
-              }
-
-              await toast.success("保存しました");
-            } catch (error) {
-              saveError.value = error instanceof Error ? error.message : "保存に失敗しました";
-            } finally {
-              isSaving.value = false;
-            }
-          }}
-        >
-          {isSaving.value ? "保存中..." : "保存する"}
-        </FormButton>
-      </div>
     </section>
   );
 });
