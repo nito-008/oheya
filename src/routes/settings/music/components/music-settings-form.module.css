@@ -59,6 +59,11 @@
   background: #fff8e8;
 }
 
+.resultButton:disabled {
+  cursor: progress;
+  opacity: 0.68;
+}
+
 .resultButton:focus-visible {
   outline: 3px solid rgb(17 17 17 / 14%);
   outline-offset: -3px;
