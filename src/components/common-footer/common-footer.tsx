@@ -1,6 +1,6 @@
 import { component$ } from "@builder.io/qwik";
 import { Form, Link } from "@builder.io/qwik-city";
-import { useSignOut } from "~/routes/plugin@auth";
+import { useSignIn, useSignOut } from "~/routes/plugin@auth";
 import { getImageUrl } from "~/schema/image";
 import type { CommonHeaderUser } from "~/components/common-header/common-header-state";
 import styles from "./common-footer.module.css";
@@ -11,6 +11,7 @@ type CommonFooterProps = {
 };
 
 export const CommonFooter = component$<CommonFooterProps>(({ user, showAuthActions = true }) => {
+  const signIn = useSignIn();
   const signOut = useSignOut();
   const isAuthenticated = showAuthActions && user.authenticated;
   const myRoomHref = user.publicId ? `/${user.publicId}/` : "/settings/profile/";
@@ -43,6 +44,15 @@ export const CommonFooter = component$<CommonFooterProps>(({ user, showAuthActio
             <input type="hidden" name="redirectTo" value="/" />
             <button class={styles.link} type="submit">
               ログアウト
+            </button>
+          </Form>
+        ) : null}
+        {!user.authenticated && showAuthActions ? (
+          <Form action={signIn} class={styles.form}>
+            <input type="hidden" name="providerId" value="google" />
+            <input type="hidden" name="options.redirectTo" value="/signup" />
+            <button class={styles.link} type="submit">
+              ログイン
             </button>
           </Form>
         ) : null}
