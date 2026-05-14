@@ -206,15 +206,6 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
     saveError.value = null;
   });
 
-  const restorePhotoText = $((photoId: string, fieldName: "subtitle" | "title") => {
-    const savedPhoto = savedPhotos.value.find((item) => item.localId === photoId);
-    const restoredValue = savedPhoto?.[fieldName] ?? "";
-    photos.value = photos.value.map((item) =>
-      item.localId === photoId ? { ...item, [fieldName]: restoredValue } : item,
-    );
-    saveError.value = null;
-  });
-
   const updateCropLayout = $((): CropLayout | null => {
     const image = sourceImageRef.value;
     const cropBox = cropBoxRef.value;
@@ -327,30 +318,58 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
     photos.value = previewPhotos;
     saveError.value = null;
     await closeCropModal();
+  });
 
-    const previousPhotos = savedPhotos.value;
+  const savePhoto$ = $(async (photo: AlbumSettingsPhoto) => {
+    const form = formRef.value;
+    const input = form?.elements.namedItem(getPhotoImageName(photo));
+    const croppedPhoto = input instanceof HTMLInputElement ? input.files?.[0] : null;
+    if (!croppedPhoto && !photo.imageId) {
+      const message = "写真を選択してください";
+      saveError.value = message;
+      await toast.error(message);
+      return;
+    }
+
     let uploadedImageId: string | null = null;
     try {
-      const uploaded = await uploadPhoto$(croppedPhoto);
-      uploadedImageId = uploaded.imageId;
-      const nextPhotos = previewPhotos.map((item) =>
-        item.localId === photoId
-          ? { ...item, imageId: uploaded.imageId, previewUrl: null, url: uploaded.url }
-          : item,
-      );
-      const saved = await saveAlbum$(nextPhotos, [uploaded.imageId]);
-      if (!saved) {
-        photos.value = previousPhotos;
+      if (croppedPhoto) {
+        const uploaded = await uploadPhoto$(croppedPhoto);
+        uploadedImageId = uploaded.imageId;
+        const uploadedPhotos = photos.value.map((item) =>
+          item.localId === photo.localId
+            ? { ...item, imageId: uploaded.imageId, previewUrl: null, url: uploaded.url }
+            : item,
+        );
+        const saved = await saveAlbum$(uploadedPhotos, [uploaded.imageId]);
+        if (saved) {
+          if (photo.previewUrl?.startsWith("blob:")) URL.revokeObjectURL(photo.previewUrl);
+          if (input instanceof HTMLInputElement) input.value = "";
+        }
+        return;
       }
+
+      await saveAlbum$(photos.value);
     } catch (error) {
       if (uploadedImageId) {
         await fetch(`/api/images/${uploadedImageId}`, { method: "DELETE" });
       }
-      photos.value = previousPhotos;
       const message = error instanceof Error ? error.message : "保存に失敗しました";
       saveError.value = message;
       await toast.error(message);
     }
+  });
+
+  const cancelPhoto$ = $((photo: AlbumSettingsPhoto) => {
+    if (photo.previewUrl?.startsWith("blob:")) URL.revokeObjectURL(photo.previewUrl);
+    const savedPhoto = savedPhotos.value.find((item) => item.localId === photo.localId);
+    photos.value = savedPhoto
+      ? photos.value.map((item) => (item.localId === photo.localId ? savedPhoto : item))
+      : photos.value.filter((item) => item.localId !== photo.localId);
+
+    const input = formRef.value?.elements.namedItem(getPhotoImageName(photo));
+    if (input instanceof HTMLInputElement) input.value = "";
+    saveError.value = null;
   });
 
   const handleSourceFileChange = $(async (event: Event, photoId: string) => {
@@ -488,128 +507,125 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
       }}
     >
       <div class={styles.photoList}>
-        {photos.value.map((photo, index) => (
-          <section key={photo.localId} class={styles.photoEditor}>
-            <div class={styles.photoHeader}>
-              <h2>写真 {index + 1}</h2>
-              <Button
-                type="button"
-                label="削除"
-                onClick$={async () => {
-                  if (!confirm("本当に削除しますか？")) return;
+        {photos.value.map((photo, index) => {
+          const savedPhoto = savedPhotos.value.find((item) => item.localId === photo.localId);
+          const titleChanged = photo.title !== (savedPhoto?.title ?? "");
+          const subtitleChanged = photo.subtitle !== (savedPhoto?.subtitle ?? "");
+          const isInitialPhoto = !savedPhoto;
+          const hasUnsavedChanges =
+            isInitialPhoto || titleChanged || subtitleChanged || !!photo.previewUrl;
 
-                  const previousPhotos = photos.value;
-                  const nextPhotos = photos.value.filter((item) => item.localId !== photo.localId);
-                  photos.value = nextPhotos;
-                  saveError.value = null;
+          return (
+            <section key={photo.localId} class={styles.photoEditor}>
+              <div class={styles.photoHeader}>
+                <h2>写真 {index + 1}</h2>
+                {!isInitialPhoto && (
+                  <Button
+                    type="button"
+                    label="削除"
+                    onClick$={async () => {
+                      if (!confirm("本当に削除しますか？")) return;
 
-                  const saved = await saveAlbum$(nextPhotos);
-                  if (!saved) {
-                    photos.value = previousPhotos;
-                  }
-                }}
-              >
-                <img src={deleteSvg} alt="" width={24} height={24} />
-              </Button>
-            </div>
+                      const previousPhotos = photos.value;
+                      const nextPhotos = photos.value.filter(
+                        (item) => item.localId !== photo.localId,
+                      );
+                      photos.value = nextPhotos;
+                      saveError.value = null;
 
-            <label class={styles.imagePicker} aria-label="写真を選ぶ">
-              <span class={styles.previewFrame}>
-                {photo.previewUrl || photo.url ? (
-                  <img src={photo.previewUrl ?? photo.url ?? ""} alt="" width={320} height={240} />
-                ) : (
-                  <span>写真を選択</span>
+                      const saved = await saveAlbum$(nextPhotos);
+                      if (!saved) {
+                        photos.value = previousPhotos;
+                      }
+                    }}
+                  >
+                    <img src={deleteSvg} alt="" width={24} height={24} />
+                  </Button>
                 )}
-                <span class={styles.fileOverlay} aria-hidden="true">
-                  <span>+</span>
+              </div>
+
+              <label class={styles.imagePicker} aria-label="写真を選ぶ">
+                <span class={styles.previewFrame}>
+                  {photo.previewUrl || photo.url ? (
+                    <img
+                      src={photo.previewUrl ?? photo.url ?? ""}
+                      alt=""
+                      width={320}
+                      height={240}
+                    />
+                  ) : (
+                    <span>写真を選択</span>
+                  )}
+                  <span class={styles.fileOverlay} aria-hidden="true">
+                    <span>+</span>
+                  </span>
                 </span>
-              </span>
-              <input
-                type="file"
-                name={getPhotoImageName(photo)}
-                accept="image/png,image/jpeg,image/webp,image/avif"
-                onChange$={(event) => handleSourceFileChange(event, photo.localId)}
-              />
-            </label>
+                <input
+                  type="file"
+                  name={getPhotoImageName(photo)}
+                  accept="image/png,image/jpeg,image/webp,image/avif"
+                  onChange$={(event) => handleSourceFileChange(event, photo.localId)}
+                />
+              </label>
 
-            <label class={inputStyles.field}>
-              <span class={inputStyles.label}>
-                タイトル（任意・最大{albumPhotoTitleMaxLength}文字）
-              </span>
-              <input
-                type="text"
-                class={inputStyles.input}
-                value={photo.title}
-                maxLength={albumPhotoTitleMaxLength}
-                onInput$={(_, target) => {
-                  updatePhotoText(photo.localId, "title", target.value);
-                }}
-              />
-            </label>
-            {photo.title !==
-              (savedPhotos.value.find((item) => item.localId === photo.localId)?.title ?? "") && (
-              <div class={styles.fieldActions}>
-                <FormButton
-                  type="button"
-                  variant="secondary"
-                  disabled={isSaving.value}
-                  onClick$={() => restorePhotoText(photo.localId, "title")}
-                >
-                  キャンセル
-                </FormButton>
-                {photo.imageId && (
+              <label class={inputStyles.field}>
+                <span class={inputStyles.label}>
+                  タイトル（任意・最大{albumPhotoTitleMaxLength}文字）
+                </span>
+                <input
+                  type="text"
+                  class={inputStyles.input}
+                  value={photo.title}
+                  maxLength={albumPhotoTitleMaxLength}
+                  onInput$={(_, target) => {
+                    updatePhotoText(photo.localId, "title", target.value);
+                  }}
+                />
+              </label>
+
+              <label class={inputStyles.field}>
+                <span class={inputStyles.label}>
+                  サブタイトル（任意・最大{albumPhotoSubtitleMaxLength}文字）
+                </span>
+                <input
+                  type="text"
+                  class={inputStyles.input}
+                  value={photo.subtitle}
+                  maxLength={albumPhotoSubtitleMaxLength}
+                  onInput$={(_, target) => {
+                    updatePhotoText(photo.localId, "subtitle", target.value);
+                  }}
+                />
+              </label>
+
+              {hasUnsavedChanges && (
+                <div class={styles.photoActions}>
                   <FormButton
-                    type="submit"
-                    variant="primary"
+                    type="button"
+                    variant="secondary"
+                    size="md"
                     disabled={isSaving.value}
+                    onClick$={() => cancelPhoto$(photo)}
+                  >
+                    キャンセル
+                  </FormButton>
+                  <FormButton
+                    type="button"
+                    variant="primary"
+                    size="md"
+                    disabled={
+                      isSaving.value || (isInitialPhoto && !photo.previewUrl && !photo.imageId)
+                    }
                     aria-busy={isSaving.value}
+                    onClick$={() => savePhoto$(photo)}
                   >
                     {isSaving.value ? "保存中..." : "保存する"}
                   </FormButton>
-                )}
-              </div>
-            )}
-
-            <label class={inputStyles.field}>
-              <span class={inputStyles.label}>
-                サブタイトル（任意・最大{albumPhotoSubtitleMaxLength}文字）
-              </span>
-              <input
-                type="text"
-                class={inputStyles.input}
-                value={photo.subtitle}
-                maxLength={albumPhotoSubtitleMaxLength}
-                onInput$={(_, target) => {
-                  updatePhotoText(photo.localId, "subtitle", target.value);
-                }}
-              />
-            </label>
-            {photo.subtitle !==
-              (savedPhotos.value.find((item) => item.localId === photo.localId)?.subtitle ??
-                "") && (
-              <div class={styles.fieldActions}>
-                <FormButton
-                  type="button"
-                  variant="secondary"
-                  disabled={isSaving.value}
-                  onClick$={() => restorePhotoText(photo.localId, "subtitle")}
-                >
-                  キャンセル
-                </FormButton>
-                {photo.imageId && (
-                  <FormButton
-                    type="submit"
-                    variant="primary"
-                    disabled={isSaving.value}
-                    aria-busy={isSaving.value}
-                  >
-                    {isSaving.value ? "保存中..." : "保存する"}
-                  </FormButton>
-                )}
-              </div>
-            )}
-          </section>
-        ))}
+                </div>
+              )}
+            </section>
+          );
+        })}
       </div>
 
       {saveError.value && <p class={styles.errorMessage}>{saveError.value}</p>}
@@ -617,7 +633,7 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
       <div class={styles.actions}>
         <FormButton
           type="button"
-          variant="secondary"
+          variant="accent"
           size="md"
           width="full"
           disabled={photos.value.length >= maxAlbumPhotoCount || isSaving.value}
