@@ -1,54 +1,16 @@
-.profileCarousel {
-  overflow: hidden;
+.profileRoom {
+  height: 100%;
+  overflow-x: hidden;
 }
 
-.carouselViewport {
-  display: flex;
-  width: 100%;
-  min-height: 80svh;
-  margin-inline: auto;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  overscroll-behavior-x: contain;
-  scrollbar-width: none;
-}
-
-.carouselViewport::-webkit-scrollbar {
-  display: none;
-}
-
-.carouselSlide {
+.profileSection {
   display: grid;
-  flex: 0 0 100%;
-  min-width: 0;
-  scroll-snap-align: center;
+  min-height: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
 }
 
-.carouselProgress {
-  position: fixed;
-  right: 50%;
-  bottom: max(1rem, env(safe-area-inset-bottom));
-  z-index: 10;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.4rem;
-  width: min(16rem, calc(100% - 3rem));
-  height: 0.25rem;
-  transform: translateX(50%);
-}
-
-.carouselProgressSegment {
-  display: block;
-  border-radius: 999px;
-  background: #d7d2cb;
-  transition: background-color 220ms var(--ease-out-expo);
-}
-
-.carouselProgressSegmentActive {
-  background: #5c554f;
-}
-
-.profileSlide {
+.profileIntro {
   grid-template-rows: 1fr auto;
   gap: 3rem;
   justify-items: center;
@@ -57,13 +19,8 @@
   text-align: center;
 }
 
-.musicSlide {
-  place-items: center;
-  align-content: center;
-  padding: 1.4rem 1rem 2rem;
-}
-
-.albumSlide {
+.musicSection,
+.albumSection {
   place-items: center;
   align-content: center;
   padding: 1.4rem 1rem 2rem;
@@ -149,7 +106,7 @@
   overflow-wrap: anywhere;
 }
 
-.scrollHint {
+.nextHint {
   align-self: end;
   justify-self: center;
   width: 7rem;
