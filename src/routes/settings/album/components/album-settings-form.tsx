@@ -1,8 +1,10 @@
 import { $, component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
+import { Button } from "~/components/ui/button/button";
 import { FormButton } from "~/components/ui/form/form-button/form-button";
 import inputStyles from "~/components/ui/form/form-text-input/form-text-input.module.css";
 import { Modal } from "~/components/ui/modal/modal";
 import { useToast } from "~/components/ui/toast/toast";
+import deleteSvg from "~/media/icons/delete.svg";
 import {
   albumPhotoSubtitleMaxLength,
   albumPhotoTitleMaxLength,
@@ -87,6 +89,7 @@ const isPhotoOutputContentType = (value: string): value is keyof typeof PHOTO_OU
 export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPhotos }) => {
   const formRef = useSignal<HTMLFormElement>();
   const photos = useSignal<AlbumSettingsPhoto[]>(initialPhotos.map(toSettingsPhoto));
+  const savedPhotos = useSignal<AlbumSettingsPhoto[]>(initialPhotos.map(toSettingsPhoto));
   const isSaving = useSignal(false);
   const saveError = useSignal<string | null>(null);
   const cropPhotoId = useSignal<string | null>(null);
@@ -110,6 +113,22 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
       reader.addEventListener("error", () => reject(reader.error));
       reader.readAsDataURL(file);
     });
+  });
+
+  const updatePhotoText = $((photoId: string, fieldName: "subtitle" | "title", value: string) => {
+    photos.value = photos.value.map((item) =>
+      item.localId === photoId ? { ...item, [fieldName]: value } : item,
+    );
+    saveError.value = null;
+  });
+
+  const restorePhotoText = $((photoId: string, fieldName: "subtitle" | "title") => {
+    const savedPhoto = savedPhotos.value.find((item) => item.localId === photoId);
+    const restoredValue = savedPhoto?.[fieldName] ?? "";
+    photos.value = photos.value.map((item) =>
+      item.localId === photoId ? { ...item, [fieldName]: restoredValue } : item,
+    );
+    saveError.value = null;
   });
 
   const updateCropLayout = $((): CropLayout | null => {
@@ -424,13 +443,14 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
             throw new Error("保存に失敗しました");
           }
 
-          const savedPhotos = payloadPhotos.map((photo, index) => ({
+          const savedPhotoValues = payloadPhotos.map((photo, index) => ({
             ...photos.value[index],
             imageId: photo.imageId,
             previewUrl: null,
             url: `/api/images/${photo.imageId}`,
           }));
-          photos.value = savedPhotos;
+          photos.value = savedPhotoValues;
+          savedPhotos.value = savedPhotoValues;
           form.reset();
           await toast.success("保存しました");
         } catch (error) {
@@ -447,16 +467,18 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
           <section key={photo.localId} class={styles.photoEditor}>
             <div class={styles.photoHeader}>
               <h2>写真 {index + 1}</h2>
-              <button
+              <Button
                 type="button"
-                class={styles.removeButton}
+                label="削除"
                 onClick$={() => {
+                  if (!confirm("本当に削除しますか？")) return;
+
                   photos.value = photos.value.filter((item) => item.localId !== photo.localId);
                   saveError.value = null;
                 }}
               >
-                削除
-              </button>
+                <img src={deleteSvg} alt="" width={24} height={24} />
+              </Button>
             </div>
 
             <label class={styles.imagePicker} aria-label="写真を選ぶ">
@@ -486,13 +508,31 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
                 value={photo.title}
                 maxLength={albumPhotoTitleMaxLength}
                 onInput$={(_, target) => {
-                  photos.value = photos.value.map((item) =>
-                    item.localId === photo.localId ? { ...item, title: target.value } : item,
-                  );
-                  saveError.value = null;
+                  updatePhotoText(photo.localId, "title", target.value);
                 }}
               />
             </label>
+            {photo.title !==
+              (savedPhotos.value.find((item) => item.localId === photo.localId)?.title ?? "") && (
+              <div class={styles.fieldActions}>
+                <FormButton
+                  type="button"
+                  variant="secondary"
+                  disabled={isSaving.value}
+                  onClick$={() => restorePhotoText(photo.localId, "title")}
+                >
+                  キャンセル
+                </FormButton>
+                <FormButton
+                  type="submit"
+                  variant="primary"
+                  disabled={isSaving.value}
+                  aria-busy={isSaving.value}
+                >
+                  {isSaving.value ? "保存中..." : "保存する"}
+                </FormButton>
+              </div>
+            )}
 
             <label class={inputStyles.field}>
               <span class={inputStyles.label}>サブタイトル</span>
@@ -502,13 +542,32 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
                 value={photo.subtitle}
                 maxLength={albumPhotoSubtitleMaxLength}
                 onInput$={(_, target) => {
-                  photos.value = photos.value.map((item) =>
-                    item.localId === photo.localId ? { ...item, subtitle: target.value } : item,
-                  );
-                  saveError.value = null;
+                  updatePhotoText(photo.localId, "subtitle", target.value);
                 }}
               />
             </label>
+            {photo.subtitle !==
+              (savedPhotos.value.find((item) => item.localId === photo.localId)?.subtitle ??
+                "") && (
+              <div class={styles.fieldActions}>
+                <FormButton
+                  type="button"
+                  variant="secondary"
+                  disabled={isSaving.value}
+                  onClick$={() => restorePhotoText(photo.localId, "subtitle")}
+                >
+                  キャンセル
+                </FormButton>
+                <FormButton
+                  type="submit"
+                  variant="primary"
+                  disabled={isSaving.value}
+                  aria-busy={isSaving.value}
+                >
+                  {isSaving.value ? "保存中..." : "保存する"}
+                </FormButton>
+              </div>
+            )}
           </section>
         ))}
       </div>
