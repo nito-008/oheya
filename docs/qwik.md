@@ -6,8 +6,16 @@
 - When building paths with `Link` `href`, `window.location`, `history.replaceState`, or similar APIs, include the trailing slash.
 - Examples:
   - `/settings/profile/`
-  - `/${userId}/profile/`
-  - `/${userId}/music/`
+  - `/${userId}/`
+  - `/${userId}/#music`
+
+## User Room Sections
+
+- Use section ids for profile room subsections instead of dedicated paths.
+- Examples:
+  - `/${userId}/#profile`
+  - `/${userId}/#music`
+  - `/${userId}/#album`
 
 ## Qwik-Specific Features
 
