@@ -39,3 +39,4 @@
 
 - Use the GitHub CLI for GitHub-related operations.
 - When addressing an issue, create a new branch and open a pull request for the change.
+- Do not push commits unless the user explicitly asks you to push.
