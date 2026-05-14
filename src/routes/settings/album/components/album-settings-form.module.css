@@ -105,7 +105,6 @@
 
 .imagePicker:focus-within .previewFrame {
   outline: 3px solid rgb(17 17 17 / 18%);
-  outline-offset: 3px;
 }
 
 .imagePicker:active .previewFrame {
