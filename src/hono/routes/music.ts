@@ -2,6 +2,7 @@ import { vValidator } from "@hono/valibot-validator";
 import { Hono } from "hono";
 import * as v from "valibot";
 import type { Bindings } from "~/hono/types";
+import { getAppleMusicArtworkUrl } from "~/lib/music-artwork";
 import type { MusicTrack } from "~/schema/music";
 
 const musicSearchQuerySchema = v.object({
@@ -47,8 +48,7 @@ export const musicRouter = new Hono<{ Bindings: Bindings }>().get(
         id: String(track.trackId),
         title: track.trackName!,
         artist: track.artistName!,
-        artworkUrl:
-          track.artworkUrl100?.replace("100x100bb", "300x300bb") ?? track.artworkUrl100 ?? null,
+        artworkUrl: getAppleMusicArtworkUrl(track.artworkUrl100, 600),
         previewUrl: track.previewUrl ?? null,
         trackViewUrl: track.trackViewUrl ?? null,
       }));
