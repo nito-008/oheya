@@ -65,11 +65,11 @@ export default component$(() => {
   const data = useProfile();
 
   return (
-    <main class={styles.main} aria-label={`${data.value.profile.name}のプロフィール`}>
+    <div class={styles.main} aria-label={`${data.value.profile.name}のプロフィール`}>
       <Profile profile={data.value.profile} />
       <Music track={data.value.track} />
       <Album photos={data.value.albumPhotos} />
-    </main>
+    </div>
   );
 });
 
