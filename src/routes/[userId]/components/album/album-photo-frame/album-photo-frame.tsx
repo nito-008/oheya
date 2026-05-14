@@ -1,5 +1,6 @@
 import { component$ } from "@builder.io/qwik";
 import albumPhotoFrameSvg from "~/media/album-photo-frame.svg";
+import photoPlaceholderSvg from "~/media/photo-placeholder.svg";
 import styles from "./album-photo-frame.module.css";
 
 type AlbumPhotoFrameProps = {
@@ -35,7 +36,15 @@ export const AlbumPhotoFrame = component$<AlbumPhotoFrameProps>(
           {imageUrl ? (
             <img src={imageUrl} alt={alt} width={800} height={600} class={styles.photoImage} />
           ) : (
-            <div class={styles.photoFallback} aria-hidden="true" />
+            <div class={styles.photoFallback} aria-hidden="true">
+              <img
+                src={photoPlaceholderSvg}
+                alt=""
+                width={96}
+                height={96}
+                class={styles.placeholderImage}
+              />
+            </div>
           )}
           <img
             src={albumPhotoFrameSvg}

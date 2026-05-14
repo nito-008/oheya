@@ -14,6 +14,7 @@ import {
 import { isImageContentType, maxImageSizeBytes } from "~/schema/image";
 import formStyles from "~/routes/signup/index.module.css";
 import sharedStyles from "~/routes/settings/components/settings-tabs/settings-tabs.module.css";
+import photoPlaceholderSvg from "~/media/photo-placeholder.svg";
 import styles from "./album-settings-form.module.css";
 
 type AlbumSettingsPhoto = {
@@ -548,13 +549,20 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
                 <span class={styles.previewFrame}>
                   {photo.previewUrl || photo.url ? (
                     <img
+                      class={styles.previewImage}
                       src={photo.previewUrl ?? photo.url ?? ""}
                       alt=""
                       width={320}
                       height={240}
                     />
                   ) : (
-                    <span>写真を選択</span>
+                    <img
+                      class={styles.placeholderImage}
+                      src={photoPlaceholderSvg}
+                      alt=""
+                      width={96}
+                      height={96}
+                    />
                   )}
                   <span class={styles.fileOverlay} aria-hidden="true">
                     <span>+</span>

@@ -78,9 +78,22 @@
 }
 
 .photoFallback {
+  display: grid;
+  place-items: center;
   background:
-    linear-gradient(145deg, rgb(255 254 248 / 90%), rgb(232 226 214 / 70%)),
-    repeating-linear-gradient(-24deg, rgb(34 34 34 / 9%) 0 0.08rem, transparent 0.08rem 0.65rem);
+    linear-gradient(45deg, rgb(47 47 47 / 8%) 25%, transparent 25% 75%, rgb(47 47 47 / 8%) 75%),
+    linear-gradient(45deg, rgb(47 47 47 / 8%) 25%, transparent 25% 75%, rgb(47 47 47 / 8%) 75%),
+    #fffef8;
+  background-position:
+    0 0,
+    0.65rem 0.65rem;
+  background-size: 1.3rem 1.3rem;
+}
+
+.placeholderImage {
+  width: min(34%, 7rem);
+  height: auto;
+  opacity: 0.8;
 }
 
 .frameImage {
