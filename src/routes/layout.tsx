@@ -52,7 +52,11 @@ export default component$(() => {
 
   return (
     <div class={styles.appShell}>
-      <CommonHeader user={headerUser} showAuthActions={showAuthActions} />
+      <CommonHeader
+        user={headerUser}
+        currentPath={location.url.pathname}
+        showAuthActions={showAuthActions}
+      />
       <main class={styles.pageContent}>
         <Slot />
       </main>
