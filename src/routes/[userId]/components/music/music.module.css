@@ -1,0 +1,7 @@
+.music {
+  display: grid;
+  min-height: 100%;
+  place-items: center;
+  align-content: center;
+  padding: 1.4rem 1rem 2rem;
+}
