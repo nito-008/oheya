@@ -506,6 +506,7 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
   });
 
   const canAddPhoto = photos.value.length < maxAlbumPhotoCount;
+  const hasPhotos = photos.value.length > 0;
 
   return (
     <form
@@ -648,7 +649,7 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
       {saveError.value && <p class={styles.errorMessage}>{saveError.value}</p>}
 
       {canAddPhoto && (
-        <div class={styles.actions}>
+        <div class={`${styles.actions} ${hasPhotos ? styles.separatedActions : ""}`}>
           <FormButton
             type="button"
             variant="accent"

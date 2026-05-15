@@ -119,6 +119,9 @@
 .actions {
   display: grid;
   gap: 0.85rem;
+}
+
+.separatedActions {
   padding-top: 2rem;
   border-top: 1px solid #ddd6cb;
 }
