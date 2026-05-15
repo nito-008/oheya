@@ -53,7 +53,17 @@ jobs:
           set -o pipefail
           vp run deploy --env preview 2>&1 | tee deploy.log
 
-          preview_url="$(grep -Eo 'https://[^[:space:]]+' deploy.log | grep -E 'workers\.dev|pages\.dev' | tail -n 1)"
+          stable_url="$(grep -Eo 'https://[^[:space:]]+' deploy.log | grep -E 'workers\.dev|pages\.dev' | tail -n 1)"
+          version_id="$(sed -n 's/^Current Version ID: //p' deploy.log | tail -n 1)"
+
+          if [ -n "$version_id" ] && [ -n "$stable_url" ]; then
+            version_prefix="${version_id%%-*}"
+            stable_origin="${stable_url#https://}"
+            preview_url="https://$version_prefix-$stable_origin"
+          else
+            preview_url="$stable_url"
+          fi
+
           if [ -z "$preview_url" ]; then
             echo "Preview URL was not found in deploy output." >&2
             exit 1
