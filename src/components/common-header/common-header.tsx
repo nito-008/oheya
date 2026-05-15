@@ -8,7 +8,6 @@ import settingSvg from "~/media/icons/setting.svg";
 import { useSignIn } from "~/routes/plugin@auth";
 import { getImageUrl } from "~/schema/image";
 import {
-  getCommonUserDisplayName,
   getCommonUserInitial,
   getCommonUserRoomHref,
   type CommonHeaderUser,
@@ -27,7 +26,6 @@ export const CommonHeader = component$<CommonHeaderProps>(
     const hasProfile = user.authenticated && Boolean(user.publicId);
     const myRoomHref = getCommonUserRoomHref(user);
     const isMyRoomPath = user.publicId ? currentPath === `/${user.publicId}/` : false;
-    const accountName = getCommonUserDisplayName(user);
     const accountInitial = getCommonUserInitial(user);
 
     return (
@@ -55,7 +53,7 @@ export const CommonHeader = component$<CommonHeaderProps>(
             ) : (
               <span class={styles.accountButtonIconFallback}>{accountInitial}</span>
             )}
-            <span class={styles.accountName}>{accountName}</span>
+            <span class={styles.accountName}>自分の部屋へ</span>
           </Link>
         ) : user.authenticated && showAuthActions ? (
           <Button href="/signup" label="アカウント登録">
