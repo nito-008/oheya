@@ -2,10 +2,10 @@ import { component$ } from "@builder.io/qwik";
 import { Form, Link } from "@builder.io/qwik-city";
 import { Button } from "~/components/ui/button/button";
 import houseSvg from "~/media/house.svg";
+import accountSvg from "~/media/icons/account.svg";
 import loginSvg from "~/media/icons/login.svg";
-import logoutSvg from "~/media/icons/logout.svg";
 import settingSvg from "~/media/icons/setting.svg";
-import { useSignIn, useSignOut } from "~/routes/plugin@auth";
+import { useSignIn } from "~/routes/plugin@auth";
 import { getImageUrl } from "~/schema/image";
 import {
   getCommonUserDisplayName,
@@ -24,7 +24,6 @@ type CommonHeaderProps = {
 export const CommonHeader = component$<CommonHeaderProps>(
   ({ user, currentPath, showAuthActions = true }) => {
     const signIn = useSignIn();
-    const signOut = useSignOut();
     const hasProfile = user.authenticated && Boolean(user.publicId);
     const myRoomHref = getCommonUserRoomHref(user);
     const isMyRoomPath = user.publicId ? currentPath === `/${user.publicId}/` : false;
@@ -59,12 +58,9 @@ export const CommonHeader = component$<CommonHeaderProps>(
             <span class={styles.accountName}>{accountName}</span>
           </Link>
         ) : user.authenticated && showAuthActions ? (
-          <Form action={signOut} class={styles.authForm}>
-            <input type="hidden" name="redirectTo" value="/" />
-            <Button type="submit" label="ログアウトする">
-              <img class={styles.logoutIcon} src={logoutSvg} alt="" width={24} height={24} />
-            </Button>
-          </Form>
+          <Button href="/signup" label="アカウント登録">
+            <img class={styles.accountIcon} src={accountSvg} alt="" width={24} height={24} />
+          </Button>
         ) : showAuthActions ? (
           <Form action={signIn} class={styles.authForm}>
             <input type="hidden" name="providerId" value="google" />
