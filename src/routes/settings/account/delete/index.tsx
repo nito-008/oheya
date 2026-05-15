@@ -5,7 +5,6 @@ import { Button } from "~/components/ui/button/button";
 import { useCommonHeaderUser } from "~/components/common-header/common-header-state";
 import { useToast } from "~/components/ui/toast/toast";
 import { createApiClient } from "~/lib/api";
-import deleteSvg from "~/media/icons/delete.svg";
 import sharedStyles from "~/routes/settings/components/settings-tabs/settings-tabs.module.css";
 import styles from "./index.module.css";
 
@@ -35,7 +34,7 @@ export default component$(() => {
       <div class={styles.actionRow}>
         <Button
           type="button"
-          label={deleting.value ? "削除中..." : "アカウントを削除"}
+          label={deleting.value ? "削除中..." : "アカウントを削除する"}
           disabled={deleting.value}
           aria-busy={deleting.value}
           onClick$={async () => {
@@ -66,9 +65,7 @@ export default component$(() => {
               );
             }
           }}
-        >
-          <img src={deleteSvg} alt="" width={24} height={24} />
-        </Button>
+        />
       </div>
     </section>
   );

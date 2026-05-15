@@ -28,3 +28,9 @@
   justify-content: center;
   width: 100%;
 }
+
+.deleteLink {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
