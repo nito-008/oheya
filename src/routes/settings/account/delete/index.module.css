@@ -1,6 +1,6 @@
 .panel {
   display: grid;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .warning {
@@ -13,6 +13,7 @@
   display: flex;
   justify-content: center;
   width: 100%;
+  margin-top: 1.75rem;
 }
 
 .actionRow :global(button) {
@@ -33,4 +34,16 @@
 .deleteIcon {
   display: inline-flex;
   color: #ec0000;
+}
+
+.backLink {
+  justify-self: center;
+  margin-top: 0.75rem;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.backLink:hover {
+  color: #6f6862;
 }

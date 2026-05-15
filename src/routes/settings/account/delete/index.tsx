@@ -1,6 +1,6 @@
 import { component$, useSignal } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
-import { routeLoader$, useNavigate } from "@builder.io/qwik-city";
+import { Link, routeLoader$, useNavigate } from "@builder.io/qwik-city";
 import { Button } from "~/components/ui/button/button";
 import { useCommonHeaderUser } from "~/components/common-header/common-header-state";
 import { useToast } from "~/components/ui/toast/toast";
@@ -70,6 +70,9 @@ export default component$(() => {
           <span class={styles.deleteIcon} dangerouslySetInnerHTML={deleteSvg} />
         </Button>
       </div>
+      <Link class={styles.backLink} href="/settings/account/">
+        やっぱりやめる
+      </Link>
     </section>
   );
 });
