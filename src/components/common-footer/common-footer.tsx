@@ -2,7 +2,12 @@ import { component$ } from "@builder.io/qwik";
 import { Form, Link } from "@builder.io/qwik-city";
 import { useSignIn, useSignOut } from "~/routes/plugin@auth";
 import { getImageUrl } from "~/schema/image";
-import type { CommonHeaderUser } from "~/components/common-header/common-header-state";
+import {
+  getCommonUserDisplayName,
+  getCommonUserInitial,
+  getCommonUserRoomHref,
+  type CommonHeaderUser,
+} from "~/components/common-header/common-header-state";
 import styles from "./common-footer.module.css";
 
 type CommonFooterProps = {
@@ -14,15 +19,15 @@ export const CommonFooter = component$<CommonFooterProps>(({ user, showAuthActio
   const signIn = useSignIn();
   const signOut = useSignOut();
   const isAuthenticated = showAuthActions && user.authenticated;
-  const myRoomHref = user.publicId ? `/${user.publicId}/` : "/settings/profile/";
-  const accountName = user.name?.trim() || "アカウント";
-  const accountInitial = accountName.slice(0, 1).toUpperCase();
+  const myRoomHref = getCommonUserRoomHref(user);
+  const accountName = getCommonUserDisplayName(user);
+  const accountInitial = getCommonUserInitial(user);
 
   return (
     <footer class={styles.footer}>
       <nav class={styles.nav} aria-label="フッター">
         {isAuthenticated ? (
-          <Link href={myRoomHref} class={styles.profileLink}>
+          <Link href={myRoomHref} prefetch="js" class={styles.profileLink}>
             {user.icon ? (
               <img
                 class={styles.profileIcon}
