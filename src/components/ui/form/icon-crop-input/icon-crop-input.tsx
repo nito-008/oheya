@@ -6,11 +6,10 @@ import { FormButton } from "~/components/ui/form/form-button/form-button";
 import { Modal } from "~/components/ui/modal/modal";
 import { TapClickIcon } from "~/components/ui/tap-click-icon/tap-click-icon";
 import iconPlaceholderSvg from "~/media/icon-placeholder.svg";
-import { getImageUrl } from "~/schema/image";
+import { getImageUrl, maxImageSourceSizeBytes } from "~/schema/image";
 import styles from "./icon-crop-input.module.css";
 
 const OUTPUT_SIZE = 256;
-const MAX_SOURCE_SIZE = 20 * 1024 * 1024;
 const MIN_SCALE = 1;
 const MAX_SCALE = 3;
 const ICON_CONTENT_TYPE = "image/webp";
@@ -240,7 +239,7 @@ export const IconCropInput = component$<IconCropInputProps>((props) => {
       return;
     }
 
-    if (file.size > MAX_SOURCE_SIZE) {
+    if (file.size > maxImageSourceSizeBytes) {
       localError.value = "20MB以下の画像を選んでください";
       input.value = "";
       return;

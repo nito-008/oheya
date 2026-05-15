@@ -11,7 +11,7 @@ import {
   maxAlbumPhotoCount,
   type UserAlbumPhoto,
 } from "~/schema/album";
-import { isImageContentType, maxImageSizeBytes } from "~/schema/image";
+import { isImageContentType, maxImageSizeBytes, maxImageSourceSizeBytes } from "~/schema/image";
 import formStyles from "~/routes/signup/index.module.css";
 import sharedStyles from "~/routes/settings/components/settings-tabs/settings-tabs.module.css";
 import photoPlaceholderSvg from "~/media/photo-placeholder.svg";
@@ -58,10 +58,9 @@ const toSavedPhotos = (photos: AlbumSettingsPhoto[]) =>
     url: photo.imageId ? `/api/images/${photo.imageId}` : photo.url,
   }));
 
-const CROP_OUTPUT_WIDTH = 800;
-const CROP_OUTPUT_HEIGHT = 600;
+const CROP_OUTPUT_WIDTH = 1920;
+const CROP_OUTPUT_HEIGHT = 1440;
 const CROP_ASPECT_RATIO = CROP_OUTPUT_WIDTH / CROP_OUTPUT_HEIGHT;
-const MAX_SOURCE_SIZE = 20 * 1024 * 1024;
 const MIN_SCALE = 1;
 const MAX_SCALE = 3;
 const PHOTO_CONTENT_TYPE = "image/webp";
@@ -128,7 +127,7 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
       throw new Error("JPEGまたはWebPの画像を選択してください");
     }
     if (file.size > maxImageSizeBytes) {
-      throw new Error("画像は1MB以下にしてください");
+      throw new Error("画像は4MB以下にしてください");
     }
 
     const imageFormData = new FormData();
@@ -392,7 +391,7 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
       return;
     }
 
-    if (file.size > MAX_SOURCE_SIZE) {
+    if (file.size > maxImageSourceSizeBytes) {
       saveError.value = "20MB以下の画像を選択してください";
       input.value = "";
       return;
