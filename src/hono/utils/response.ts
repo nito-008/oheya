@@ -1,1 +1,1 @@
-export const noContent = () => new Response(null, { status: 204 });
+export const emptyOk = () => new Response(null, { status: 200 });

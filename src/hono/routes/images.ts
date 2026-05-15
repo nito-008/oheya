@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { authMiddleware } from "~/hono/middleware/auth";
 import type { Bindings } from "~/hono/types";
 import { applyR2HttpMetadata, deleteOwnedImage } from "~/hono/utils/image";
-import { noContent } from "~/hono/utils/response";
+import { emptyOk } from "~/hono/utils/response";
 import { getDb } from "~/lib/db";
 import { images } from "~/lib/db/schema";
 import {
@@ -100,5 +100,5 @@ export const imagesRouter = new Hono<{ Bindings: Bindings }>()
     }
 
     await deleteOwnedImage(c.env, imageId, userId);
-    return noContent();
+    return emptyOk();
   });
