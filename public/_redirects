@@ -1,1 +1,10 @@
 # https://developers.cloudflare.com/pages/platform/redirects/
+
+/favicon.ico/ /favicon.ico 301
+/favicon.svg/ /favicon.svg 301
+/favicon-96x96.png/ /favicon-96x96.png 301
+/apple-touch-icon.png/ /apple-touch-icon.png 301
+/site.webmanifest/ /site.webmanifest 301
+/web-app-manifest-192x192.png/ /web-app-manifest-192x192.png 301
+/web-app-manifest-512x512.png/ /web-app-manifest-512x512.png 301
+/robots.txt/ /robots.txt 301
