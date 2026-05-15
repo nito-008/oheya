@@ -1,6 +1,7 @@
 import { component$, useSignal } from "@builder.io/qwik";
 import musicPauseSvg from "~/media/music-pause.svg";
 import musicPlaySvg from "~/media/music-play.svg";
+import songPlaceholderSvg from "~/media/song-placeholder.svg";
 import songJacketFrameSvg from "~/media/song-jacket-frame.svg";
 import { getAppleMusicArtworkUrl } from "~/lib/music-artwork";
 import type { MusicTrack } from "~/schema/music";
@@ -17,6 +18,8 @@ export const SongJacket = component$<SongJacketProps>(({ track }) => {
   const isPlaying = useSignal(false);
   const audioRef = useSignal<HTMLAudioElement>();
 
+  const trackTitle = track?.title ?? "楽曲未設定";
+  const canPlayPreview = !!track?.previewUrl;
   const artworkUrl = getAppleMusicArtworkUrl(track?.artworkUrl, 1000);
 
   return (
@@ -25,13 +28,21 @@ export const SongJacket = component$<SongJacketProps>(({ track }) => {
         {artworkUrl ? (
           <img
             src={artworkUrl}
-            alt={`${track?.title ?? "選択中の曲"}のジャケット`}
+            alt={`${trackTitle}のジャケット`}
             width={1000}
             height={1000}
             class={styles.jacketImage}
           />
         ) : (
-          <div class={styles.jacketFallback} aria-hidden="true" />
+          <span class={styles.jacketPlaceholderSurface} aria-hidden="true">
+            <img
+              src={songPlaceholderSvg}
+              alt=""
+              width={96}
+              height={96}
+              class={styles.jacketPlaceholder}
+            />
+          </span>
         )}
         <img
           src={songJacketFrameSvg}
@@ -41,39 +52,40 @@ export const SongJacket = component$<SongJacketProps>(({ track }) => {
           class={styles.frameImage}
           aria-hidden="true"
         />
-        <button
-          type="button"
-          class={{
-            [styles.playButton]: true,
-            [styles.playButtonPlaying]: isPlaying.value,
-          }}
-          aria-label={isPlaying.value ? "プレビューを一時停止" : "プレビューを再生"}
-          disabled={!track?.previewUrl}
-          onClick$={async () => {
-            const audio = audioRef.value;
-            if (!audio) return;
+        {canPlayPreview && (
+          <button
+            type="button"
+            class={{
+              [styles.playButton]: true,
+              [styles.playButtonPlaying]: isPlaying.value,
+            }}
+            aria-label={isPlaying.value ? "プレビューを一時停止" : "プレビューを再生"}
+            onClick$={async () => {
+              const audio = audioRef.value;
+              if (!audio) return;
 
-            if (audio.paused) {
-              await audio.play();
-              isPlaying.value = true;
-            } else {
-              audio.pause();
-              isPlaying.value = false;
-            }
-          }}
-        >
-          <img
-            src={isPlaying.value ? musicPauseSvg : musicPlaySvg}
-            alt=""
-            width={56}
-            height={56}
-            class={styles.playIcon}
-            aria-hidden="true"
-          />
-        </button>
+              if (audio.paused) {
+                await audio.play();
+                isPlaying.value = true;
+              } else {
+                audio.pause();
+                isPlaying.value = false;
+              }
+            }}
+          >
+            <img
+              src={isPlaying.value ? musicPauseSvg : musicPlaySvg}
+              alt=""
+              width={56}
+              height={56}
+              class={styles.playIcon}
+              aria-hidden="true"
+            />
+          </button>
+        )}
       </div>
       <div class={styles.trackInfo}>
-        <p class={styles.trackTitle}>{track?.title ?? "楽曲未設定"}</p>
+        <p class={styles.trackTitle}>{trackTitle}</p>
         <p class={styles.trackArtist}>{track?.artist ?? "設定から変更できます"}</p>
       </div>
       {track?.trackViewUrl && (
