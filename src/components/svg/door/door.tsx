@@ -9,19 +9,18 @@ type DoorProps = {
 
 export const Door = component$<DoorProps>(({ href }) => {
   const label = href ? "ランダムなお部屋に入る" : "ドア";
+  const art = <span class={styles.art} dangerouslySetInnerHTML={doorSvg} />;
 
   return (
     <>
       {href ? (
-        <Link
-          href={href}
-          prefetch="js"
-          class={styles.door}
-          aria-label={label}
-          dangerouslySetInnerHTML={doorSvg}
-        />
+        <Link href={href} prefetch="js" class={styles.door} aria-label={label}>
+          {art}
+        </Link>
       ) : (
-        <div class={styles.door} aria-label={label} dangerouslySetInnerHTML={doorSvg} />
+        <div class={styles.door} aria-label={label}>
+          {art}
+        </div>
       )}
     </>
   );

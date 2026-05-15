@@ -6,6 +6,10 @@
   text-decoration: none;
 }
 
+.art {
+  display: flex;
+}
+
 .door svg {
   overflow: visible;
   width: clamp(280px, 23vw, 380px);
