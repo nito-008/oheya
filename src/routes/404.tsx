@@ -11,5 +11,5 @@ export default component$(() => {
 });
 
 export const head: DocumentHead = {
-  title: "ページが見つかりません - Oheya",
+  title: "ページが見つかりません | Oheya",
 };

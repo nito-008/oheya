@@ -116,7 +116,7 @@ export const head: DocumentHead = ({ resolveValue }) => {
 
   if (data.status === "notFound") {
     return {
-      title: `${data.message} - Oheya`,
+      title: `${data.message} | Oheya`,
     };
   }
 
