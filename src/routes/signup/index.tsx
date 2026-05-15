@@ -1,6 +1,6 @@
 import { component$ } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
-import { routeLoader$ } from "@builder.io/qwik-city";
+import { Form as QwikForm, routeLoader$ } from "@builder.io/qwik-city";
 import { FormError, type InitialValues, useForm, valiForm$ } from "@modular-forms/qwik";
 import type * as v from "valibot";
 import { FormErrorMessage } from "~/components/ui/form/form-error-message/form-error-message";
@@ -8,6 +8,7 @@ import { FormButton } from "~/components/ui/form/form-button/form-button";
 import { FormTextInput } from "~/components/ui/form/form-text-input/form-text-input";
 import { IconCropInput } from "~/components/ui/form/icon-crop-input/icon-crop-input";
 import { createApiClient } from "~/lib/api";
+import { useSignOut } from "~/routes/plugin@auth";
 import { NAME_MAX_LENGTH, PUBLIC_ID_MAX_LENGTH, userSchema } from "~/schema/user";
 import styles from "./index.module.css";
 
@@ -33,7 +34,8 @@ export const useFormLoader = routeLoader$<InitialValues<SignupForm>>(() => ({
 
 export default component$(() => {
   useProfileStatus();
-  const [signupForm, { Form, Field }] = useForm<SignupForm>({
+  const signOut = useSignOut();
+  const [signupForm, { Form: SignupFormElement, Field }] = useForm<SignupForm>({
     loader: useFormLoader(),
     validate: valiForm$(userSchema),
   });
@@ -41,7 +43,7 @@ export default component$(() => {
   return (
     <main class={styles.main}>
       <h1>アカウント登録</h1>
-      <Form
+      <SignupFormElement
         class={styles.form}
         onSubmit$={async (values, event) => {
           const form = event.target as HTMLFormElement;
@@ -125,7 +127,13 @@ export default component$(() => {
             {signupForm.submitting ? "登録中..." : "はじめる"}
           </FormButton>
         </div>
-      </Form>
+      </SignupFormElement>
+      <QwikForm action={signOut} class={styles.cancelForm}>
+        <input type="hidden" name="redirectTo" value="/" />
+        <button class={styles.cancelLink} type="submit">
+          アカウント登録をやめる
+        </button>
+      </QwikForm>
     </main>
   );
 });
