@@ -3,8 +3,9 @@ import { Form, Link } from "@builder.io/qwik-city";
 import { Button } from "~/components/ui/button/button";
 import houseSvg from "~/media/house.svg";
 import loginSvg from "~/media/icons/login.svg";
+import logoutSvg from "~/media/icons/logout.svg";
 import settingSvg from "~/media/icons/setting.svg";
-import { useSignIn } from "~/routes/plugin@auth";
+import { useSignIn, useSignOut } from "~/routes/plugin@auth";
 import { getImageUrl } from "~/schema/image";
 import {
   getCommonUserDisplayName,
@@ -23,7 +24,8 @@ type CommonHeaderProps = {
 export const CommonHeader = component$<CommonHeaderProps>(
   ({ user, currentPath, showAuthActions = true }) => {
     const signIn = useSignIn();
-    const isAuthenticated = showAuthActions && user.authenticated;
+    const signOut = useSignOut();
+    const hasProfile = user.authenticated && Boolean(user.publicId);
     const myRoomHref = getCommonUserRoomHref(user);
     const isMyRoomPath = user.publicId ? currentPath === `/${user.publicId}/` : false;
     const accountName = getCommonUserDisplayName(user);
@@ -37,11 +39,11 @@ export const CommonHeader = component$<CommonHeaderProps>(
             <img class={styles.titleIcon} src={houseSvg} alt="" width={29} height={29} />
           </Link>
         </h1>
-        {isAuthenticated && isMyRoomPath ? (
+        {hasProfile && isMyRoomPath ? (
           <Button href="/settings/profile/" label="設定">
             <img class={styles.settingsIcon} src={settingSvg} alt="" width={24} height={24} />
           </Button>
-        ) : isAuthenticated ? (
+        ) : hasProfile ? (
           <Link href={myRoomHref} prefetch="js" class={styles.accountLink}>
             {user.icon ? (
               <img
@@ -56,6 +58,13 @@ export const CommonHeader = component$<CommonHeaderProps>(
             )}
             <span class={styles.accountName}>{accountName}</span>
           </Link>
+        ) : user.authenticated ? (
+          <Form action={signOut} class={styles.authForm}>
+            <input type="hidden" name="redirectTo" value="/" />
+            <Button type="submit" label="ログアウトする">
+              <img class={styles.logoutIcon} src={logoutSvg} alt="" width={24} height={24} />
+            </Button>
+          </Form>
         ) : showAuthActions ? (
           <Form action={signIn} class={styles.authForm}>
             <input type="hidden" name="providerId" value="google" />
