@@ -6,7 +6,12 @@ import loginSvg from "~/media/icons/login.svg";
 import settingSvg from "~/media/icons/setting.svg";
 import { useSignIn } from "~/routes/plugin@auth";
 import { getImageUrl } from "~/schema/image";
-import type { CommonHeaderUser } from "./common-header-state";
+import {
+  getCommonUserDisplayName,
+  getCommonUserInitial,
+  getCommonUserRoomHref,
+  type CommonHeaderUser,
+} from "./common-header-state";
 import styles from "./common-header.module.css";
 
 type CommonHeaderProps = {
@@ -19,10 +24,10 @@ export const CommonHeader = component$<CommonHeaderProps>(
   ({ user, currentPath, showAuthActions = true }) => {
     const signIn = useSignIn();
     const isAuthenticated = showAuthActions && user.authenticated;
-    const myRoomHref = user.publicId ? `/${user.publicId}/` : "/settings/profile/";
+    const myRoomHref = getCommonUserRoomHref(user);
     const isMyRoomPath = user.publicId ? currentPath === `/${user.publicId}/` : false;
-    const accountName = user.name?.trim() || "アカウント";
-    const accountInitial = accountName.slice(0, 1).toUpperCase();
+    const accountName = getCommonUserDisplayName(user);
+    const accountInitial = getCommonUserInitial(user);
 
     return (
       <header class={styles.header}>
@@ -37,7 +42,7 @@ export const CommonHeader = component$<CommonHeaderProps>(
             <img class={styles.settingsIcon} src={settingSvg} alt="" width={24} height={24} />
           </Button>
         ) : isAuthenticated ? (
-          <Link href={myRoomHref} class={styles.accountLink}>
+          <Link href={myRoomHref} prefetch="js" class={styles.accountLink}>
             {user.icon ? (
               <img
                 class={styles.accountButtonIcon}
