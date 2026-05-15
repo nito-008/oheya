@@ -25,6 +25,7 @@ jobs:
     environment: preview
     permissions:
       contents: read
+      issues: write
 
     steps:
       - name: Checkout
@@ -43,7 +44,53 @@ jobs:
         run: vp run build
 
       - name: Deploy preview Worker
+        id: deploy
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: vp run deploy --env preview
+        run: |
+          set -o pipefail
+          vp run deploy --env preview 2>&1 | tee deploy.log
+
+          preview_url="$(grep -Eo 'https://[^[:space:]]+' deploy.log | grep -E 'workers\.dev|pages\.dev' | tail -n 1)"
+          if [ -z "$preview_url" ]; then
+            echo "Preview URL was not found in deploy output." >&2
+            exit 1
+          fi
+
+          echo "preview_url=$preview_url" >> "$GITHUB_OUTPUT"
+          echo "Preview URL: $preview_url" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment preview URL
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PREVIEW_URL: ${{ steps.deploy.outputs.preview_url }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          marker="<!-- oheya-preview-url -->"
+          body_file="$(mktemp)"
+          cat > "$body_file" <<EOF
+          $marker
+          プレビュー URL: $PREVIEW_URL
+          EOF
+          body="$(cat "$body_file")"
+
+          comment_id="$(
+            gh api "repos/$REPOSITORY/issues/$PR_NUMBER/comments" --paginate \
+              --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | contains(\"$marker\"))) | .id" \
+              | tail -n 1
+          )"
+
+          if [ -n "$comment_id" ]; then
+            gh api \
+              --method PATCH \
+              "repos/$REPOSITORY/issues/comments/$comment_id" \
+              --field "body=$body"
+          else
+            gh api \
+              --method POST \
+              "repos/$REPOSITORY/issues/$PR_NUMBER/comments" \
+              --field "body=$body"
+          fi
