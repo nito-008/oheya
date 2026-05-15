@@ -1,7 +1,7 @@
 import { eq, inArray, sql } from "drizzle-orm";
 import type { Bindings } from "~/hono/types";
 import { getDb } from "~/lib/db";
-import { albumPhotos, images, profiles } from "~/lib/db/schema";
+import { accounts, albumPhotos, images, profiles, sessions, users } from "~/lib/db/schema";
 import type { AlbumPhoto } from "~/schema/album";
 import { getImageUrl } from "~/schema/image";
 import type { MusicTrack } from "~/schema/music";
@@ -123,6 +123,31 @@ export const getImageOwners = async (env: Bindings, imageIds: readonly string[])
     .where(inArray(images.id, uniqueImageIds));
 
   return new Map(imageOwners.map((image) => [image.id, image.userId]));
+};
+
+export const deleteUserAccount = async (env: Bindings, userId: string) => {
+  const db = getDb(env);
+  const userImages = await db
+    .select({ id: images.id })
+    .from(images)
+    .where(eq(images.userId, userId));
+  const imageIds = userImages.map((image) => image.id);
+  const deletedUsers = await db.transaction(async (tx) => {
+    await tx.delete(albumPhotos).where(eq(albumPhotos.userId, userId));
+    await tx.delete(profiles).where(eq(profiles.userId, userId));
+    await tx.delete(images).where(eq(images.userId, userId));
+    await tx.delete(accounts).where(eq(accounts.userId, userId));
+    await tx.delete(sessions).where(eq(sessions.userId, userId));
+
+    return tx.delete(users).where(eq(users.id, userId)).returning({ id: users.id });
+  });
+
+  if (deletedUsers.length === 0) {
+    return false;
+  }
+
+  await Promise.all(imageIds.map((imageId) => env.R2_BUCKET.delete(imageId)));
+  return true;
 };
 
 export const toAlbumPhotoRows = (userId: string, photos: readonly AlbumPhoto[]) =>

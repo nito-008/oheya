@@ -1,4 +1,5 @@
 import { component$ } from "@builder.io/qwik";
+import { Link } from "@builder.io/qwik-city";
 import { Button } from "~/components/ui/button/button";
 import logoutSvg from "~/media/icons/logout.svg";
 import { useSignOut } from "~/routes/plugin@auth";
@@ -16,7 +17,7 @@ export const AccountSettingsPanel = component$<AccountSettingsPanelProps>(() => 
     <section class={`${sharedStyles.content} ${styles.panel}`}>
       <div class={styles.section}>
         <h2>ログアウト</h2>
-        <div class={styles.signOutForm}>
+        <div class={styles.actionRow}>
           <Button
             type="button"
             label="ログアウトする"
@@ -27,6 +28,14 @@ export const AccountSettingsPanel = component$<AccountSettingsPanelProps>(() => 
           >
             <img src={logoutSvg} alt="" width={24} height={24} />
           </Button>
+        </div>
+      </div>
+      <div class={styles.section}>
+        <h2>アカウントの削除</h2>
+        <div class={styles.actionRow}>
+          <Link class={styles.deleteLink} href="/settings/account/delete/">
+            アカウント削除へ
+          </Link>
         </div>
       </div>
     </section>
