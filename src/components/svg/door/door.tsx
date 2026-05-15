@@ -1,24 +1,28 @@
-import { component$, useSignal } from "@builder.io/qwik";
+import { component$ } from "@builder.io/qwik";
+import { Link } from "@builder.io/qwik-city";
 import doorSvg from "~/media/door.svg?raw";
 import styles from "./door.module.css";
 
-export const Door = component$(() => {
-  const open = useSignal(false);
+type DoorProps = {
+  href?: string;
+};
+
+export const Door = component$<DoorProps>(({ href }) => {
+  const label = href ? "ランダムなお部屋に入る" : "ドア";
 
   return (
-    <div
-      class={[styles.door, open.value && styles.open]}
-      tabIndex={0}
-      aria-pressed={open.value}
-      aria-label={open.value ? "ドアを閉じる" : "ドアを開ける"}
-      onClick$={() => (open.value = !open.value)}
-      onKeyDown$={(event) => {
-        if (event.key === " " || event.key === "Enter") {
-          event.preventDefault();
-          open.value = !open.value;
-        }
-      }}
-      dangerouslySetInnerHTML={doorSvg}
-    />
+    <>
+      {href ? (
+        <Link
+          href={href}
+          prefetch="js"
+          class={styles.door}
+          aria-label={label}
+          dangerouslySetInnerHTML={doorSvg}
+        />
+      ) : (
+        <div class={styles.door} aria-label={label} dangerouslySetInnerHTML={doorSvg} />
+      )}
+    </>
   );
 });
