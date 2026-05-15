@@ -1,5 +1,4 @@
 import { component$ } from "@builder.io/qwik";
-import { Form } from "@builder.io/qwik-city";
 import { Button } from "~/components/ui/button/button";
 import logoutSvg from "~/media/icons/logout.svg";
 import { useSignOut } from "~/routes/plugin@auth";
@@ -17,12 +16,18 @@ export const AccountSettingsPanel = component$<AccountSettingsPanelProps>(() => 
     <section class={`${sharedStyles.content} ${styles.panel}`}>
       <div class={styles.section}>
         <h2>ログアウト</h2>
-        <Form action={signOut} class={styles.signOutForm}>
-          <input type="hidden" name="redirectTo" value="/" />
-          <Button type="submit" label="ログアウトする">
+        <div class={styles.signOutForm}>
+          <Button
+            type="button"
+            label="ログアウトする"
+            onClick$={async () => {
+              if (!confirm("ログアウトしますか？")) return;
+              await signOut.submit({ redirectTo: "/" });
+            }}
+          >
             <img src={logoutSvg} alt="" width={24} height={24} />
           </Button>
-        </Form>
+        </div>
       </div>
     </section>
   );

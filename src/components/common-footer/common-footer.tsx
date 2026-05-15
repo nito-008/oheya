@@ -45,12 +45,16 @@ export const CommonFooter = component$<CommonFooterProps>(({ user, showAuthActio
           </Link>
         ) : null}
         {user.authenticated ? (
-          <Form action={signOut} class={styles.form}>
-            <input type="hidden" name="redirectTo" value="/" />
-            <button class={styles.link} type="submit">
-              ログアウト
-            </button>
-          </Form>
+          <button
+            class={styles.link}
+            type="button"
+            onClick$={async () => {
+              if (!confirm("ログアウトしますか？")) return;
+              await signOut.submit({ redirectTo: "/" });
+            }}
+          >
+            ログアウト
+          </button>
         ) : null}
         {!user.authenticated && showAuthActions ? (
           <Form action={signIn} class={styles.form}>
