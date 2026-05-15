@@ -34,6 +34,18 @@
       "remote": true,
     },
   ],
+  "env": {
+    "preview": {
+      "name": "oheya-preview",
+      "r2_buckets": [
+        {
+          "binding": "R2_BUCKET",
+          "bucket_name": "oheya-dev",
+          "remote": true,
+        },
+      ],
+    },
+  },
   /**
    * Environment Variables
    * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
