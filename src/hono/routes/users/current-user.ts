@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { authMiddleware } from "~/hono/middleware/auth";
 import { deleteUnusedUserImages } from "~/hono/utils/image";
-import { noContent } from "~/hono/utils/response";
+import { emptyOk } from "~/hono/utils/response";
 import { getDb } from "~/lib/db";
 import { albumPhotos, profiles } from "~/lib/db/schema";
 import { albumSchema } from "~/schema/album";
@@ -86,7 +86,7 @@ export const currentUserRouter = new Hono<UsersEnv>()
 
     await deleteUnusedUserImages(c.env, userId, removedImageIds);
 
-    return noContent();
+    return emptyOk();
   })
   .patch("/music", vValidator("json", musicSelectionSchema), async (c) => {
     const userId = c.var.userId;
@@ -113,7 +113,7 @@ export const currentUserRouter = new Hono<UsersEnv>()
       })
       .where(eq(profiles.userId, userId));
 
-    return noContent();
+    return emptyOk();
   })
   .patch("/", vValidator("json", userSchema), async (c) => {
     const userId = c.var.userId;
@@ -162,5 +162,5 @@ export const currentUserRouter = new Hono<UsersEnv>()
       await deleteUnusedUserImages(c.env, userId, [profile.icon]);
     }
 
-    return noContent();
+    return emptyOk();
   });
