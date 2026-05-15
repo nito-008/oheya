@@ -13,6 +13,7 @@ import styles from "./layout.module.css";
 export const useHeaderUser = routeLoader$<CommonHeaderUser>(async (event) => {
   const client = createApiClient(event);
   const res = await client.api.users.me.$get();
+  const session = event.sharedMap.get("session");
 
   if (res.ok) {
     const user = await res.json();
@@ -24,8 +25,11 @@ export const useHeaderUser = routeLoader$<CommonHeaderUser>(async (event) => {
     };
   }
 
-  if (res.status === 401 || res.status === 404) {
+  if (res.status === 401) {
     return { authenticated: false, publicId: null, name: null, icon: null };
+  }
+  if (res.status === 404) {
+    return { authenticated: Boolean(session), publicId: null, name: null, icon: null };
   }
 
   throw new Error("ユーザー情報を取得できませんでした");

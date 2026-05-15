@@ -18,7 +18,7 @@ type CommonFooterProps = {
 export const CommonFooter = component$<CommonFooterProps>(({ user, showAuthActions = true }) => {
   const signIn = useSignIn();
   const signOut = useSignOut();
-  const isAuthenticated = showAuthActions && user.authenticated;
+  const hasProfile = showAuthActions && user.authenticated && Boolean(user.publicId);
   const myRoomHref = getCommonUserRoomHref(user);
   const accountName = getCommonUserDisplayName(user);
   const accountInitial = getCommonUserInitial(user);
@@ -26,7 +26,7 @@ export const CommonFooter = component$<CommonFooterProps>(({ user, showAuthActio
   return (
     <footer class={styles.footer}>
       <nav class={styles.nav} aria-label="フッター">
-        {isAuthenticated ? (
+        {hasProfile ? (
           <Link href={myRoomHref} prefetch="js" class={styles.profileLink}>
             {user.icon ? (
               <img
@@ -44,7 +44,7 @@ export const CommonFooter = component$<CommonFooterProps>(({ user, showAuthActio
             <span class={styles.profileName}>{accountName}</span>
           </Link>
         ) : null}
-        {isAuthenticated ? (
+        {user.authenticated ? (
           <Form action={signOut} class={styles.form}>
             <input type="hidden" name="redirectTo" value="/" />
             <button class={styles.link} type="submit">

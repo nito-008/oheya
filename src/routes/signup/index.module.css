@@ -3,6 +3,7 @@
   flex-direction: column;
   align-items: center;
   padding: 2rem 1rem;
+  margin-block-end: 12rem;
   text-align: center;
   color: #252525;
 }
@@ -11,13 +12,6 @@
   margin-bottom: 2.5rem;
   font-size: 2rem;
   font-weight: 400;
-}
-
-.main p {
-  max-width: 25rem;
-  margin-block: 0 1.25rem;
-  color: #555;
-  line-height: 1.5;
 }
 
 .form {
@@ -38,4 +32,32 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+.cancelForm {
+  display: flex;
+  justify-content: center;
+  width: min(100%, 25rem);
+  margin-top: 1.5rem;
+}
+
+.cancelLink {
+  padding: 0;
+  border: 0;
+  color: #555;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  background: transparent;
+  cursor: pointer;
+  transition: color 160ms var(--ease-out-expo);
+}
+
+.cancelLink:hover {
+  color: #252525;
+}
+
+.cancelLink:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 0.25rem;
 }
