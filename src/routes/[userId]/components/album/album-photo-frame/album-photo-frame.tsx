@@ -46,6 +46,15 @@ export const AlbumPhotoFrame = component$<AlbumPhotoFrameProps>(
               />
             </div>
           )}
+          {imageUrl && (
+            <a
+              href={imageUrl}
+              target="_blank"
+              rel="noreferrer"
+              class={styles.openLink}
+              aria-label="写真を新しいタブで開く"
+            />
+          )}
           <img
             src={albumPhotoFrameSvg}
             alt=""

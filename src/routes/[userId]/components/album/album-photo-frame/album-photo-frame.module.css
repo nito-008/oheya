@@ -70,6 +70,24 @@
   object-fit: cover;
 }
 
+.openLink {
+  position: absolute;
+  top: var(--photo-top);
+  left: var(--photo-left);
+  width: var(--photo-width);
+  aspect-ratio: 4 / 3;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 160ms var(--ease-out-expo);
+}
+
+.openLink:hover,
+.openLink:active,
+.openLink:focus-visible {
+  background-color: rgb(36 36 36 / 38%);
+  outline: none;
+}
+
 .photoFallback {
   display: grid;
   place-items: center;
