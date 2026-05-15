@@ -15,21 +15,38 @@
   aspect-ratio: 360 / 400;
 }
 
-.jacketImage,
-.jacketFallback {
+.jacketImage {
   position: absolute;
   top: var(--artwork-top);
   left: var(--artwork-left);
   width: var(--artwork-size);
   aspect-ratio: 1;
-}
-
-.jacketImage {
   object-fit: cover;
 }
 
-.jacketFallback {
-  background: transparent;
+.jacketPlaceholderSurface {
+  position: absolute;
+  top: var(--artwork-top);
+  left: var(--artwork-left);
+  display: grid;
+  place-items: center;
+  width: var(--artwork-size);
+  aspect-ratio: 1;
+  background:
+    linear-gradient(45deg, rgb(47 47 47 / 8%) 25%, transparent 25% 75%, rgb(47 47 47 / 8%) 75%),
+    linear-gradient(45deg, rgb(47 47 47 / 8%) 25%, transparent 25% 75%, rgb(47 47 47 / 8%) 75%),
+    #fffef8;
+  background-position:
+    0 0,
+    0.65rem 0.65rem;
+  background-size: 1.3rem 1.3rem;
+}
+
+.jacketPlaceholder {
+  display: block;
+  width: min(42%, 8.5rem);
+  height: auto;
+  opacity: 0.92;
 }
 
 .frameImage {
@@ -58,10 +75,6 @@
 
 .playButtonPlaying {
   --play-icon-offset: 0%;
-}
-
-.playButton:disabled {
-  cursor: wait;
 }
 
 .playIcon {
