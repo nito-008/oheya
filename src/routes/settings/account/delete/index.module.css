@@ -16,5 +16,21 @@
 }
 
 .actionRow :global(button) {
+  border-color: #ec0000;
+  background: #fff0f0;
+  color: #ec0000;
+}
+
+.actionRow :global(button:hover) {
+  border-color: #b80000;
+  background: #ffe1e1;
+}
+
+.actionRow :global(button:active) {
+  color: #8f0000;
+}
+
+.deleteIcon {
+  display: inline-flex;
   color: #ec0000;
 }

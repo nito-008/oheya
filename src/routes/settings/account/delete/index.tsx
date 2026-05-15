@@ -5,6 +5,7 @@ import { Button } from "~/components/ui/button/button";
 import { useCommonHeaderUser } from "~/components/common-header/common-header-state";
 import { useToast } from "~/components/ui/toast/toast";
 import { createApiClient } from "~/lib/api";
+import deleteSvg from "~/media/icons/delete.svg?raw";
 import sharedStyles from "~/routes/settings/components/settings-tabs/settings-tabs.module.css";
 import styles from "./index.module.css";
 
@@ -65,7 +66,9 @@ export default component$(() => {
               );
             }
           }}
-        />
+        >
+          <span class={styles.deleteIcon} dangerouslySetInnerHTML={deleteSvg} />
+        </Button>
       </div>
     </section>
   );
