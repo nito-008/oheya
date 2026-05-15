@@ -28,11 +28,16 @@
   display: flex;
   justify-content: center;
   width: 100%;
-  margin-top: 0.75rem;
+  margin-top: 0.7rem;
 }
 
 .deleteLink {
   color: #ec0000;
   text-decoration: underline;
   text-underline-offset: 0.2em;
+  margin-top: 0.8rem;
+}
+
+.deleteLink:hover {
+  color: #b80000;
 }
