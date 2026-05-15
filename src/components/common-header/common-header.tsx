@@ -58,7 +58,7 @@ export const CommonHeader = component$<CommonHeaderProps>(
             )}
             <span class={styles.accountName}>{accountName}</span>
           </Link>
-        ) : user.authenticated ? (
+        ) : user.authenticated && showAuthActions ? (
           <Form action={signOut} class={styles.authForm}>
             <input type="hidden" name="redirectTo" value="/" />
             <Button type="submit" label="ログアウトする">
