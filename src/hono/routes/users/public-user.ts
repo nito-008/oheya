@@ -1,10 +1,11 @@
 import { Hono, type MiddlewareHandler } from "hono";
+import { PUBLIC_ID_MAX_LENGTH, publicIdPattern } from "~/schema/user";
 import { userNotFound, type UsersEnv } from ".";
 import { getUserAlbum, getUserIdByPublicId, getUserMusic, getUserProfile } from "./service";
 
 const publicUserMiddleware: MiddlewareHandler<UsersEnv> = async (c, next) => {
   const publicId = c.req.param("publicId");
-  if (!publicId) {
+  if (!publicId || !publicIdPattern.test(publicId) || publicId.length > PUBLIC_ID_MAX_LENGTH) {
     return c.json(userNotFound, 404);
   }
 

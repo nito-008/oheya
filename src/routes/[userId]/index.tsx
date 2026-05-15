@@ -7,6 +7,7 @@ import type { MusicTrack } from "~/schema/music";
 import { Album } from "~/routes/[userId]/components/album/album";
 import { Music } from "~/routes/[userId]/components/music/music";
 import { Profile } from "~/routes/[userId]/components/profile/profile";
+import { PUBLIC_ID_MAX_LENGTH, publicIdPattern } from "~/schema/user";
 import styles from "./index.module.css";
 
 type ProfileLoaderData = {
@@ -22,6 +23,10 @@ type ProfileLoaderData = {
 export const useProfile = routeLoader$<ProfileLoaderData>(async (event) => {
   const client = createApiClient(event);
   const publicId = event.params.userId;
+
+  if (!publicIdPattern.test(publicId) || publicId.length > PUBLIC_ID_MAX_LENGTH) {
+    throw event.error(404, "プロフィールが見つかりません");
+  }
 
   const [profileRes, musicRes, albumRes] = await Promise.all([
     client.api.users[":publicId"].$get({
