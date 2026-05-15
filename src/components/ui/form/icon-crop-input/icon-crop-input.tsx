@@ -5,6 +5,7 @@ import { FormErrorMessage } from "~/components/ui/form/form-error-message/form-e
 import { FormButton } from "~/components/ui/form/form-button/form-button";
 import { Modal } from "~/components/ui/modal/modal";
 import { TapClickIcon } from "~/components/ui/tap-click-icon/tap-click-icon";
+import { clamp, getCropLayout, zoomCropAtPoint } from "~/lib/image-crop";
 import iconPlaceholderSvg from "~/media/icon-placeholder.svg";
 import { getImageUrl, maxImageSourceSizeBytes } from "~/schema/image";
 import styles from "./icon-crop-input.module.css";
@@ -51,6 +52,21 @@ type CropDragState = {
   startPositionY: number;
 };
 
+type CropPointer = {
+  clientX: number;
+  clientY: number;
+  pointerId: number;
+};
+
+type CropPinchState = {
+  startCenterX: number;
+  startCenterY: number;
+  startDistance: number;
+  startPositionX: number;
+  startPositionY: number;
+  startZoom: number;
+};
+
 type CropLayout = {
   viewSize: number;
   imageWidth: number;
@@ -59,9 +75,16 @@ type CropLayout = {
   maxPositionY: number;
 };
 
-const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 const isIconOutputContentType = (value: string): value is keyof typeof ICON_OUTPUT_EXTENSIONS =>
   value in ICON_OUTPUT_EXTENSIONS;
+
+const getPointerDistance = (first: CropPointer, second: CropPointer) =>
+  Math.hypot(second.clientX - first.clientX, second.clientY - first.clientY);
+
+const getPointerCenter = (first: CropPointer, second: CropPointer) => ({
+  clientX: (first.clientX + second.clientX) / 2,
+  clientY: (first.clientY + second.clientY) / 2,
+});
 
 export const IconCropInput = component$<IconCropInputProps>((props) => {
   const { field, fieldProps, label, onApply$ } = props;
@@ -82,6 +105,8 @@ export const IconCropInput = component$<IconCropInputProps>((props) => {
   const cropImageWidth = useSignal(OUTPUT_SIZE);
   const cropImageHeight = useSignal(OUTPUT_SIZE);
   const cropDrag = useSignal<CropDragState | null>(null);
+  const cropPointers = useSignal<CropPointer[]>([]);
+  const cropPinch = useSignal<CropPinchState | null>(null);
 
   const readFileAsDataUrl = $((file: File) => {
     return new Promise<string>((resolve, reject) => {
@@ -99,19 +124,28 @@ export const IconCropInput = component$<IconCropInputProps>((props) => {
 
     const cropRect = cropBox.getBoundingClientRect();
     const viewSize = cropRect.width || OUTPUT_SIZE;
-    const coverScale =
-      Math.max(viewSize / image.naturalWidth, viewSize / image.naturalHeight) * cropZoom.value;
-    const imageWidth = image.naturalWidth * coverScale;
-    const imageHeight = image.naturalHeight * coverScale;
-    const maxPositionX = Math.max(0, (imageWidth - viewSize) / 2);
-    const maxPositionY = Math.max(0, (imageHeight - viewSize) / 2);
+    const layout = getCropLayout({
+      imageNaturalHeight: image.naturalHeight,
+      imageNaturalWidth: image.naturalWidth,
+      positionX: cropPositionX.value,
+      positionY: cropPositionY.value,
+      viewHeight: viewSize,
+      viewWidth: viewSize,
+      zoom: cropZoom.value,
+    });
 
-    cropImageWidth.value = imageWidth;
-    cropImageHeight.value = imageHeight;
-    cropPositionX.value = clamp(cropPositionX.value, -maxPositionX, maxPositionX);
-    cropPositionY.value = clamp(cropPositionY.value, -maxPositionY, maxPositionY);
+    cropImageWidth.value = layout.imageWidth;
+    cropImageHeight.value = layout.imageHeight;
+    cropPositionX.value = layout.positionX;
+    cropPositionY.value = layout.positionY;
 
-    return { viewSize, imageWidth, imageHeight, maxPositionX, maxPositionY };
+    return {
+      viewSize,
+      imageWidth: layout.imageWidth,
+      imageHeight: layout.imageHeight,
+      maxPositionX: layout.maxPositionX,
+      maxPositionY: layout.maxPositionY,
+    };
   });
 
   const drawCrop = $(async () => {
@@ -171,6 +205,8 @@ export const IconCropInput = component$<IconCropInputProps>((props) => {
     sourceImageUrl.value = "";
     cropImageReady.value = false;
     cropDrag.value = null;
+    cropPointers.value = [];
+    cropPinch.value = null;
   });
 
   const updateIconValue = $(async (imageId: string) => {
@@ -250,6 +286,8 @@ export const IconCropInput = component$<IconCropInputProps>((props) => {
       sourceImageUrl.value = await readFileAsDataUrl(file);
       cropImageReady.value = false;
       cropDrag.value = null;
+      cropPointers.value = [];
+      cropPinch.value = null;
       cropModalOpen.value = true;
       input.value = "";
     } catch {
@@ -263,6 +301,29 @@ export const IconCropInput = component$<IconCropInputProps>((props) => {
 
     const cropBox = element as HTMLDivElement;
     cropBox.setPointerCapture(event.pointerId);
+    const nextPointers = [
+      ...cropPointers.value.filter((pointer) => pointer.pointerId !== event.pointerId),
+      { clientX: event.clientX, clientY: event.clientY, pointerId: event.pointerId },
+    ];
+    cropPointers.value = nextPointers;
+
+    if (nextPointers.length >= 2) {
+      const [firstPointer, secondPointer] = nextPointers;
+      const center = getPointerCenter(firstPointer, secondPointer);
+      const cropRect = cropBox.getBoundingClientRect();
+      cropPinch.value = {
+        startCenterX: center.clientX - cropRect.left,
+        startCenterY: center.clientY - cropRect.top,
+        startDistance: getPointerDistance(firstPointer, secondPointer),
+        startPositionX: cropPositionX.value,
+        startPositionY: cropPositionY.value,
+        startZoom: cropZoom.value,
+      };
+      cropDrag.value = null;
+      return;
+    }
+
+    cropPinch.value = null;
     cropDrag.value = {
       pointerId: event.pointerId,
       startClientX: event.clientX,
@@ -273,6 +334,65 @@ export const IconCropInput = component$<IconCropInputProps>((props) => {
   });
 
   const handleCropPointerMove = $(async (event: PointerEvent) => {
+    const pointerIndex = cropPointers.value.findIndex(
+      (pointer) => pointer.pointerId === event.pointerId,
+    );
+    if (pointerIndex !== -1) {
+      const nextPointers = [...cropPointers.value];
+      nextPointers[pointerIndex] = {
+        clientX: event.clientX,
+        clientY: event.clientY,
+        pointerId: event.pointerId,
+      };
+      cropPointers.value = nextPointers;
+    }
+
+    if (cropPointers.value.length >= 2 && cropPinch.value) {
+      const image = sourceImageRef.value;
+      const cropBox = cropBoxRef.value;
+      if (!image || !cropBox || !image.naturalWidth || !image.naturalHeight) return;
+
+      const [firstPointer, secondPointer] = cropPointers.value;
+      const cropRect = cropBox.getBoundingClientRect();
+      const viewSize = cropRect.width || OUTPUT_SIZE;
+      const center = getPointerCenter(firstPointer, secondPointer);
+      const currentCenterX = center.clientX - cropRect.left;
+      const currentCenterY = center.clientY - cropRect.top;
+      const pinch = cropPinch.value;
+      const distance = getPointerDistance(firstPointer, secondPointer);
+      if (pinch.startDistance <= 0 || distance <= 0) return;
+
+      const targetZoom = pinch.startZoom * (distance / pinch.startDistance);
+      const transform = zoomCropAtPoint({
+        imageNaturalHeight: image.naturalHeight,
+        imageNaturalWidth: image.naturalWidth,
+        maxZoom: MAX_SCALE,
+        minZoom: MIN_SCALE,
+        positionX: pinch.startPositionX,
+        positionY: pinch.startPositionY,
+        targetZoom,
+        viewHeight: viewSize,
+        viewWidth: viewSize,
+        zoom: pinch.startZoom,
+        zoomPointX: pinch.startCenterX,
+        zoomPointY: pinch.startCenterY,
+      });
+
+      cropZoom.value = transform.zoom;
+      cropPositionX.value = clamp(
+        transform.positionX + currentCenterX - pinch.startCenterX,
+        -transform.maxPositionX,
+        transform.maxPositionX,
+      );
+      cropPositionY.value = clamp(
+        transform.positionY + currentCenterY - pinch.startCenterY,
+        -transform.maxPositionY,
+        transform.maxPositionY,
+      );
+      await updateCropLayout();
+      return;
+    }
+
     const drag = cropDrag.value;
     if (!drag || drag.pointerId !== event.pointerId) return;
 
@@ -292,13 +412,32 @@ export const IconCropInput = component$<IconCropInputProps>((props) => {
   });
 
   const handleCropPointerEnd = $((event: PointerEvent, element: Element) => {
-    if (cropDrag.value?.pointerId !== event.pointerId) return;
-
     const cropBox = element as HTMLDivElement;
     if (cropBox.hasPointerCapture(event.pointerId)) {
       cropBox.releasePointerCapture(event.pointerId);
     }
-    cropDrag.value = null;
+
+    const nextPointers = cropPointers.value.filter(
+      (pointer) => pointer.pointerId !== event.pointerId,
+    );
+    cropPointers.value = nextPointers;
+    cropPinch.value = null;
+
+    if (nextPointers.length === 1) {
+      const [pointer] = nextPointers;
+      cropDrag.value = {
+        pointerId: pointer.pointerId,
+        startClientX: pointer.clientX,
+        startClientY: pointer.clientY,
+        startPositionX: cropPositionX.value,
+        startPositionY: cropPositionY.value,
+      };
+      return;
+    }
+
+    if (cropDrag.value?.pointerId === event.pointerId || nextPointers.length === 0) {
+      cropDrag.value = null;
+    }
   });
 
   const handleCropWheel = $(async (event: WheelEvent) => {
@@ -316,31 +455,24 @@ export const IconCropInput = component$<IconCropInputProps>((props) => {
     );
     if (newZoom === oldZoom) return;
 
-    const coverScale = Math.max(viewSize / image.naturalWidth, viewSize / image.naturalHeight);
-    const oldImageWidth = image.naturalWidth * coverScale * oldZoom;
-    const oldImageHeight = image.naturalHeight * coverScale * oldZoom;
-    const newImageWidth = image.naturalWidth * coverScale * newZoom;
-    const newImageHeight = image.naturalHeight * coverScale * newZoom;
-    const oldImageLeft = (viewSize - oldImageWidth) / 2 + cropPositionX.value;
-    const oldImageTop = (viewSize - oldImageHeight) / 2 + cropPositionY.value;
-    const zoomPointX = event.clientX - cropRect.left;
-    const zoomPointY = event.clientY - cropRect.top;
-    const imagePointX = (zoomPointX - oldImageLeft) / oldImageWidth;
-    const imagePointY = (zoomPointY - oldImageTop) / oldImageHeight;
-    const maxPositionX = Math.max(0, (newImageWidth - viewSize) / 2);
-    const maxPositionY = Math.max(0, (newImageHeight - viewSize) / 2);
+    const transform = zoomCropAtPoint({
+      imageNaturalHeight: image.naturalHeight,
+      imageNaturalWidth: image.naturalWidth,
+      maxZoom: MAX_SCALE,
+      minZoom: MIN_SCALE,
+      positionX: cropPositionX.value,
+      positionY: cropPositionY.value,
+      targetZoom: newZoom,
+      viewHeight: viewSize,
+      viewWidth: viewSize,
+      zoom: oldZoom,
+      zoomPointX: event.clientX - cropRect.left,
+      zoomPointY: event.clientY - cropRect.top,
+    });
 
-    cropZoom.value = newZoom;
-    cropPositionX.value = clamp(
-      zoomPointX - imagePointX * newImageWidth - (viewSize - newImageWidth) / 2,
-      -maxPositionX,
-      maxPositionX,
-    );
-    cropPositionY.value = clamp(
-      zoomPointY - imagePointY * newImageHeight - (viewSize - newImageHeight) / 2,
-      -maxPositionY,
-      maxPositionY,
-    );
+    cropZoom.value = transform.zoom;
+    cropPositionX.value = transform.positionX;
+    cropPositionY.value = transform.positionY;
     await updateCropLayout();
   });
 
