@@ -8,6 +8,7 @@
   "main": "./dist/_worker.js",
   "compatibility_date": "2025-07-18",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "preview_urls": true,
   "assets": {
     "binding": "ASSET",
     "directory": "./dist",
@@ -34,6 +35,18 @@
       "remote": true,
     },
   ],
+  "env": {
+    "preview": {
+      "name": "oheya-preview",
+      "r2_buckets": [
+        {
+          "binding": "R2_BUCKET",
+          "bucket_name": "oheya-dev",
+          "remote": true,
+        },
+      ],
+    },
+  },
   /**
    * Environment Variables
    * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
