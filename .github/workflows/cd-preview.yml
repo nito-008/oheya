@@ -26,6 +26,7 @@ jobs:
     permissions:
       contents: read
       issues: write
+      pull-requests: write
 
     steps:
       - name: Checkout
@@ -69,6 +70,8 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REPOSITORY: ${{ github.repository }}
         run: |
+          set -o pipefail
+
           marker="<!-- oheya-preview-url -->"
           body_file="$(mktemp)"
           cat > "$body_file" <<EOF
