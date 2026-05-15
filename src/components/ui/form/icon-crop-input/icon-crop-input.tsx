@@ -15,6 +15,7 @@ const MAX_SCALE = 3;
 const ICON_CONTENT_TYPE = "image/webp";
 const ICON_QUALITY = 0.86;
 const FALLBACK_ICON_CONTENT_TYPE = "image/jpeg";
+const IMAGE_ACCEPT = "image/png,image/jpeg,image/webp,image/avif";
 const ICON_OUTPUT_EXTENSIONS = {
   [ICON_CONTENT_TYPE]: "webp",
   [FALLBACK_ICON_CONTENT_TYPE]: "jpeg",
@@ -386,11 +387,7 @@ export const IconCropInput = component$<IconCropInputProps>((props) => {
             <span class={styles.mask} aria-hidden="true" />
             <label class={styles.fileOverlay} aria-label="画像を選ぶ">
               <span aria-hidden="true">+</span>
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/webp,image/avif"
-                onChange$={handleSourceFileChange}
-              />
+              <input type="file" accept={IMAGE_ACCEPT} onChange$={handleSourceFileChange} />
             </label>
           </div>
           <TapClickIcon class={styles.clickCue} />

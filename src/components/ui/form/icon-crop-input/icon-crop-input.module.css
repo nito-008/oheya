@@ -55,10 +55,6 @@
   max-width: 100%;
 }
 
-.cropBox:hover {
-  filter: drop-shadow(2px 3px 0 #d8d2c2) drop-shadow(0 0 0.25rem rgb(17 17 17 / 20%));
-}
-
 .cropBoxFrame:focus-within {
   outline: 3px solid rgb(17 17 17 / 18%);
 }
@@ -67,9 +63,18 @@
   outline: 0;
 }
 
-.cropBox:focus-within .fileOverlay,
-.cropBox:hover .fileOverlay {
+.cropBox:focus-within .fileOverlay {
   opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .cropBox:hover {
+    filter: drop-shadow(2px 3px 0 #d8d2c2) drop-shadow(0 0 0.25rem rgb(17 17 17 / 20%));
+  }
+
+  .cropBox:hover .fileOverlay {
+    opacity: 1;
+  }
 }
 
 .sourceImage,
@@ -177,6 +182,12 @@
   backdrop-filter: blur(3px);
   clip-path: circle(50%);
   transition: opacity 0.3s var(--ease-out-expo);
+}
+
+@media (hover: none), (pointer: coarse) {
+  .fileOverlay {
+    opacity: 1;
+  }
 }
 
 .fileOverlay span {
