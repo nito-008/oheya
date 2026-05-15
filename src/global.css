@@ -12,11 +12,15 @@
   font-family: "Uzura";
   src: url("/fonts/uzura.ttf") format("truetype");
   font-display: swap;
+  unicode-range: U+0020-024F, U+2000-206F, U+3000-30FF, U+4E00-9FFF, U+FF00-FFEF;
 }
 
 :root {
   --common-header-height: 4.2rem;
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --font-body:
+    "Uzura", "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP";
+  --font-title: "Caveat", var(--font-body), cursive;
 }
 
 html {
@@ -25,8 +29,7 @@ html {
   -moz-tab-size: 4;
   -o-tab-size: 4;
   tab-size: 4;
-  font-family:
-    "Uzura", "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP";
+  font-family: var(--font-body);
 }
 
 body {
