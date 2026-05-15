@@ -11,6 +11,7 @@ import { musicSelectionSchema } from "~/schema/music";
 import { userSchema } from "~/schema/user";
 import { userNotFound, type UsersEnv } from ".";
 import {
+  deleteUserAccount,
   getImageOwners,
   getUserAlbum,
   getUserMusic,
@@ -43,6 +44,14 @@ export const currentUserRouter = new Hono<UsersEnv>()
     }
 
     return c.json(album);
+  })
+  .delete("/", async (c) => {
+    const deleted = await deleteUserAccount(c.env, c.var.userId);
+    if (!deleted) {
+      return c.json(userNotFound, 404);
+    }
+
+    return emptyOk();
   })
   .patch("/album", vValidator("json", albumSchema), async (c) => {
     const userId = c.var.userId;
