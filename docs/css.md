@@ -19,4 +19,4 @@
 ## Fonts
 
 - Use the Uzura font by default. It is already configured on `html`.
-- Use Caveat for titles.
+- Use `var(--font-title)` for titles.
