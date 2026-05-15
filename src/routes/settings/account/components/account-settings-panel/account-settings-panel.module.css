@@ -23,7 +23,7 @@
   line-height: 1.5;
 }
 
-.signOutForm {
+.actionRow {
   display: flex;
   justify-content: center;
   width: 100%;
