@@ -8,7 +8,7 @@ type DoorProps = {
 };
 
 export const Door = component$<DoorProps>(({ href }) => {
-  const label = href ? "ランダムなお部屋に入る" : "ドア";
+  const label = href ? "誰かのお部屋に入る" : "ドア";
   const art = <span class={styles.art} dangerouslySetInnerHTML={doorSvg} />;
 
   return (
