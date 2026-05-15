@@ -79,6 +79,7 @@
 }
 
 .loginIcon,
+.accountIcon,
 .settingsIcon,
 .accountButtonIcon {
   display: inline-flex;
@@ -87,6 +88,7 @@
 }
 
 .loginIcon,
+.accountIcon,
 .settingsIcon {
   width: 1.5rem;
   height: 1.5rem;
