@@ -1,5 +1,5 @@
-import { component$, Slot, useContextProvider, useStore, useTask$ } from "@builder.io/qwik";
-import { routeLoader$, useLocation } from "@builder.io/qwik-city";
+import { $, component$, Slot, useContextProvider, useStore, useTask$ } from "@builder.io/qwik";
+import { ErrorBoundary, routeLoader$, useLocation } from "@builder.io/qwik-city";
 import { CommonFooter } from "~/components/common-footer/common-footer";
 import { CommonHeader } from "~/components/common-header/common-header";
 import {
@@ -7,6 +7,7 @@ import {
   type CommonHeaderUser,
 } from "~/components/common-header/common-header-state";
 import { createApiClient } from "~/lib/api";
+import { ErrorPage, getErrorPageMessage } from "./components/error-page/error-page";
 import styles from "./layout.module.css";
 
 export const useHeaderUser = routeLoader$<CommonHeaderUser>(async (event) => {
@@ -23,11 +24,7 @@ export const useHeaderUser = routeLoader$<CommonHeaderUser>(async (event) => {
     };
   }
 
-  if (res.status === 401) {
-    return { authenticated: false, publicId: null, name: null, icon: null };
-  }
-
-  if (res.status === 404) {
+  if (res.status === 401 || res.status === 404) {
     return { authenticated: false, publicId: null, name: null, icon: null };
   }
 
@@ -58,7 +55,13 @@ export default component$(() => {
         showAuthActions={showAuthActions}
       />
       <main class={styles.pageContent}>
-        <Slot />
+        <ErrorBoundary
+          fallback$={$((error) => (
+            <ErrorPage message={getErrorPageMessage(error)} />
+          ))}
+        >
+          <Slot />
+        </ErrorBoundary>
       </main>
       <CommonFooter user={headerUser} showAuthActions={showAuthActions} />
     </div>
