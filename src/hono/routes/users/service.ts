@@ -1,5 +1,6 @@
 import { eq, inArray, sql } from "drizzle-orm";
 import type { Bindings } from "~/hono/types";
+import { getUserImageObjectKey } from "~/hono/utils/image";
 import { getDb } from "~/lib/db";
 import { accounts, albumPhotos, images, profiles, sessions, users } from "~/lib/db/schema";
 import type { AlbumPhoto } from "~/schema/album";
@@ -146,7 +147,9 @@ export const deleteUserAccount = async (env: Bindings, userId: string) => {
     return false;
   }
 
-  await Promise.all(imageIds.map((imageId) => env.R2_BUCKET.delete(imageId)));
+  await Promise.all(
+    imageIds.map((imageId) => env.R2_BUCKET.delete(getUserImageObjectKey(userId, imageId))),
+  );
   return true;
 };
 

@@ -2,7 +2,7 @@ import { eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { authMiddleware } from "~/hono/middleware/auth";
 import type { Bindings } from "~/hono/types";
-import { applyR2HttpMetadata, deleteOwnedImage } from "~/hono/utils/image";
+import { applyR2HttpMetadata, deleteOwnedImage, getUserImageObjectKey } from "~/hono/utils/image";
 import { emptyOk } from "~/hono/utils/response";
 import { getDb } from "~/lib/db";
 import { images } from "~/lib/db/schema";
@@ -20,7 +20,16 @@ export const imagesRouter = new Hono<{ Bindings: Bindings }>()
       return c.json({ message: "Image not found" } as const, 404);
     }
 
-    const object = await c.env.R2_BUCKET.get(imageId);
+    const db = getDb(c.env);
+    const [image] = await db
+      .select({ userId: images.userId })
+      .from(images)
+      .where(eq(images.id, imageId));
+    if (!image) {
+      return c.json({ message: "Image not found" } as const, 404);
+    }
+
+    const object = await c.env.R2_BUCKET.get(getUserImageObjectKey(image.userId, imageId));
     if (!object) {
       return c.json({ message: "Image not found" } as const, 404);
     }
@@ -68,7 +77,7 @@ export const imagesRouter = new Hono<{ Bindings: Bindings }>()
     }
 
     try {
-      await c.env.R2_BUCKET.put(imageId, await image.arrayBuffer(), {
+      await c.env.R2_BUCKET.put(getUserImageObjectKey(userId, imageId), await image.arrayBuffer(), {
         httpMetadata: {
           contentType: image.type,
         },
