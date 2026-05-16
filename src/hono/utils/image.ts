@@ -3,6 +3,8 @@ import type { Bindings } from "~/hono/types";
 import { getDb } from "~/lib/db";
 import { albumPhotos, images, profiles } from "~/lib/db/schema";
 
+export const getUserImageObjectKey = (userId: string, imageId: string) => `${userId}/${imageId}`;
+
 export const applyR2HttpMetadata = (headers: Headers, metadata: R2HTTPMetadata | undefined) => {
   if (!metadata) return;
   if (metadata.contentType) headers.set("content-type", metadata.contentType);
@@ -21,7 +23,7 @@ export const deleteOwnedImage = async (env: Bindings, imageId: string, userId: s
     .returning({ id: images.id });
   if (deletedImages.length === 0) return false;
 
-  await env.R2_BUCKET.delete(imageId);
+  await env.R2_BUCKET.delete(getUserImageObjectKey(userId, imageId));
   return true;
 };
 
