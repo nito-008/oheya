@@ -14,7 +14,6 @@ type MusicSearchResponse = {
 type MusicSettingsFormProps = {
   initialTrack: MusicTrack | null;
   onNext$?: QRL<() => void>;
-  onSkip$?: QRL<() => void>;
   saveOnSelect?: boolean;
 };
 
@@ -24,7 +23,7 @@ const getTrackLabel = (track: Pick<MusicTrack, "title" | "artist">) =>
 const cloneTrack = (track: MusicTrack): MusicTrack => ({ ...track });
 
 export const MusicSettingsForm = component$<MusicSettingsFormProps>((props) => {
-  const { initialTrack, onNext$, onSkip$, saveOnSelect = true } = props;
+  const { initialTrack, onNext$, saveOnSelect = true } = props;
   const query = useSignal("");
   const results = useSignal<MusicTrack[]>([]);
   const selectedTrack = useSignal<MusicTrack | null>(
@@ -278,14 +277,6 @@ export const MusicSettingsForm = component$<MusicSettingsFormProps>((props) => {
           >
             {isSaving.value ? "保存中..." : "次へ"}
           </FormButton>
-          <button
-            type="button"
-            class={formStyles.cancelLink}
-            disabled={isSaving.value}
-            onClick$={onSkip$}
-          >
-            スキップする
-          </button>
         </div>
       )}
     </section>

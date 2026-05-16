@@ -30,8 +30,8 @@ type AlbumSettingsPhoto = {
 
 type AlbumSettingsFormProps = {
   initialPhotos: UserAlbumPhoto[];
+  onBack$?: QRL<() => void>;
   onNext$?: QRL<() => void>;
-  onSkip$?: QRL<() => void>;
   saveOnEdit?: boolean;
 };
 
@@ -121,7 +121,7 @@ const getPointerCenter = (first: CropPointer, second: CropPointer) => ({
 });
 
 export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
-  const { initialPhotos, onNext$, onSkip$, saveOnEdit = true } = props;
+  const { initialPhotos, onBack$, onNext$, saveOnEdit = true } = props;
   const formRef = useSignal<HTMLFormElement>();
   const photos = useSignal<AlbumSettingsPhoto[]>(initialPhotos.map(toSettingsPhoto));
   const savedPhotos = useSignal<AlbumSettingsPhoto[]>(initialPhotos.map(toSettingsPhoto));
@@ -860,25 +860,27 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
         </div>
       )}
       {!saveOnEdit && (
-        <div class={formStyles.actions}>
+        <div class={`${formStyles.actions} ${formStyles.splitActions}`}>
+          <FormButton
+            type="button"
+            variant="secondary"
+            size="md"
+            width="full"
+            disabled={isSaving.value || isSavingAll.value}
+            onClick$={onBack$}
+          >
+            戻る
+          </FormButton>
           <FormButton
             type="submit"
-            variant="accent"
+            variant="primary"
             size="md"
             width="full"
             disabled={isSaving.value || isSavingAll.value}
             aria-busy={isSaving.value || isSavingAll.value}
           >
-            {isSaving.value || isSavingAll.value ? "保存中..." : "次へ"}
+            {isSaving.value || isSavingAll.value ? "保存中..." : "おっけー"}
           </FormButton>
-          <button
-            type="button"
-            class={formStyles.cancelLink}
-            disabled={isSaving.value || isSavingAll.value}
-            onClick$={onSkip$}
-          >
-            スキップする
-          </button>
         </div>
       )}
       <Modal open={cropModalOpen.value} title="写真を調整" onClose$={closeCropModal}>
