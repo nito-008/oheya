@@ -208,7 +208,6 @@ export default component$(() => {
             initialTrack={profileStatus.value.musicTrack}
             saveOnSelect={false}
             onNext$={$(() => goToStep$("album"))}
-            onSkip$={$(() => goToStep$("album"))}
           />
         </>
       )}
@@ -218,8 +217,8 @@ export default component$(() => {
           <AlbumSettingsForm
             initialPhotos={profileStatus.value.albumPhotos}
             saveOnEdit={false}
+            onBack$={$(() => goToStep$("music"))}
             onNext$={finishSignup$}
-            onSkip$={finishSignup$}
           />
         </>
       )}
