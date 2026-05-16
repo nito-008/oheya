@@ -694,6 +694,8 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
 
   const canAddPhoto = photos.value.length < maxAlbumPhotoCount;
   const hasPhotos = photos.value.length > 0;
+  const canSaveAllPhotos =
+    hasPhotos && photos.value.every((photo) => photo.imageId || photo.previewUrl);
 
   return (
     <form
@@ -865,7 +867,7 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
             variant="primary"
             size="md"
             width="full"
-            disabled={isSaving.value || isSavingAll.value}
+            disabled={isSaving.value || isSavingAll.value || !canSaveAllPhotos}
             aria-busy={isSaving.value || isSavingAll.value}
           >
             {isSaving.value || isSavingAll.value ? "保存中..." : "おっけー"}

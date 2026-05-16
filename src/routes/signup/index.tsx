@@ -1,7 +1,7 @@
 import { $, component$, useSignal } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { Form as QwikForm, routeLoader$, useNavigate } from "@builder.io/qwik-city";
-import { FormError, type InitialValues, useForm, valiForm$ } from "@modular-forms/qwik";
+import { FormError, getValue, type InitialValues, useForm, valiForm$ } from "@modular-forms/qwik";
 import type * as v from "valibot";
 import { FormErrorMessage } from "~/components/ui/form/form-error-message/form-error-message";
 import { FormButton } from "~/components/ui/form/form-button/form-button";
@@ -86,6 +86,9 @@ export default component$(() => {
     loader: useFormLoader(),
     validate: valiForm$(userSchema),
   });
+  const publicIdValue = getValue(signupForm, "publicId") ?? "";
+  const nameValue = getValue(signupForm, "name") ?? "";
+  const canSubmitProfile = publicIdValue.trim().length > 0 && nameValue.trim().length > 0;
 
   const goToStep$ = $(async (step: SignupStep) => {
     currentStep.value = step;
@@ -186,7 +189,7 @@ export default component$(() => {
                 variant="accent"
                 size="md"
                 width="full"
-                disabled={signupForm.submitting}
+                disabled={signupForm.submitting || !canSubmitProfile}
                 aria-busy={signupForm.submitting}
               >
                 {signupForm.submitting ? "登録中..." : "はじめる"}
