@@ -256,7 +256,7 @@ export const MusicSettingsForm = component$<MusicSettingsFormProps>((props) => {
         )}
       </div>
 
-      {isSaving.value && <p class={styles.placeholder}>保存中...</p>}
+      {saveOnSelect && isSaving.value && <p class={styles.placeholder}>保存中...</p>}
       {saveError.value && <p class={styles.placeholder}>{saveError.value}</p>}
       {!saveOnSelect && (
         <div class={formStyles.actions}>
