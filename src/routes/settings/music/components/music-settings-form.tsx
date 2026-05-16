@@ -38,6 +38,7 @@ export const MusicSettingsForm = component$<MusicSettingsFormProps>((props) => {
   const toast = useToast();
 
   const normalizedQuery = query.value.trim().toLowerCase();
+  const canContinue = !!selectedTrack.value;
 
   const saveMusic$ = $(async (track: MusicTrack, previousTrack: MusicTrack | null) => {
     if (isSaving.value) return;
@@ -264,14 +265,14 @@ export const MusicSettingsForm = component$<MusicSettingsFormProps>((props) => {
             variant="accent"
             size="md"
             width="full"
-            disabled={isSaving.value}
+            disabled={isSaving.value || !canContinue}
             aria-busy={isSaving.value}
             onClick$={async () => {
+              if (!selectedTrack.value) return;
+
               const previousTrack = initialTrack ? cloneTrack(initialTrack) : null;
-              if (selectedTrack.value) {
-                await saveMusic$(selectedTrack.value, previousTrack);
-                if (saveError.value) return;
-              }
+              await saveMusic$(selectedTrack.value, previousTrack);
+              if (saveError.value) return;
               await onNext$?.();
             }}
           >
