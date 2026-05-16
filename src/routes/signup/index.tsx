@@ -1,6 +1,6 @@
 import { $, component$, useSignal } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
-import { Form as QwikForm, routeLoader$ } from "@builder.io/qwik-city";
+import { Form as QwikForm, routeLoader$, useNavigate } from "@builder.io/qwik-city";
 import { FormError, type InitialValues, useForm, valiForm$ } from "@modular-forms/qwik";
 import type * as v from "valibot";
 import { FormErrorMessage } from "~/components/ui/form/form-error-message/form-error-message";
@@ -27,6 +27,9 @@ type SignupStatus = {
 };
 
 const mediaSignupSteps = new Set<SignupStep>(["music", "album"]);
+
+const getSignupPath = (step: SignupStep): string =>
+  step === "profile" ? "/signup/" : `/signup/?step=${step}`;
 
 const getSignupStep = (url: URL): SignupStep => {
   const step = url.searchParams.get("step");
@@ -76,6 +79,7 @@ export const useFormLoader = routeLoader$<InitialValues<SignupForm>>(() => ({
 export default component$(() => {
   const profileStatus = useProfileStatus();
   const signOut = useSignOut();
+  const navigate = useNavigate();
   const currentStep = useSignal<SignupStep>(profileStatus.value.step);
   const publicId = useSignal(profileStatus.value.profile?.publicId ?? "");
   const [signupForm, { Form: SignupFormElement, Field }] = useForm<SignupForm>({
@@ -83,18 +87,14 @@ export default component$(() => {
     validate: valiForm$(userSchema),
   });
 
-  const goToStep$ = $((step: SignupStep) => {
+  const goToStep$ = $(async (step: SignupStep) => {
     currentStep.value = step;
-    window.history.replaceState(
-      null,
-      "",
-      step === "profile" ? "/signup/" : `/signup/?step=${step}`,
-    );
+    await navigate(getSignupPath(step), { replaceState: true });
   });
 
-  const finishSignup$ = $(() => {
+  const finishSignup$ = $(async () => {
     if (!publicId.value) return;
-    window.location.href = `/${publicId.value}/`;
+    await navigate(`/${publicId.value}/`);
   });
 
   return (
@@ -227,6 +227,6 @@ export default component$(() => {
 });
 
 export const head: DocumentHead = {
-  title: "はじめる | Oheya",
-  meta: [{ name: "description", content: "Oheyaのユーザー登録ページ" }],
+  title: "アカウント登録 | Oheya",
+  meta: [{ name: "description", content: "Oheyaのアカウント登録ページ" }],
 };
