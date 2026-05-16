@@ -3,7 +3,10 @@ import type { DocumentHead } from "@builder.io/qwik-city";
 import { routeLoader$ } from "@builder.io/qwik-city";
 import { FormError, type InitialValues, useForm, valiForm$ } from "@modular-forms/qwik";
 import type * as v from "valibot";
-import { useCommonHeaderUser } from "~/components/common-header/common-header-state";
+import {
+  setCommonHeaderUser,
+  useCommonHeaderUser,
+} from "~/components/common-header/common-header-state";
 import { FormErrorMessage } from "~/components/ui/form/form-error-message/form-error-message";
 import { FormButton } from "~/components/ui/form/form-button/form-button";
 import { FormTextInput } from "~/components/ui/form/form-text-input/form-text-input";
@@ -130,10 +133,12 @@ export default component$(() => {
           savedName.value = values.name;
           publicIdValue.value = values.publicId;
           nameValue.value = values.name;
-          headerUser.authenticated = true;
-          headerUser.publicId = values.publicId;
-          headerUser.name = values.name;
-          headerUser.icon = nextValues.icon || null;
+          setCommonHeaderUser(headerUser, {
+            authenticated: true,
+            publicId: values.publicId,
+            name: values.name,
+            icon: nextValues.icon || null,
+          });
           await toast.success("保存しました");
         }}
       >
@@ -241,10 +246,12 @@ export default component$(() => {
                     throw error;
                   }
 
-                  headerUser.authenticated = true;
-                  headerUser.publicId = savedPublicId.value;
-                  headerUser.name = savedName.value;
-                  headerUser.icon = uploadedIcon;
+                  setCommonHeaderUser(headerUser, {
+                    authenticated: true,
+                    publicId: savedPublicId.value,
+                    name: savedName.value,
+                    icon: uploadedIcon,
+                  });
                   await toast.success("保存しました");
                   return uploadedIcon;
                 }}

@@ -13,6 +13,22 @@ export const CommonHeaderUserContext = createContextId<CommonHeaderUserState>("c
 
 export const useCommonHeaderUser = () => useContext(CommonHeaderUserContext);
 
+export const setCommonHeaderUser = (user: CommonHeaderUserState, nextUser: CommonHeaderUser) => {
+  user.authenticated = nextUser.authenticated;
+  user.publicId = nextUser.publicId;
+  user.name = nextUser.name;
+  user.icon = nextUser.icon;
+};
+
+export const clearCommonHeaderUser = (user: CommonHeaderUserState) => {
+  setCommonHeaderUser(user, {
+    authenticated: false,
+    publicId: null,
+    name: null,
+    icon: null,
+  });
+};
+
 export const getCommonUserRoomHref = (user: Pick<CommonHeaderUser, "publicId">) =>
   user.publicId ? `/${user.publicId}/` : "/settings/profile/";
 
