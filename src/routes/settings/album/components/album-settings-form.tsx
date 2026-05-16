@@ -1,4 +1,4 @@
-import { $, component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
+import { $, component$, useSignal, useVisibleTask$, type QRL } from "@builder.io/qwik";
 import { Button } from "~/components/ui/button/button";
 import { FormButton } from "~/components/ui/form/form-button/form-button";
 import inputStyles from "~/components/ui/form/form-text-input/form-text-input.module.css";
@@ -29,6 +29,9 @@ type AlbumSettingsPhoto = {
 
 type AlbumSettingsFormProps = {
   initialPhotos: UserAlbumPhoto[];
+  onNext$?: QRL<() => void>;
+  onSkip$?: QRL<() => void>;
+  saveOnEdit?: boolean;
 };
 
 const toSettingsPhoto = (photo: UserAlbumPhoto, index: number): AlbumSettingsPhoto => ({
@@ -116,11 +119,13 @@ const getPointerCenter = (first: CropPointer, second: CropPointer) => ({
   clientY: (first.clientY + second.clientY) / 2,
 });
 
-export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPhotos }) => {
+export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
+  const { initialPhotos, onNext$, onSkip$, saveOnEdit = true } = props;
   const formRef = useSignal<HTMLFormElement>();
   const photos = useSignal<AlbumSettingsPhoto[]>(initialPhotos.map(toSettingsPhoto));
   const savedPhotos = useSignal<AlbumSettingsPhoto[]>(initialPhotos.map(toSettingsPhoto));
   const isSaving = useSignal(false);
+  const isSavingAll = useSignal(false);
   const saveError = useSignal<string | null>(null);
   const cropPhotoId = useSignal<string | null>(null);
   const sourceImageUrl = useSignal("");
@@ -390,6 +395,62 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
     }
   });
 
+  const saveAllPhotos$ = $(async () => {
+    if (isSaving.value || isSavingAll.value) return false;
+
+    const form = formRef.value;
+    const nextPhotos = [...photos.value];
+    const uploadedImageIds: string[] = [];
+    isSavingAll.value = true;
+    saveError.value = null;
+
+    try {
+      for (const [index, photo] of nextPhotos.entries()) {
+        const input = form?.elements.namedItem(getPhotoImageName(photo));
+        const croppedPhoto = input instanceof HTMLInputElement ? input.files?.[0] : null;
+
+        if (croppedPhoto) {
+          const uploaded = await uploadPhoto$(croppedPhoto);
+          uploadedImageIds.push(uploaded.imageId);
+          nextPhotos[index] = {
+            ...photo,
+            imageId: uploaded.imageId,
+            previewUrl: null,
+            url: uploaded.url,
+          };
+          continue;
+        }
+
+        if (!photo.imageId) {
+          const message = "写真を選択してください";
+          saveError.value = message;
+          await toast.error(message);
+          return false;
+        }
+      }
+
+      const saved = await saveAlbum$(nextPhotos, uploadedImageIds);
+      if (saved) {
+        for (const photo of photos.value) {
+          if (photo.previewUrl?.startsWith("blob:")) URL.revokeObjectURL(photo.previewUrl);
+          const input = form?.elements.namedItem(getPhotoImageName(photo));
+          if (input instanceof HTMLInputElement) input.value = "";
+        }
+      }
+      return saved;
+    } catch (error) {
+      await Promise.all(
+        uploadedImageIds.map((imageId) => fetch(`/api/images/${imageId}`, { method: "DELETE" })),
+      );
+      const message = error instanceof Error ? error.message : "保存に失敗しました";
+      saveError.value = message;
+      await toast.error(message);
+      return false;
+    } finally {
+      isSavingAll.value = false;
+    }
+  });
+
   const cancelPhoto$ = $((photo: AlbumSettingsPhoto) => {
     if (photo.previewUrl?.startsWith("blob:")) URL.revokeObjectURL(photo.previewUrl);
     const savedPhoto = savedPhotos.value.find((item) => item.localId === photo.localId);
@@ -640,7 +701,13 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
       preventdefault:submit
       class={`${formStyles.form} ${sharedStyles.content} ${styles.panel}`}
       onSubmit$={async () => {
-        await saveAlbum$(photos.value);
+        if (saveOnEdit) {
+          await saveAlbum$(photos.value);
+          return;
+        }
+
+        const saved = await saveAllPhotos$();
+        if (saved) await onNext$?.();
       }}
     >
       <div class={styles.photoList}>
@@ -656,11 +723,16 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
             <section key={photo.localId} class={styles.photoEditor}>
               <div class={styles.photoHeader}>
                 <h2>写真 {index + 1}</h2>
-                {!isInitialPhoto && (
+                {(!isInitialPhoto || !saveOnEdit) && (
                   <Button
                     type="button"
                     label="削除"
                     onClick$={async () => {
+                      if (!saveOnEdit) {
+                        cancelPhoto$(photo);
+                        return;
+                      }
+
                       if (!confirm("本当に削除しますか？")) return;
 
                       const previousPhotos = photos.value;
@@ -742,7 +814,7 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
                 />
               </label>
 
-              {hasUnsavedChanges && (
+              {saveOnEdit && hasUnsavedChanges && (
                 <div class={styles.photoActions}>
                   <FormButton
                     type="button"
@@ -781,11 +853,33 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>(({ initialPh
             variant="accent"
             size="md"
             width="full"
-            disabled={isSaving.value}
+            disabled={isSaving.value || isSavingAll.value}
             onClick$={addPhoto$}
           >
             写真を追加
           </FormButton>
+        </div>
+      )}
+      {!saveOnEdit && (
+        <div class={formStyles.actions}>
+          <FormButton
+            type="submit"
+            variant="accent"
+            size="md"
+            width="full"
+            disabled={isSaving.value || isSavingAll.value}
+            aria-busy={isSaving.value || isSavingAll.value}
+          >
+            {isSaving.value || isSavingAll.value ? "保存中..." : "次へ"}
+          </FormButton>
+          <button
+            type="button"
+            class={formStyles.cancelLink}
+            disabled={isSaving.value || isSavingAll.value}
+            onClick$={onSkip$}
+          >
+            スキップする
+          </button>
         </div>
       )}
       <Modal open={cropModalOpen.value} title="写真を調整" onClose$={closeCropModal}>
