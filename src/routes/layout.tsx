@@ -4,6 +4,7 @@ import { CommonFooter } from "~/components/common-footer/common-footer";
 import { CommonHeader } from "~/components/common-header/common-header";
 import {
   CommonHeaderUserContext,
+  setCommonHeaderUser,
   type CommonHeaderUser,
 } from "~/components/common-header/common-header-state";
 import { createApiClient } from "~/lib/api";
@@ -45,10 +46,7 @@ export default component$(() => {
 
   useTask$(({ track }) => {
     const nextHeaderUser = track(() => loadedHeaderUser.value);
-    headerUser.authenticated = nextHeaderUser.authenticated;
-    headerUser.publicId = nextHeaderUser.publicId;
-    headerUser.name = nextHeaderUser.name;
-    headerUser.icon = nextHeaderUser.icon;
+    setCommonHeaderUser(headerUser, nextHeaderUser);
   });
 
   return (

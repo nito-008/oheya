@@ -1,11 +1,15 @@
 import { component$, useSignal } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
-import { Link, routeLoader$, useNavigate } from "@builder.io/qwik-city";
+import { Link, routeLoader$ } from "@builder.io/qwik-city";
 import { Button } from "~/components/ui/button/button";
-import { useCommonHeaderUser } from "~/components/common-header/common-header-state";
+import {
+  clearCommonHeaderUser,
+  useCommonHeaderUser,
+} from "~/components/common-header/common-header-state";
 import { useToast } from "~/components/ui/toast/toast";
 import { createApiClient } from "~/lib/api";
 import deleteSvg from "~/media/icons/delete.svg?raw";
+import { useSignOut } from "~/routes/plugin@auth";
 import sharedStyles from "~/routes/settings/components/settings-tabs/settings-tabs.module.css";
 import styles from "./index.module.css";
 
@@ -24,7 +28,7 @@ export default component$(() => {
   useAccountDeleteLoader();
   const deleting = useSignal(false);
   const toast = useToast();
-  const navigate = useNavigate();
+  const signOut = useSignOut();
   const headerUser = useCommonHeaderUser();
 
   return (
@@ -53,12 +57,9 @@ export default component$(() => {
                 throw new Error("アカウントの削除に失敗しました");
               }
 
-              headerUser.authenticated = false;
-              headerUser.publicId = null;
-              headerUser.name = null;
-              headerUser.icon = null;
+              clearCommonHeaderUser(headerUser);
               await toast.success("アカウントを削除しました");
-              await navigate("/");
+              await signOut.submit({ redirectTo: "/" });
             } catch (error) {
               deleting.value = false;
               await toast.error(
