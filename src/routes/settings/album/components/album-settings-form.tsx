@@ -6,6 +6,7 @@ import { Modal } from "~/components/ui/modal/modal";
 import { useToast } from "~/components/ui/toast/toast";
 import { clamp, getCropLayout, zoomCropAtPoint } from "~/lib/image-crop";
 import deleteSvg from "~/media/icons/delete.svg";
+import plusSvg from "~/media/icons/plus.svg";
 import {
   albumPhotoSubtitleMaxLength,
   albumPhotoTitleMaxLength,
@@ -848,16 +849,14 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
 
       {canAddPhoto && (
         <div class={`${styles.actions} ${hasPhotos ? styles.separatedActions : ""}`}>
-          <FormButton
+          <Button
             type="button"
-            variant="accent"
-            size="md"
-            width="full"
+            label="写真を追加"
             disabled={isSaving.value || isSavingAll.value}
             onClick$={addPhoto$}
           >
-            写真を追加
-          </FormButton>
+            <img src={plusSvg} alt="" width={24} height={24} />
+          </Button>
         </div>
       )}
       {!saveOnEdit && (
