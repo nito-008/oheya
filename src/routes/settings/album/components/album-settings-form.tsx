@@ -30,7 +30,6 @@ type AlbumSettingsPhoto = {
 
 type AlbumSettingsFormProps = {
   initialPhotos: UserAlbumPhoto[];
-  onBack$?: QRL<() => void>;
   onNext$?: QRL<() => void>;
   saveOnEdit?: boolean;
 };
@@ -121,7 +120,7 @@ const getPointerCenter = (first: CropPointer, second: CropPointer) => ({
 });
 
 export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
-  const { initialPhotos, onBack$, onNext$, saveOnEdit = true } = props;
+  const { initialPhotos, onNext$, saveOnEdit = true } = props;
   const formRef = useSignal<HTMLFormElement>();
   const photos = useSignal<AlbumSettingsPhoto[]>(initialPhotos.map(toSettingsPhoto));
   const savedPhotos = useSignal<AlbumSettingsPhoto[]>(initialPhotos.map(toSettingsPhoto));
@@ -860,17 +859,7 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
         </div>
       )}
       {!saveOnEdit && (
-        <div class={`${formStyles.actions} ${formStyles.splitActions}`}>
-          <FormButton
-            type="button"
-            variant="secondary"
-            size="md"
-            width="full"
-            disabled={isSaving.value || isSavingAll.value}
-            onClick$={onBack$}
-          >
-            戻る
-          </FormButton>
+        <div class={formStyles.actions}>
           <FormButton
             type="submit"
             variant="primary"
