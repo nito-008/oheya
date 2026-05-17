@@ -2,6 +2,7 @@ import { component$, useSignal } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { Link, routeLoader$ } from "@builder.io/qwik-city";
 import { Button } from "~/components/ui/button/button";
+import { ConfirmDialog } from "~/components/ui/confirm-dialog/confirm-dialog";
 import {
   clearCommonHeaderUser,
   useCommonHeaderUser,
@@ -27,6 +28,7 @@ export const useAccountDeleteLoader = routeLoader$(async (event) => {
 export default component$(() => {
   useAccountDeleteLoader();
   const deleting = useSignal(false);
+  const confirmOpen = useSignal(false);
   const toast = useToast();
   const signOut = useSignOut();
   const headerUser = useCommonHeaderUser();
@@ -42,11 +44,23 @@ export default component$(() => {
           label={deleting.value ? "削除中..." : "アカウントを削除する"}
           disabled={deleting.value}
           aria-busy={deleting.value}
-          onClick$={async () => {
-            if (!confirm("本当にアカウントを削除しますか？この操作は取り消せません。")) {
-              return;
-            }
-
+          onClick$={() => {
+            confirmOpen.value = true;
+          }}
+        >
+          <span class={styles.deleteIcon} dangerouslySetInnerHTML={deleteSvg} />
+        </Button>
+        <ConfirmDialog
+          open={confirmOpen.value}
+          title="アカウントを削除しますか？"
+          message="関連するすべてのデータが削除されます。この操作は取り消せません。"
+          confirmLabel={deleting.value ? "削除中..." : "削除する"}
+          confirmVariant="danger"
+          confirmDisabled={deleting.value}
+          onClose$={() => {
+            if (!deleting.value) confirmOpen.value = false;
+          }}
+          onConfirm$={async () => {
             deleting.value = true;
             try {
               const res = await fetch("/api/users/me", { method: "DELETE" });
@@ -62,14 +76,13 @@ export default component$(() => {
               await signOut.submit({ redirectTo: "/" });
             } catch (error) {
               deleting.value = false;
+              confirmOpen.value = false;
               await toast.error(
                 error instanceof Error ? error.message : "アカウントの削除に失敗しました",
               );
             }
           }}
-        >
-          <span class={styles.deleteIcon} dangerouslySetInnerHTML={deleteSvg} />
-        </Button>
+        />
       </div>
       <Link class={styles.backLink} href="/settings/account/">
         やっぱりやめる
