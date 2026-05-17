@@ -16,18 +16,18 @@
   margin-top: 1.75rem;
 }
 
-.actionRow :global(button) {
+.actionRow > :global(button) {
   border-color: #ec0000;
   background: #fff0f0;
   color: #ec0000;
 }
 
-.actionRow :global(button:hover) {
+.actionRow > :global(button:hover) {
   border-color: #b80000;
   background: #ffe1e1;
 }
 
-.actionRow :global(button:active) {
+.actionRow > :global(button:active) {
   color: #8f0000;
 }
 

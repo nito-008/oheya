@@ -1,5 +1,6 @@
 import { $, component$, useSignal, useVisibleTask$, type QRL } from "@builder.io/qwik";
 import { Button } from "~/components/ui/button/button";
+import { ConfirmDialog } from "~/components/ui/confirm-dialog/confirm-dialog";
 import { FormButton } from "~/components/ui/form/form-button/form-button";
 import inputStyles from "~/components/ui/form/form-text-input/form-text-input.module.css";
 import { Modal } from "~/components/ui/modal/modal";
@@ -127,6 +128,7 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
   const isSaving = useSignal(false);
   const isSavingAll = useSignal(false);
   const saveError = useSignal<string | null>(null);
+  const deleteConfirmPhotoId = useSignal<string | null>(null);
   const cropPhotoId = useSignal<string | null>(null);
   const sourceImageUrl = useSignal("");
   const sourceImageRef = useSignal<HTMLImageElement>();
@@ -463,6 +465,24 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
     saveError.value = null;
   });
 
+  const deleteSavedPhoto$ = $(async () => {
+    const photoId = deleteConfirmPhotoId.value;
+    deleteConfirmPhotoId.value = null;
+    if (!photoId) return;
+
+    const previousPhotos = photos.value;
+    const nextPhotos = previousPhotos.filter((item) => item.localId !== photoId);
+    if (nextPhotos.length === previousPhotos.length) return;
+
+    photos.value = nextPhotos;
+    saveError.value = null;
+
+    const saved = await saveAlbum$(nextPhotos);
+    if (!saved) {
+      photos.value = previousPhotos;
+    }
+  });
+
   const addPhoto$ = $(() => {
     if (photos.value.length >= maxAlbumPhotoCount) return;
 
@@ -735,19 +755,7 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
                         return;
                       }
 
-                      if (!confirm("本当に削除しますか？")) return;
-
-                      const previousPhotos = photos.value;
-                      const nextPhotos = photos.value.filter(
-                        (item) => item.localId !== photo.localId,
-                      );
-                      photos.value = nextPhotos;
-                      saveError.value = null;
-
-                      const saved = await saveAlbum$(nextPhotos);
-                      if (!saved) {
-                        photos.value = previousPhotos;
-                      }
+                      deleteConfirmPhotoId.value = photo.localId;
                     }}
                   >
                     <img src={deleteSvg} alt="" width={24} height={24} />
@@ -926,6 +934,16 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
           </div>
         </div>
       </Modal>
+      <ConfirmDialog
+        open={deleteConfirmPhotoId.value !== null}
+        title="写真を削除しますか？"
+        message="この写真をアルバムから削除します。"
+        confirmLabel="削除する"
+        onClose$={() => {
+          deleteConfirmPhotoId.value = null;
+        }}
+        onConfirm$={deleteSavedPhoto$}
+      />
     </form>
   );
 });

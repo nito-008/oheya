@@ -166,8 +166,9 @@
 .modalActions {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
+  justify-content: flex-end;
   width: 100%;
+  gap: 1.25rem;
 }
 
 .fileOverlay {
