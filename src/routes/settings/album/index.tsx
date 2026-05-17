@@ -10,7 +10,7 @@ export const useAlbumSettingsLoader = routeLoader$<UserAlbumPhoto[]>(async (even
   const res = await client.api.users.me.album.$get();
 
   if (res.status === 401) throw event.redirect(302, "/");
-  if (res.status === 404) throw event.redirect(302, "/signup");
+  if (res.status === 404) throw event.redirect(302, "/signup/");
   if (!res.ok) throw new Error("アルバム設定の取得に失敗しました");
 
   const data = (await res.json()) as { photos: UserAlbumPhoto[] };
