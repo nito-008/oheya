@@ -4,6 +4,9 @@ import { imageIdPattern } from "~/schema/image";
 export const maxAlbumPhotoCount = 6;
 export const albumPhotoTitleMaxLength = 48;
 export const albumPhotoSubtitleMaxLength = 128;
+export const albumPhotoImageWidth = 1280;
+export const albumPhotoImageHeight = 960;
+export const albumPhotoImageAspectRatio = albumPhotoImageWidth / albumPhotoImageHeight;
 
 export const albumPhotoSchema = v.object({
   imageId: v.pipe(v.string(), v.regex(imageIdPattern)),
