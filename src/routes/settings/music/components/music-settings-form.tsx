@@ -1,4 +1,5 @@
-import { $, component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
+import { $, component$, useSignal, useVisibleTask$, type QRL } from "@builder.io/qwik";
+import { FormButton } from "~/components/ui/form/form-button/form-button";
 import inputStyles from "~/components/ui/form/form-text-input/form-text-input.module.css";
 import { useToast } from "~/components/ui/toast/toast";
 import type { MusicTrack } from "~/schema/music";
@@ -12,6 +13,8 @@ type MusicSearchResponse = {
 
 type MusicSettingsFormProps = {
   initialTrack: MusicTrack | null;
+  onNext$?: QRL<() => void>;
+  saveOnSelect?: boolean;
 };
 
 const getTrackLabel = (track: Pick<MusicTrack, "title" | "artist">) =>
@@ -19,7 +22,8 @@ const getTrackLabel = (track: Pick<MusicTrack, "title" | "artist">) =>
 
 const cloneTrack = (track: MusicTrack): MusicTrack => ({ ...track });
 
-export const MusicSettingsForm = component$<MusicSettingsFormProps>(({ initialTrack }) => {
+export const MusicSettingsForm = component$<MusicSettingsFormProps>((props) => {
+  const { initialTrack, onNext$, saveOnSelect = true } = props;
   const query = useSignal("");
   const results = useSignal<MusicTrack[]>([]);
   const selectedTrack = useSignal<MusicTrack | null>(
@@ -34,6 +38,7 @@ export const MusicSettingsForm = component$<MusicSettingsFormProps>(({ initialTr
   const toast = useToast();
 
   const normalizedQuery = query.value.trim().toLowerCase();
+  const canContinue = !!selectedTrack.value;
 
   const saveMusic$ = $(async (track: MusicTrack, previousTrack: MusicTrack | null) => {
     if (isSaving.value) return;
@@ -61,7 +66,9 @@ export const MusicSettingsForm = component$<MusicSettingsFormProps>(({ initialTr
       await toast.success("保存しました");
     } catch (error) {
       selectedTrack.value = previousTrack;
-      saveError.value = error instanceof Error ? error.message : "保存に失敗しました";
+      const message = error instanceof Error ? error.message : "保存に失敗しました";
+      saveError.value = message;
+      await toast.error(message);
     } finally {
       isSaving.value = false;
     }
@@ -217,7 +224,7 @@ export const MusicSettingsForm = component$<MusicSettingsFormProps>(({ initialTr
                           saveError.value = null;
                           isSearchActive.value = false;
 
-                          if (nextTrack.id !== previousTrack?.id) {
+                          if (saveOnSelect && nextTrack.id !== previousTrack?.id) {
                             await saveMusic$(nextTrack, previousTrack);
                           }
                         }}
@@ -249,8 +256,30 @@ export const MusicSettingsForm = component$<MusicSettingsFormProps>(({ initialTr
         )}
       </div>
 
-      {isSaving.value && <p class={styles.placeholder}>保存中...</p>}
+      {saveOnSelect && isSaving.value && <p class={styles.placeholder}>保存中...</p>}
       {saveError.value && <p class={styles.placeholder}>{saveError.value}</p>}
+      {!saveOnSelect && (
+        <div class={formStyles.actions}>
+          <FormButton
+            type="button"
+            variant="accent"
+            size="md"
+            width="full"
+            disabled={isSaving.value || !canContinue}
+            aria-busy={isSaving.value}
+            onClick$={async () => {
+              if (!selectedTrack.value) return;
+
+              const previousTrack = initialTrack ? cloneTrack(initialTrack) : null;
+              await saveMusic$(selectedTrack.value, previousTrack);
+              if (saveError.value) return;
+              await onNext$?.();
+            }}
+          >
+            {isSaving.value ? "保存中..." : "次へ"}
+          </FormButton>
+        </div>
+      )}
     </section>
   );
 });

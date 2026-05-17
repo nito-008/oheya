@@ -4,6 +4,8 @@
 
 - Treat paths as trailing-slash paths.
 - When building paths with `Link` `href`, `window.location`, `history.replaceState`, or similar APIs, include the trailing slash.
+- For client-side URL transitions from Qwik components, use `useNavigate` instead of `window.location` or `history` APIs.
+- Use `useNavigate` with `replaceState: true` when replacing the current history entry is part of the intended behavior.
 - Examples:
   - `/settings/profile/`
   - `/${userId}/`
