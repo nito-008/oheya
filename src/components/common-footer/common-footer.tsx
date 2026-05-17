@@ -1,5 +1,6 @@
-import { component$ } from "@builder.io/qwik";
+import { component$, useSignal } from "@builder.io/qwik";
 import { Form, Link } from "@builder.io/qwik-city";
+import { ConfirmDialog } from "~/components/ui/confirm-dialog/confirm-dialog";
 import { useSignIn, useSignOut } from "~/routes/plugin@auth";
 import { getImageUrl } from "~/schema/image";
 import {
@@ -22,6 +23,7 @@ export const CommonFooter = component$<CommonFooterProps>(({ user, showAuthActio
   const myRoomHref = getCommonUserRoomHref(user);
   const accountName = getCommonUserDisplayName(user);
   const accountInitial = getCommonUserInitial(user);
+  const logoutConfirmOpen = useSignal(false);
 
   return (
     <footer class={styles.footer}>
@@ -48,9 +50,8 @@ export const CommonFooter = component$<CommonFooterProps>(({ user, showAuthActio
           <button
             class={styles.link}
             type="button"
-            onClick$={async () => {
-              if (!confirm("ログアウトしますか？")) return;
-              await signOut.submit({ redirectTo: "/" });
+            onClick$={() => {
+              logoutConfirmOpen.value = true;
             }}
           >
             ログアウト
@@ -74,6 +75,18 @@ export const CommonFooter = component$<CommonFooterProps>(({ user, showAuthActio
           ホーム
         </Link>
       </nav>
+      <ConfirmDialog
+        open={logoutConfirmOpen.value}
+        title="ログアウトしますか？"
+        message="現在のアカウントからログアウトします。"
+        confirmLabel="ログアウト"
+        onClose$={() => {
+          logoutConfirmOpen.value = false;
+        }}
+        onConfirm$={async () => {
+          await signOut.submit({ redirectTo: "/" });
+        }}
+      />
     </footer>
   );
 });

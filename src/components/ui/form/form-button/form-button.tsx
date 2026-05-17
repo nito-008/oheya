@@ -1,7 +1,7 @@
 import { component$, Slot, type PropsOf } from "@builder.io/qwik";
 import styles from "./form-button.module.css";
 
-type FormButtonVariant = "accent" | "primary" | "secondary";
+type FormButtonVariant = "accent" | "danger" | "primary" | "secondary";
 type FormButtonSize = "md" | "sm";
 type FormButtonWidth = "fit" | "full";
 
