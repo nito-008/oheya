@@ -18,7 +18,7 @@ type CommonFooterProps = {
 export const CommonFooter = component$<CommonFooterProps>(({ user, showAuthActions = true }) => {
   const signIn = useSignIn();
   const signOut = useSignOut();
-  const hasProfile = showAuthActions && user.authenticated && Boolean(user.publicId);
+  const hasProfile = user.authenticated && Boolean(user.publicId);
   const myRoomHref = getCommonUserRoomHref(user);
   const accountName = getCommonUserDisplayName(user);
   const accountInitial = getCommonUserInitial(user);
@@ -26,7 +26,7 @@ export const CommonFooter = component$<CommonFooterProps>(({ user, showAuthActio
   return (
     <footer class={styles.footer}>
       <nav class={styles.nav} aria-label="フッター">
-        {hasProfile ? (
+        {showAuthActions && hasProfile ? (
           <Link href={myRoomHref} prefetch="js" class={styles.profileLink}>
             {user.icon ? (
               <img
@@ -44,7 +44,7 @@ export const CommonFooter = component$<CommonFooterProps>(({ user, showAuthActio
             <span class={styles.profileName}>{accountName}</span>
           </Link>
         ) : null}
-        {user.authenticated ? (
+        {user.authenticated && hasProfile && showAuthActions ? (
           <button
             class={styles.link}
             type="button"
@@ -56,10 +56,15 @@ export const CommonFooter = component$<CommonFooterProps>(({ user, showAuthActio
             ログアウト
           </button>
         ) : null}
+        {user.authenticated && !hasProfile && showAuthActions ? (
+          <Link href="/signup/" class={styles.link}>
+            アカウント登録
+          </Link>
+        ) : null}
         {!user.authenticated && showAuthActions ? (
           <Form action={signIn} class={styles.form}>
             <input type="hidden" name="providerId" value="google" />
-            <input type="hidden" name="options.redirectTo" value="/signup" />
+            <input type="hidden" name="options.redirectTo" value="/signup/" />
             <button class={styles.link} type="submit">
               ログイン
             </button>
