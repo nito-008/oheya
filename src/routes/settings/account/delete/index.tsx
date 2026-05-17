@@ -18,7 +18,7 @@ export const useAccountDeleteLoader = routeLoader$(async (event) => {
   const res = await client.api.users.me.$get();
 
   if (res.status === 401) throw event.redirect(302, "/");
-  if (res.status === 404) throw event.redirect(302, "/signup");
+  if (res.status === 404) throw event.redirect(302, "/signup/");
   if (!res.ok) throw new Error("アカウント情報の読み込みに失敗しました");
 
   return {};

@@ -10,7 +10,7 @@ export const useMusicSettingsLoader = routeLoader$<MusicTrack | null>(async (eve
   const res = await client.api.users.me.music.$get();
 
   if (res.status === 401) throw event.redirect(302, "/");
-  if (res.status === 404) throw event.redirect(302, "/signup");
+  if (res.status === 404) throw event.redirect(302, "/signup/");
   if (!res.ok) throw new Error("音楽設定の取得に失敗しました");
 
   const data = (await res.json()) as { track: MusicTrack | null };
