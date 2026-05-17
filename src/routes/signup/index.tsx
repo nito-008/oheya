@@ -7,6 +7,7 @@ import { FormErrorMessage } from "~/components/ui/form/form-error-message/form-e
 import { FormButton } from "~/components/ui/form/form-button/form-button";
 import { FormTextInput } from "~/components/ui/form/form-text-input/form-text-input";
 import { IconCropInput } from "~/components/ui/form/icon-crop-input/icon-crop-input";
+import { useToast } from "~/components/ui/toast/toast";
 import { createApiClient } from "~/lib/api";
 import { useSignOut } from "~/routes/plugin@auth";
 import { AlbumSettingsForm } from "~/routes/settings/album/components/album-settings-form";
@@ -27,6 +28,7 @@ type SignupStatus = {
 };
 
 const mediaSignupSteps = new Set<SignupStep>(["music", "album"]);
+const accountCreatedMessage = "アカウントを作成しました";
 
 const getSignupPath = (step: SignupStep): string =>
   step === "profile" ? "/signup/" : `/signup/?step=${step}`;
@@ -80,6 +82,7 @@ export default component$(() => {
   const profileStatus = useProfileStatus();
   const signOut = useSignOut();
   const navigate = useNavigate();
+  const toast = useToast();
   const currentStep = useSignal<SignupStep>(profileStatus.value.step);
   const publicId = useSignal(profileStatus.value.profile?.publicId ?? "");
   const [signupForm, { Form: SignupFormElement, Field }] = useForm<SignupForm>({
@@ -148,6 +151,7 @@ export default component$(() => {
               }
 
               publicId.value = values.publicId;
+              await toast.success(accountCreatedMessage);
               await goToStep$("music");
             }}
           >

@@ -24,6 +24,7 @@ export const CommonHeader = component$<CommonHeaderProps>(
   ({ user, currentPath, showAuthActions = true }) => {
     const signIn = useSignIn();
     const hasProfile = user.authenticated && Boolean(user.publicId);
+    const showProfileActions = showAuthActions && hasProfile;
     const myRoomHref = getCommonUserRoomHref(user);
     const isMyRoomPath = user.publicId ? currentPath === `/${user.publicId}/` : false;
     const accountInitial = getCommonUserInitial(user);
@@ -36,11 +37,11 @@ export const CommonHeader = component$<CommonHeaderProps>(
             <img class={styles.titleIcon} src={houseSvg} alt="" width={29} height={29} />
           </Link>
         </h1>
-        {hasProfile && isMyRoomPath ? (
+        {showProfileActions && isMyRoomPath ? (
           <Button href="/settings/profile/" label="設定">
             <img class={styles.settingsIcon} src={settingSvg} alt="" width={24} height={24} />
           </Button>
-        ) : hasProfile ? (
+        ) : showProfileActions ? (
           <Link href={myRoomHref} prefetch="js" class={styles.accountLink}>
             {user.icon ? (
               <img
