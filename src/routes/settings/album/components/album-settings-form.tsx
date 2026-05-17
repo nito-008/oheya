@@ -9,6 +9,9 @@ import { clamp, getCropLayout, zoomCropAtPoint } from "~/lib/image-crop";
 import deleteSvg from "~/media/icons/delete.svg";
 import plusSvg from "~/media/icons/plus.svg";
 import {
+  albumPhotoImageAspectRatio,
+  albumPhotoImageHeight,
+  albumPhotoImageWidth,
   albumPhotoSubtitleMaxLength,
   albumPhotoTitleMaxLength,
   maxAlbumPhotoCount,
@@ -69,9 +72,6 @@ const replacePhoto = (
   updater: (photo: AlbumSettingsPhoto) => AlbumSettingsPhoto,
 ) => photos.map((photo) => (photo.localId === photoId ? updater(photo) : photo));
 
-const CROP_OUTPUT_WIDTH = 1920;
-const CROP_OUTPUT_HEIGHT = 1440;
-const CROP_ASPECT_RATIO = CROP_OUTPUT_WIDTH / CROP_OUTPUT_HEIGHT;
 const MIN_SCALE = 1;
 const MAX_SCALE = 3;
 const PHOTO_CONTENT_TYPE = "image/webp";
@@ -144,8 +144,8 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
   const cropZoom = useSignal(MIN_SCALE);
   const cropPositionX = useSignal(0);
   const cropPositionY = useSignal(0);
-  const cropImageWidth = useSignal(CROP_OUTPUT_WIDTH);
-  const cropImageHeight = useSignal(CROP_OUTPUT_HEIGHT);
+  const cropImageWidth = useSignal(albumPhotoImageWidth);
+  const cropImageHeight = useSignal(albumPhotoImageHeight);
   const cropDrag = useSignal<CropDragState | null>(null);
   const cropPointers = useSignal<CropPointer[]>([]);
   const cropPinch = useSignal<CropPinchState | null>(null);
@@ -326,8 +326,8 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
     if (!image || !cropBox || !image.naturalWidth || !image.naturalHeight) return null;
 
     const cropRect = cropBox.getBoundingClientRect();
-    const viewWidth = cropRect.width || CROP_OUTPUT_WIDTH;
-    const viewHeight = cropRect.height || viewWidth / CROP_ASPECT_RATIO;
+    const viewWidth = cropRect.width || albumPhotoImageWidth;
+    const viewHeight = cropRect.height || viewWidth / albumPhotoImageAspectRatio;
     const layout = getCropLayout({
       imageNaturalHeight: image.naturalHeight,
       imageNaturalWidth: image.naturalWidth,
@@ -352,26 +352,26 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
     if (!image || !cropBox || !image.naturalWidth || !image.naturalHeight) return null;
 
     const canvas = document.createElement("canvas");
-    canvas.width = CROP_OUTPUT_WIDTH;
-    canvas.height = CROP_OUTPUT_HEIGHT;
+    canvas.width = albumPhotoImageWidth;
+    canvas.height = albumPhotoImageHeight;
     const context = canvas.getContext("2d");
     if (!context) return null;
 
     const cropRect = cropBox.getBoundingClientRect();
-    const viewWidth = cropRect.width || CROP_OUTPUT_WIDTH;
-    const viewHeight = cropRect.height || viewWidth / CROP_ASPECT_RATIO;
-    const viewToOutput = CROP_OUTPUT_WIDTH / viewWidth;
+    const viewWidth = cropRect.width || albumPhotoImageWidth;
+    const viewHeight = cropRect.height || viewWidth / albumPhotoImageAspectRatio;
+    const viewToOutput = albumPhotoImageWidth / viewWidth;
     const drawScale =
       Math.max(viewWidth / image.naturalWidth, viewHeight / image.naturalHeight) *
       cropZoom.value *
       viewToOutput;
     const drawWidth = image.naturalWidth * drawScale;
     const drawHeight = image.naturalHeight * drawScale;
-    const drawX = (CROP_OUTPUT_WIDTH - drawWidth) / 2 + cropPositionX.value * viewToOutput;
-    const drawY = (CROP_OUTPUT_HEIGHT - drawHeight) / 2 + cropPositionY.value * viewToOutput;
+    const drawX = (albumPhotoImageWidth - drawWidth) / 2 + cropPositionX.value * viewToOutput;
+    const drawY = (albumPhotoImageHeight - drawHeight) / 2 + cropPositionY.value * viewToOutput;
 
     context.fillStyle = "#fffef8";
-    context.fillRect(0, 0, CROP_OUTPUT_WIDTH, CROP_OUTPUT_HEIGHT);
+    context.fillRect(0, 0, albumPhotoImageWidth, albumPhotoImageHeight);
     context.drawImage(image, drawX, drawY, drawWidth, drawHeight);
 
     const toBlob = (contentType: string) =>
@@ -670,8 +670,8 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
 
       const [firstPointer, secondPointer] = cropPointers.value;
       const cropRect = cropBox.getBoundingClientRect();
-      const viewWidth = cropRect.width || CROP_OUTPUT_WIDTH;
-      const viewHeight = cropRect.height || viewWidth / CROP_ASPECT_RATIO;
+      const viewWidth = cropRect.width || albumPhotoImageWidth;
+      const viewHeight = cropRect.height || viewWidth / albumPhotoImageAspectRatio;
       const center = getPointerCenter(firstPointer, secondPointer);
       const currentCenterX = center.clientX - cropRect.left;
       const currentCenterY = center.clientY - cropRect.top;
@@ -763,8 +763,8 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
     if (!image || !cropBox || !image.naturalWidth || !image.naturalHeight) return;
 
     const cropRect = cropBox.getBoundingClientRect();
-    const viewWidth = cropRect.width || CROP_OUTPUT_WIDTH;
-    const viewHeight = cropRect.height || viewWidth / CROP_ASPECT_RATIO;
+    const viewWidth = cropRect.width || albumPhotoImageWidth;
+    const viewHeight = cropRect.height || viewWidth / albumPhotoImageAspectRatio;
     const oldZoom = cropZoom.value;
     const newZoom = clamp(
       oldZoom * (event.deltaY < 0 ? 1 + WHEEL_ZOOM_STEP : 1 - WHEEL_ZOOM_STEP),
@@ -1041,8 +1041,8 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
                 class={styles.sourceImage}
                 src={sourceImageUrl.value}
                 alt=""
-                width={CROP_OUTPUT_WIDTH}
-                height={CROP_OUTPUT_HEIGHT}
+                width={albumPhotoImageWidth}
+                height={albumPhotoImageHeight}
                 draggable={false}
                 style={{
                   height: `${cropImageHeight.value}px`,
