@@ -23,21 +23,26 @@ export const AlbumGallery = component$<AlbumGalleryProps>(({ photos }) => {
 
   return (
     <div class={styles.albumGallery} aria-label="アルバム">
-      {photos.map((photo, index) => (
-        <article key={photo.imageId} class={styles.photoCard}>
-          <AlbumPhotoFrame
-            imageUrl={photo.url}
-            alt={getPhotoAlt(photo)}
-            variant={index % albumPhotoFrameVariantCount}
-          />
-          {(photo.title || photo.subtitle) && (
-            <div class={styles.photoMeta}>
-              {photo.title && <h2>{photo.title}</h2>}
-              {photo.subtitle && <p>{photo.subtitle}</p>}
+      {photos.map((photo, index) => {
+        const title = photo.title.trim();
+        const subtitle = photo.subtitle.trim();
+        const hasMeta = Boolean(title || subtitle);
+
+        return (
+          <article key={photo.imageId} class={styles.photoCard}>
+            <AlbumPhotoFrame
+              imageUrl={photo.url}
+              alt={getPhotoAlt(photo)}
+              variant={index % albumPhotoFrameVariantCount}
+            />
+            <div class={styles.photoMeta} aria-hidden={hasMeta ? undefined : "true"}>
+              {title && <h2>{title}</h2>}
+              {subtitle && <p>{subtitle}</p>}
             </div>
-          )}
-        </article>
-      ))}
+            <div class={styles.photoCardSpacer} aria-hidden="true" />
+          </article>
+        );
+      })}
     </div>
   );
 });

@@ -1,8 +1,10 @@
 .albumGallery {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 32rem), 32rem));
+  grid-auto-rows: auto auto 3.55rem;
   justify-content: center;
-  gap: 4rem 7rem;
+  column-gap: 7rem;
+  row-gap: 0.45rem;
   width: min(100%, 72rem);
   padding: 0;
 }
@@ -15,14 +17,21 @@
 
 .photoCard {
   display: grid;
-  gap: 0.45rem;
+  grid-row: span 3;
+  grid-template-rows: subgrid;
 }
 
 .photoMeta {
   display: grid;
+  grid-row: 2;
+  align-content: start;
   gap: 0.7rem;
   padding-inline: 1rem;
   text-align: center;
+}
+
+.photoCardSpacer {
+  grid-row: 3;
 }
 
 .photoMeta h2,
