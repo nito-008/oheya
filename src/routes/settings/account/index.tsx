@@ -13,7 +13,7 @@ export const useAccountSettingsLoader = routeLoader$<AccountSettingsLoaderData>(
   const res = await client.api.users.me.$get();
 
   if (res.status === 401) throw event.redirect(302, "/");
-  if (res.status === 404) throw event.redirect(302, "/signup");
+  if (res.status === 404) throw event.redirect(302, "/signup/");
   if (!res.ok) throw new Error("アカウント設定の読み込みに失敗しました");
 
   const profile = await res.json();

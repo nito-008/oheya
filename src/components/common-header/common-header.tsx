@@ -56,13 +56,13 @@ export const CommonHeader = component$<CommonHeaderProps>(
             <span class={styles.accountName}>自分の部屋へ</span>
           </Link>
         ) : user.authenticated && showAuthActions ? (
-          <Button href="/signup" label="アカウント登録">
+          <Button href="/signup/" label="アカウント登録">
             <img class={styles.accountIcon} src={accountSvg} alt="" width={24} height={24} />
           </Button>
         ) : showAuthActions ? (
           <Form action={signIn} class={styles.authForm}>
             <input type="hidden" name="providerId" value="google" />
-            <input type="hidden" name="options.redirectTo" value="/signup" />
+            <input type="hidden" name="options.redirectTo" value="/signup/" />
             <Button type="submit" label="ログイン">
               <img class={styles.loginIcon} src={loginSvg} alt="" width={24} height={24} />
             </Button>
