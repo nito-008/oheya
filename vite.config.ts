@@ -5,6 +5,7 @@
 import { defineConfig } from "vite-plus";
 import { qwikVite } from "@builder.io/qwik/optimizer";
 import { qwikCity } from "@builder.io/qwik-city/vite";
+import { partytownVite } from "@qwik.dev/partytown/utils";
 import { getPlatformProxy } from "wrangler";
 import pkg from "./package.json" with { type: "json" };
 
@@ -256,6 +257,7 @@ export default defineConfig({
     ],
   },
   plugins: [
+    partytownVite({}),
     qwikCity({ platform: platform ? { env: platform.env, cf: platform.cf, ctx: platform.ctx, caches: platform.caches } : undefined }),
     qwikVite(),
   ],
