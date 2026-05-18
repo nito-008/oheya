@@ -11,7 +11,7 @@ import { ErrorPage } from "~/routes/components/error-page/error-page";
 import { PUBLIC_ID_MAX_LENGTH, publicIdPattern } from "~/schema/user";
 import styles from "./index.module.css";
 
-const PROFILE_NOT_FOUND_MESSAGE = "ページが見つかりません";
+const ROOM_NOT_FOUND_MESSAGE = "お部屋が見つかりません";
 
 type ProfileLoaderData =
   | {
@@ -33,7 +33,7 @@ type FoundProfileLoaderData = Extract<ProfileLoaderData, { status: "found" }>;
 
 const createNotFoundProfileData = (): ProfileLoaderData => ({
   status: "notFound",
-  message: PROFILE_NOT_FOUND_MESSAGE,
+  message: ROOM_NOT_FOUND_MESSAGE,
 });
 
 const createFoundProfileData = (
