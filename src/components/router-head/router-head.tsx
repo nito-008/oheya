@@ -1,12 +1,24 @@
 import { useDocumentHead, useLocation, type DocumentMeta } from "@builder.io/qwik-city";
 
 import { component$ } from "@builder.io/qwik";
+import { QwikPartytown } from "~/components/partytown/partytown";
 
 const SITE_NAME = "Oheya";
 const DEFAULT_DESCRIPTION = "インターネットのどこかにある、誰かのお部屋";
 const OGP_IMAGE_PATH = "/ogp.png";
 const OGP_IMAGE_WIDTH = "1200";
 const OGP_IMAGE_HEIGHT = "630";
+const GA_MEASUREMENT_ID = "G-9TQQT768PQ";
+const GA_SCRIPT_SRC = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
+const GA_INLINE_SCRIPT = `
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function() {
+    dataLayer.push(arguments);
+  }
+  gtag('js', new Date());
+
+  gtag('config', '${GA_MEASUREMENT_ID}');
+`;
 
 const getMetaContent = (meta: readonly DocumentMeta[], name: string) =>
   meta.find((item) => item.name === name)?.content;
@@ -17,7 +29,8 @@ const getMetaContent = (meta: readonly DocumentMeta[], name: string) =>
 export const RouterHead = component$(() => {
   const head = useDocumentHead();
   const loc = useLocation();
-  const description = getMetaContent(head.meta, "description") ?? DEFAULT_DESCRIPTION;
+  const headDescription = getMetaContent(head.meta, "description");
+  const description = headDescription ?? DEFAULT_DESCRIPTION;
   const currentUrl = loc.url.href;
   const ogpImageUrl = new URL(OGP_IMAGE_PATH, loc.url).href;
 
@@ -25,6 +38,9 @@ export const RouterHead = component$(() => {
     <>
       <title>{head.title}</title>
 
+      <QwikPartytown forward={["gtag", "dataLayer.push"]} />
+      <script async type="text/partytown" src={GA_SCRIPT_SRC}></script>
+      <script type="text/partytown" dangerouslySetInnerHTML={GA_INLINE_SCRIPT}></script>
       <link rel="canonical" href={currentUrl} />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
@@ -33,9 +49,7 @@ export const RouterHead = component$(() => {
       <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
       <meta name="apple-mobile-web-app-title" content={SITE_NAME} />
       <link rel="manifest" href="/site.webmanifest" />
-      {!getMetaContent(head.meta, "description") && (
-        <meta name="description" content={DEFAULT_DESCRIPTION} />
-      )}
+      {!headDescription && <meta name="description" content={DEFAULT_DESCRIPTION} />}
       <meta property="og:site_name" content={SITE_NAME} />
       <meta property="og:title" content={head.title} />
       <meta property="og:description" content={description} />
