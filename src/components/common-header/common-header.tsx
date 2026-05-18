@@ -2,16 +2,13 @@ import { component$ } from "@builder.io/qwik";
 import { Form, Link } from "@builder.io/qwik-city";
 import { Button } from "~/components/ui/button/button";
 import houseSvg from "~/media/house.svg";
+import iconPlaceholderSvg from "~/media/icon-placeholder.svg";
 import accountSvg from "~/media/icons/account.svg";
 import loginSvg from "~/media/icons/login.svg";
 import settingSvg from "~/media/icons/setting.svg";
 import { useSignIn } from "~/routes/plugin@auth";
 import { getImageUrl } from "~/schema/image";
-import {
-  getCommonUserInitial,
-  getCommonUserRoomHref,
-  type CommonHeaderUser,
-} from "./common-header-state";
+import { getCommonUserRoomHref, type CommonHeaderUser } from "./common-header-state";
 import styles from "./common-header.module.css";
 
 type CommonHeaderProps = {
@@ -27,7 +24,6 @@ export const CommonHeader = component$<CommonHeaderProps>(
     const showProfileActions = showAuthActions && hasProfile;
     const myRoomHref = getCommonUserRoomHref(user);
     const isMyRoomPath = user.publicId ? currentPath === `/${user.publicId}/` : false;
-    const accountInitial = getCommonUserInitial(user);
 
     return (
       <header class={styles.header}>
@@ -52,7 +48,15 @@ export const CommonHeader = component$<CommonHeaderProps>(
                 height={48}
               />
             ) : (
-              <span class={styles.accountButtonIconFallback}>{accountInitial}</span>
+              <span class={styles.accountButtonIconFallback} aria-hidden="true">
+                <img
+                  src={iconPlaceholderSvg}
+                  alt=""
+                  width={64}
+                  height={64}
+                  class={styles.accountButtonIconFallbackImage}
+                />
+              </span>
             )}
             <span class={styles.accountName}>自分の部屋へ</span>
           </Link>

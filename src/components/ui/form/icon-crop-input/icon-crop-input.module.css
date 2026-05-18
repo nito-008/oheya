@@ -36,15 +36,15 @@
   overflow: hidden;
   border: 2px solid #2f2f2f;
   border-radius: 999px;
+  clip-path: circle(50%);
   background:
     linear-gradient(45deg, rgb(47 47 47 / 8%) 25%, transparent 25% 75%, rgb(47 47 47 / 8%) 75%),
     linear-gradient(45deg, rgb(47 47 47 / 8%) 25%, transparent 25% 75%, rgb(47 47 47 / 8%) 75%),
     #fffef8;
   background-position:
     0 0,
-    0.5rem 0.5rem;
-  background-size: 1rem 1rem;
-  clip-path: circle(50%);
+    0.65rem 0.65rem;
+  background-size: 1.3rem 1.3rem;
   filter: drop-shadow(2px 3px 0 #d8d2c2);
   touch-action: none;
   user-select: none;
@@ -106,9 +106,17 @@
   pointer-events: none;
 }
 
+.placeholderSurface {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
 .placeholderImage {
-  width: 62%;
-  height: 62%;
+  width: 70%;
+  height: 70%;
+  object-fit: contain;
   opacity: 0.8;
   pointer-events: none;
 }

@@ -43,10 +43,11 @@
 }
 
 .jacketPlaceholder {
-  display: block;
   width: min(42%, 8.5rem);
   height: auto;
-  opacity: 0.92;
+  object-fit: contain;
+  opacity: 0.8;
+  pointer-events: none;
 }
 
 .frameImage {

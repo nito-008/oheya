@@ -113,15 +113,28 @@
 }
 
 .accountButtonIconFallback {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   width: 1.25rem;
   height: 1.25rem;
   border: 1.5px solid #2f2f2f;
   border-radius: 999px;
-  background: #fef1c4;
   box-sizing: border-box;
-  font-size: 0.65rem;
-  line-height: 1;
+  padding: 0;
+  background:
+    linear-gradient(45deg, rgb(47 47 47 / 8%) 25%, transparent 25% 75%, rgb(47 47 47 / 8%) 75%),
+    linear-gradient(45deg, rgb(47 47 47 / 8%) 25%, transparent 25% 75%, rgb(47 47 47 / 8%) 75%),
+    #fffef8;
+  background-position:
+    0 0,
+    0.475rem 0.475rem;
+  background-size: 0.95rem 0.95rem;
+}
+
+.accountButtonIconFallbackImage {
+  width: 76%;
+  height: 76%;
+  object-fit: contain;
+  opacity: 0.8;
+  pointer-events: none;
 }

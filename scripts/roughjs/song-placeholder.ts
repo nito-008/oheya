@@ -1,8 +1,8 @@
 import type { RoughSVG } from "roughjs/bin/svg";
 
-const lineStyle = {
+const outlineStyle = {
   stroke: "#222222",
-  strokeWidth: 4.2,
+  strokeWidth: 3.4,
   roughness: 0.8,
   bowing: 0.7,
   fill: "transparent",
@@ -10,7 +10,7 @@ const lineStyle = {
 };
 
 const detailStyle = {
-  ...lineStyle,
+  ...outlineStyle,
   seed: 247,
 };
 
