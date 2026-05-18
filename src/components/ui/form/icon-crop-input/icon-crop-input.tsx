@@ -5,6 +5,7 @@ import { FormErrorMessage } from "~/components/ui/form/form-error-message/form-e
 import { FormButton } from "~/components/ui/form/form-button/form-button";
 import { Modal } from "~/components/ui/modal/modal";
 import { TapClickIcon } from "~/components/ui/tap-click-icon/tap-click-icon";
+import { canvasToImageBlob } from "~/lib/canvas-image";
 import { clamp, getCropLayout, zoomCropAtPoint } from "~/lib/image-crop";
 import iconPlaceholderSvg from "~/media/icon-placeholder.svg";
 import { getImageUrl, maxImageSourceSizeBytes } from "~/schema/image";
@@ -13,14 +14,8 @@ import styles from "./icon-crop-input.module.css";
 const OUTPUT_SIZE = 256;
 const MIN_SCALE = 1;
 const MAX_SCALE = 3;
-const ICON_CONTENT_TYPE = "image/webp";
 const ICON_QUALITY = 0.86;
-const FALLBACK_ICON_CONTENT_TYPE = "image/jpeg";
 const IMAGE_ACCEPT = "image/png,image/jpeg,image/webp,image/avif";
-const ICON_OUTPUT_EXTENSIONS = {
-  [ICON_CONTENT_TYPE]: "webp",
-  [FALLBACK_ICON_CONTENT_TYPE]: "jpeg",
-} as const;
 const WHEEL_ZOOM_STEP = 0.12;
 
 type FieldProps = {
@@ -74,9 +69,6 @@ type CropLayout = {
   maxPositionX: number;
   maxPositionY: number;
 };
-
-const isIconOutputContentType = (value: string): value is keyof typeof ICON_OUTPUT_EXTENSIONS =>
-  value in ICON_OUTPUT_EXTENSIONS;
 
 const getPointerDistance = (first: CropPointer, second: CropPointer) =>
   Math.hypot(second.clientX - first.clientX, second.clientY - first.clientY);
@@ -175,22 +167,14 @@ export const IconCropInput = component$<IconCropInputProps>((props) => {
     context.fillRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
     context.drawImage(image, drawX, drawY, drawWidth, drawHeight);
 
-    const toBlob = (contentType: string) =>
-      new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, contentType, ICON_QUALITY));
-
-    let blob = await toBlob(ICON_CONTENT_TYPE);
-    if (!blob || !isIconOutputContentType(blob.type)) {
-      blob = await toBlob(FALLBACK_ICON_CONTENT_TYPE);
-    }
-
-    if (!blob || !isIconOutputContentType(blob.type)) {
+    const output = await canvasToImageBlob(canvas, ICON_QUALITY);
+    if (!output) {
       localError.value = "このブラウザはアイコン画像の保存形式に対応していません";
       return null;
     }
 
     localError.value = "";
-    const extension = ICON_OUTPUT_EXTENSIONS[blob.type];
-    return new File([blob], `icon.${extension}`, { type: blob.type });
+    return new File([output.blob], `icon.${output.extension}`, { type: output.contentType });
   });
 
   const resetCrop = $(async () => {
