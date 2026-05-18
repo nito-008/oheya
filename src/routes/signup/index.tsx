@@ -200,9 +200,9 @@ export default component$(() => {
               </FormButton>
             </div>
           </SignupFormElement>
-          <QwikForm action={signOut} class={styles.cancelForm}>
+          <QwikForm action={signOut} class={styles.textAction}>
             <input type="hidden" name="redirectTo" value="/" />
-            <button class={styles.cancelLink} type="submit">
+            <button class={styles.textButton} type="submit">
               アカウント登録をやめる
             </button>
           </QwikForm>
@@ -216,6 +216,11 @@ export default component$(() => {
             saveOnSelect={false}
             onNext$={$(() => goToStep$("album"))}
           />
+          <div class={styles.textAction}>
+            <button class={styles.textButton} type="button" onClick$={() => goToStep$("album")}>
+              スキップする
+            </button>
+          </div>
         </>
       )}
       {currentStep.value === "album" && (
@@ -226,6 +231,11 @@ export default component$(() => {
             saveOnEdit={false}
             onNext$={finishSignup$}
           />
+          <div class={styles.textAction}>
+            <button class={styles.textButton} type="button" onClick$={finishSignup$}>
+              スキップする
+            </button>
+          </div>
         </>
       )}
     </main>
