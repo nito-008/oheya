@@ -508,13 +508,15 @@ export const IconCropInput = component$<IconCropInputProps>((props) => {
                 height={OUTPUT_SIZE}
               />
             ) : (
-              <img
-                class={styles.placeholderImage}
-                src={iconPlaceholderSvg}
-                alt=""
-                width={64}
-                height={64}
-              />
+              <span class={styles.placeholderSurface} aria-hidden="true">
+                <img
+                  src={iconPlaceholderSvg}
+                  alt=""
+                  width={64}
+                  height={64}
+                  class={styles.placeholderImage}
+                />
+              </span>
             )}
             <span class={styles.mask} aria-hidden="true" />
             <label class={styles.fileOverlay} aria-label="画像を選ぶ">

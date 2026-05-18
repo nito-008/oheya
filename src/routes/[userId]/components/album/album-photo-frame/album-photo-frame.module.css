@@ -104,7 +104,9 @@
 .placeholderImage {
   width: min(34%, 7rem);
   height: auto;
+  object-fit: contain;
   opacity: 0.8;
+  pointer-events: none;
 }
 
 .frameImage {

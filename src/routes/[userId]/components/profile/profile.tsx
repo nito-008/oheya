@@ -36,14 +36,15 @@ export const Profile = component$<ProfileProps>(({ profile }) => {
               class={styles.avatarImage}
             />
           ) : (
-            <img
-              aria-hidden="true"
-              src={iconPlaceholderSvg}
-              alt=""
-              width={96}
-              height={96}
-              class={styles.avatarPlaceholder}
-            />
+            <span class={styles.avatarPlaceholder} aria-hidden="true">
+              <img
+                src={iconPlaceholderSvg}
+                alt=""
+                width={96}
+                height={96}
+                class={styles.avatarPlaceholderImage}
+              />
+            </span>
           )}
           <img
             aria-hidden="true"

@@ -6,6 +6,7 @@ import inputStyles from "~/components/ui/form/form-text-input/form-text-input.mo
 import { Modal } from "~/components/ui/modal/modal";
 import { useToast } from "~/components/ui/toast/toast";
 import { clamp, getCropLayout, zoomCropAtPoint } from "~/lib/image-crop";
+import photoPlaceholderSvg from "~/media/photo-placeholder.svg";
 import deleteSvg from "~/media/icons/delete.svg";
 import plusSvg from "~/media/icons/plus.svg";
 import {
@@ -20,7 +21,6 @@ import {
 import { isImageContentType, maxImageSizeBytes, maxImageSourceSizeBytes } from "~/schema/image";
 import formStyles from "~/routes/signup/index.module.css";
 import sharedStyles from "~/routes/settings/components/settings-tabs/settings-tabs.module.css";
-import photoPlaceholderSvg from "~/media/photo-placeholder.svg";
 import styles from "./album-settings-form.module.css";
 
 type AlbumSettingsPhoto = {
@@ -857,8 +857,8 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
               </div>
 
               <label class={styles.imagePicker} aria-label="写真を選ぶ">
-                <span class={styles.previewFrame}>
-                  {photo.previewUrl || photo.url ? (
+                {photo.previewUrl || photo.url ? (
+                  <span class={styles.previewFrame}>
                     <img
                       class={styles.previewImage}
                       src={photo.previewUrl ?? photo.url ?? ""}
@@ -866,19 +866,24 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
                       width={320}
                       height={240}
                     />
-                  ) : (
+                    <span class={styles.fileOverlay} aria-hidden="true">
+                      <span>+</span>
+                    </span>
+                  </span>
+                ) : (
+                  <span class={styles.previewFrame}>
                     <img
-                      class={styles.placeholderImage}
                       src={photoPlaceholderSvg}
                       alt=""
                       width={96}
                       height={96}
+                      class={styles.placeholderImage}
                     />
-                  )}
-                  <span class={styles.fileOverlay} aria-hidden="true">
-                    <span>+</span>
+                    <span class={styles.fileOverlay} aria-hidden="true">
+                      <span>+</span>
+                    </span>
                   </span>
-                </span>
+                )}
                 <input
                   type="file"
                   name={getPhotoImageName(photo)}

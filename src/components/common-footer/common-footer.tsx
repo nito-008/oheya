@@ -1,11 +1,11 @@
 import { component$, useSignal } from "@builder.io/qwik";
 import { Form, Link } from "@builder.io/qwik-city";
 import { ConfirmDialog } from "~/components/ui/confirm-dialog/confirm-dialog";
+import iconPlaceholderSvg from "~/media/icon-placeholder.svg";
 import { useSignIn, useSignOut } from "~/routes/plugin@auth";
 import { getImageUrl } from "~/schema/image";
 import {
   getCommonUserDisplayName,
-  getCommonUserInitial,
   getCommonUserRoomHref,
   type CommonHeaderUser,
 } from "~/components/common-header/common-header-state";
@@ -22,7 +22,6 @@ export const CommonFooter = component$<CommonFooterProps>(({ user, showAuthActio
   const hasProfile = user.authenticated && Boolean(user.publicId);
   const myRoomHref = getCommonUserRoomHref(user);
   const accountName = getCommonUserDisplayName(user);
-  const accountInitial = getCommonUserInitial(user);
   const logoutConfirmOpen = useSignal(false);
 
   return (
@@ -40,7 +39,13 @@ export const CommonFooter = component$<CommonFooterProps>(({ user, showAuthActio
               />
             ) : (
               <span class={styles.profileIconFallback} aria-hidden="true">
-                {accountInitial}
+                <img
+                  src={iconPlaceholderSvg}
+                  alt=""
+                  width={64}
+                  height={64}
+                  class={styles.profileIconFallbackImage}
+                />
               </span>
             )}
             <span class={styles.profileName}>{accountName}</span>
