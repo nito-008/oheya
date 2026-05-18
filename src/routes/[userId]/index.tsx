@@ -103,7 +103,7 @@ export default component$(() => {
   }
 
   return (
-    <div class={styles.main} aria-label={`${data.value.profile.name}のプロフィール`}>
+    <div class={styles.main} aria-label={`${data.value.profile.name}のお部屋`}>
       <Profile profile={data.value.profile} />
       <Music track={data.value.track} />
       <Album photos={data.value.albumPhotos} />
@@ -122,6 +122,6 @@ export const head: DocumentHead = ({ resolveValue }) => {
 
   return {
     title: `${data.profile.name} | Oheya`,
-    meta: [{ name: "description", content: `${data.profile.name}のプロフィール` }],
+    meta: [{ name: "description", content: `${data.profile.name}のお部屋` }],
   };
 };
