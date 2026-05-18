@@ -5,6 +5,7 @@ import { FormButton } from "~/components/ui/form/form-button/form-button";
 import inputStyles from "~/components/ui/form/form-text-input/form-text-input.module.css";
 import { Modal } from "~/components/ui/modal/modal";
 import { useToast } from "~/components/ui/toast/toast";
+import { canvasToImageBlob } from "~/lib/canvas-image";
 import { clamp, getCropLayout, zoomCropAtPoint } from "~/lib/image-crop";
 import photoPlaceholderSvg from "~/media/photo-placeholder.svg";
 import deleteSvg from "~/media/icons/delete.svg";
@@ -74,13 +75,7 @@ const replacePhoto = (
 
 const MIN_SCALE = 1;
 const MAX_SCALE = 3;
-const PHOTO_CONTENT_TYPE = "image/webp";
 const PHOTO_QUALITY = 0.86;
-const FALLBACK_PHOTO_CONTENT_TYPE = "image/jpeg";
-const PHOTO_OUTPUT_EXTENSIONS = {
-  [PHOTO_CONTENT_TYPE]: "webp",
-  [FALLBACK_PHOTO_CONTENT_TYPE]: "jpeg",
-} as const;
 const WHEEL_ZOOM_STEP = 0.12;
 
 type CropDragState = {
@@ -114,9 +109,6 @@ type CropLayout = {
   maxPositionX: number;
   maxPositionY: number;
 };
-
-const isPhotoOutputContentType = (value: string): value is keyof typeof PHOTO_OUTPUT_EXTENSIONS =>
-  value in PHOTO_OUTPUT_EXTENSIONS;
 
 const getPointerDistance = (first: CropPointer, second: CropPointer) =>
   Math.hypot(second.clientX - first.clientX, second.clientY - first.clientY);
@@ -374,21 +366,15 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
     context.fillRect(0, 0, albumPhotoImageWidth, albumPhotoImageHeight);
     context.drawImage(image, drawX, drawY, drawWidth, drawHeight);
 
-    const toBlob = (contentType: string) =>
-      new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, contentType, PHOTO_QUALITY));
-
-    let blob = await toBlob(PHOTO_CONTENT_TYPE);
-    if (!blob || !isPhotoOutputContentType(blob.type)) {
-      blob = await toBlob(FALLBACK_PHOTO_CONTENT_TYPE);
-    }
-
-    if (!blob || !isPhotoOutputContentType(blob.type)) {
+    const output = await canvasToImageBlob(canvas, PHOTO_QUALITY);
+    if (!output) {
       saveError.value = "このブラウザは写真の保存形式に対応していません";
       return null;
     }
 
-    const extension = PHOTO_OUTPUT_EXTENSIONS[blob.type];
-    return new File([blob], `album-photo.${extension}`, { type: blob.type });
+    return new File([output.blob], `album-photo.${output.extension}`, {
+      type: output.contentType,
+    });
   });
 
   const resetCrop = $(async () => {
