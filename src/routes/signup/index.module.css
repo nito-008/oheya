@@ -35,14 +35,14 @@
   gap: 1.5rem;
 }
 
-.cancelForm {
+.textAction {
   display: flex;
   justify-content: center;
   width: min(100%, 25rem);
   margin-top: 1.5rem;
 }
 
-.cancelLink {
+.textButton {
   padding: 0;
   border: 0;
   color: #555;
@@ -54,11 +54,11 @@
   transition: color 160ms var(--ease-out-expo);
 }
 
-.cancelLink:hover {
+.textButton:hover {
   color: #252525;
 }
 
-.cancelLink:focus-visible {
+.textButton:focus-visible {
   outline: 2px solid currentColor;
   outline-offset: 0.25rem;
 }
