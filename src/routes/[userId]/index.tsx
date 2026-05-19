@@ -7,6 +7,7 @@ import type { MusicTrack } from "~/schema/music";
 import { Album } from "~/routes/[userId]/components/album/album";
 import { Music } from "~/routes/[userId]/components/music/music";
 import { Profile } from "~/routes/[userId]/components/profile/profile";
+import { RandomRoomButton } from "~/routes/[userId]/components/random-room-button/random-room-button";
 import { ErrorPage } from "~/routes/components/error-page/error-page";
 import { PUBLIC_ID_MAX_LENGTH, publicIdPattern } from "~/schema/user";
 import styles from "./index.module.css";
@@ -107,6 +108,7 @@ export default component$(() => {
       <Profile profile={data.value.profile} />
       <Music track={data.value.track} />
       <Album photos={data.value.albumPhotos} />
+      <RandomRoomButton currentPublicId={data.value.profile.publicId} />
     </div>
   );
 });
