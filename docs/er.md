@@ -33,17 +33,23 @@ erDiagram
     integer byte_size
     integer created_at
   }
+  music {
+    text id PK
+    text user_id FK
+    text track_id
+    text title
+    text artist
+    text artwork_url "nullable"
+    text preview_url "nullable"
+    text track_view_url "nullable"
+    integer position
+    integer created_at
+  }
   profile {
     text user_id PK,FK
     text public_id UK
     text name
     text icon "nullable"
-    text music_track_id "nullable"
-    text music_title "nullable"
-    text music_artist "nullable"
-    text music_artwork_url "nullable"
-    text music_preview_url "nullable"
-    text music_track_view_url "nullable"
   }
   session {
     text sessionToken PK
@@ -66,6 +72,7 @@ erDiagram
   user ||--o{ album_photo : "user_id"
   image ||--o{ album_photo : "image_id"
   user ||--o{ image : "user_id"
+  user ||--o{ music : "user_id"
   user ||--o{ profile : "user_id"
   user ||--o{ session : "userId"
 ```
