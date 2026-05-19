@@ -3,6 +3,7 @@ import { routeLoader$, type DocumentHead } from "@builder.io/qwik-city";
 import { Introduction } from "~/components/introduction/introduction";
 import { Door } from "~/components/svg/door/door";
 import { createApiClient } from "~/lib/api";
+import { getUserRoomHref } from "~/lib/room";
 import styles from "./index.module.css";
 
 export const useRandomRoomHref = routeLoader$<string | null>(async (event) => {
@@ -18,7 +19,7 @@ export const useRandomRoomHref = routeLoader$<string | null>(async (event) => {
   }
 
   const { publicId } = await res.json();
-  return `/${publicId}/`;
+  return getUserRoomHref(publicId);
 });
 
 export default component$(() => {

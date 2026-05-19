@@ -1,4 +1,5 @@
 import { createContextId, useContext } from "@builder.io/qwik";
+import { getUserRoomHref } from "~/lib/room";
 
 export type CommonHeaderUser = {
   authenticated: boolean;
@@ -30,7 +31,7 @@ export const clearCommonHeaderUser = (user: CommonHeaderUserState) => {
 };
 
 export const getCommonUserRoomHref = (user: Pick<CommonHeaderUser, "publicId">) =>
-  user.publicId ? `/${user.publicId}/` : "/settings/profile/";
+  user.publicId ? getUserRoomHref(user.publicId) : "/settings/profile/";
 
 export const getCommonUserDisplayName = (user: Pick<CommonHeaderUser, "name">) =>
   user.name?.trim() || "アカウント";
