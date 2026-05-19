@@ -70,20 +70,22 @@
   object-fit: cover;
 }
 
-.openLink {
+.openAction {
   position: absolute;
   top: var(--photo-top);
   left: var(--photo-left);
   width: var(--photo-width);
+  padding: 0;
   aspect-ratio: 4 / 3;
+  border: 0;
   background: transparent;
   cursor: pointer;
   transition: background-color 160ms var(--ease-out-expo);
 }
 
-.openLink:hover,
-.openLink:active,
-.openLink:focus-visible {
+.openAction:hover,
+.openAction:active,
+.openAction:focus-visible {
   background-color: rgb(36 36 36 / 38%);
   outline: none;
 }
