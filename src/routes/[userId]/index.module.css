@@ -2,5 +2,5 @@
   display: grid;
   gap: 28svh;
   overflow-x: hidden;
-  padding-block: 20svh 32svh;
+  padding-block: 20svh 8svh;
 }

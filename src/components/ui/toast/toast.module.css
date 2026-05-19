@@ -8,7 +8,7 @@
   align-items: center;
   gap: 0.55rem;
   padding-block: 0.7rem;
-  padding-inline: 0.9rem 1.1rem;
+  padding-inline: 0.9rem 2rem;
   border: 1px solid var(--toast-border);
   border-radius: 999px;
   background: var(--toast-background);

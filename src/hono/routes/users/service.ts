@@ -1,4 +1,4 @@
-import { eq, inArray, sql } from "drizzle-orm";
+import { eq, inArray, ne, sql } from "drizzle-orm";
 import type { Bindings } from "~/hono/types";
 import { getUserImageObjectKey } from "~/hono/utils/image";
 import { getDb } from "~/lib/db";
@@ -17,13 +17,18 @@ export const getUserIdByPublicId = async (env: Bindings, publicId: string) => {
   return profile?.userId ?? null;
 };
 
-export const getRandomPublicId = async (env: Bindings) => {
+export const getRandomPublicId = async (
+  env: Bindings,
+  options: { excludePublicId?: string } = {},
+) => {
   const db = getDb(env);
-  const [profile] = await db
-    .select({ publicId: profiles.publicId })
-    .from(profiles)
-    .orderBy(sql`random()`)
-    .limit(1);
+  const query = db.select({ publicId: profiles.publicId }).from(profiles);
+  const [profile] = options.excludePublicId
+    ? await query
+        .where(ne(profiles.publicId, options.excludePublicId))
+        .orderBy(sql`random()`)
+        .limit(1)
+    : await query.orderBy(sql`random()`).limit(1);
 
   return profile?.publicId ?? null;
 };
