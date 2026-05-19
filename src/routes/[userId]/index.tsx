@@ -20,6 +20,7 @@ type ProfileLoaderData =
       profile: {
         icon: string | null;
         name: string;
+        ogp: string | null;
         publicId: string;
       };
       albumPhotos: UserAlbumPhoto[];
@@ -41,6 +42,7 @@ const createFoundProfileData = (
   profile: {
     icon: string | null;
     name: string;
+    ogp: string | null;
     publicId: string;
   },
   albumPhotos: UserAlbumPhoto[],
@@ -124,6 +126,11 @@ export const head: DocumentHead = ({ resolveValue }) => {
 
   return {
     title: `${data.profile.name} | Oheya`,
-    meta: [{ name: "description", content: `${data.profile.name}のお部屋` }],
+    meta: [
+      { name: "description", content: `${data.profile.name}のお部屋` },
+      ...(data.profile.ogp
+        ? [{ property: "og:image", content: `/api/images/${data.profile.ogp}` }]
+        : []),
+    ],
   };
 };

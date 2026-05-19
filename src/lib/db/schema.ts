@@ -18,6 +18,7 @@ export const profiles = sqliteTable("profile", {
   publicId: text("public_id").notNull().unique(),
   name: text("name").notNull(),
   icon: text("icon"),
+  ogp: text("ogp"),
 });
 
 export const images = sqliteTable(

@@ -13,6 +13,7 @@ import { FormTextInput } from "~/components/ui/form/form-text-input/form-text-in
 import { IconCropInput } from "~/components/ui/form/icon-crop-input/icon-crop-input";
 import { useToast } from "~/components/ui/toast/toast";
 import { createApiClient } from "~/lib/api";
+import { createProfileOgpImageFile } from "~/lib/profile-ogp-image";
 import { NAME_MAX_LENGTH, PUBLIC_ID_MAX_LENGTH, userSchema } from "~/schema/user";
 import formStyles from "~/routes/signup/index.module.css";
 import styles from "~/routes/settings/components/settings-tabs/settings-tabs.module.css";
@@ -33,6 +34,7 @@ export const useProfileSettingsLoader = routeLoader$<InitialValues<ProfileSettin
       publicId: profile.publicId,
       name: profile.name,
       icon: profile.icon ?? "",
+      ogp: profile.ogp ?? "",
     };
   },
 );
@@ -50,17 +52,28 @@ export default component$(() => {
   const publicIdValue = useSignal(savedPublicId.value);
   const nameValue = useSignal(savedName.value);
 
-  const uploadIcon$ = $(async (iconImage: File) => {
+  const uploadImage$ = $(async (image: File, errorMessage: string) => {
     const imageFormData = new FormData();
-    imageFormData.set("image", iconImage, iconImage.name);
+    imageFormData.set("image", image, image.name);
     const uploadRes = await fetch("/api/images", { method: "POST", body: imageFormData });
     if (!uploadRes.ok) {
-      throw new Error("アイコン画像をアップロードできませんでした");
+      throw new Error(errorMessage);
     }
 
     const uploaded = (await uploadRes.json()) as { imageId: string };
     return uploaded.imageId;
   });
+
+  const uploadProfileOgp$ = $(
+    async (values: Pick<ProfileSettingsForm, "publicId" | "name" | "icon">) => {
+      const ogpImage = await createProfileOgpImageFile({
+        publicId: values.publicId,
+        name: values.name,
+        icon: values.icon || null,
+      });
+      return uploadImage$(ogpImage, "OGP画像をアップロードできませんでした");
+    },
+  );
 
   const saveProfile$ = $(async (values: ProfileSettingsForm) => {
     const res = await fetch("/api/users/me", {
@@ -82,8 +95,7 @@ export default component$(() => {
     }
   });
 
-  const setFormFieldValue$ = $((button: HTMLButtonElement, fieldName: string, value: string) => {
-    const form = button.form;
+  const setFormFieldValue$ = $((form: HTMLFormElement | null, fieldName: string, value: string) => {
     const input = form?.elements.namedItem(fieldName);
     if (!(input instanceof HTMLInputElement)) return;
 
@@ -100,33 +112,41 @@ export default component$(() => {
           const form = event.target as HTMLFormElement;
           const iconImage = new FormData(form).get("iconImage");
           let uploadedIcon: string | null = null;
-
-          if (iconImage instanceof File && iconImage.size > 0) {
-            try {
-              uploadedIcon = await uploadIcon$(iconImage);
-            } catch (error) {
-              throw new FormError<ProfileSettingsForm>(
-                error instanceof Error
-                  ? error.message
-                  : "アイコン画像をアップロードできませんでした",
-              );
-            }
-          }
-
-          const nextValues = { ...values, icon: uploadedIcon ?? values.icon };
+          let uploadedOgp: string | null = null;
+          let savedIcon = values.icon;
 
           try {
-            await saveProfile$(nextValues);
-          } catch (error) {
-            if (uploadedIcon) {
-              await fetch(`/api/images/${uploadedIcon}`, { method: "DELETE" });
+            if (iconImage instanceof File && iconImage.size > 0) {
+              uploadedIcon = await uploadImage$(
+                iconImage,
+                "アイコン画像をアップロードできませんでした",
+              );
             }
-            throw error;
+
+            const nextValues = { ...values, icon: uploadedIcon ?? values.icon };
+            savedIcon = nextValues.icon;
+            uploadedOgp = await uploadProfileOgp$(nextValues);
+
+            await saveProfile$({ ...nextValues, ogp: uploadedOgp });
+          } catch (error) {
+            await Promise.all(
+              [uploadedIcon, uploadedOgp]
+                .filter((imageId): imageId is string => Boolean(imageId))
+                .map((imageId) => fetch(`/api/images/${imageId}`, { method: "DELETE" })),
+            );
+            throw error instanceof FormError
+              ? error
+              : new FormError<ProfileSettingsForm>(
+                  error instanceof Error ? error.message : "保存に失敗しました",
+                );
           }
 
           if (uploadedIcon) {
             const iconImageInput = form.elements.namedItem("iconImage") as HTMLInputElement | null;
             if (iconImageInput) iconImageInput.value = "";
+          }
+          if (uploadedOgp) {
+            await setFormFieldValue$(form, "ogp", uploadedOgp);
           }
 
           savedPublicId.value = values.publicId;
@@ -137,7 +157,7 @@ export default component$(() => {
             authenticated: true,
             publicId: values.publicId,
             name: values.name,
-            icon: nextValues.icon || null,
+            icon: savedIcon || null,
           });
           await toast.success("保存しました");
         }}
@@ -164,7 +184,7 @@ export default component$(() => {
                       disabled={profileForm.submitting}
                       onClick$={async (_, button) => {
                         publicIdValue.value = savedPublicId.value;
-                        await setFormFieldValue$(button, "publicId", savedPublicId.value);
+                        await setFormFieldValue$(button.form, "publicId", savedPublicId.value);
                       }}
                     >
                       キャンセル
@@ -203,7 +223,7 @@ export default component$(() => {
                       disabled={profileForm.submitting}
                       onClick$={async (_, button) => {
                         nameValue.value = savedName.value;
-                        await setFormFieldValue$(button, "name", savedName.value);
+                        await setFormFieldValue$(button.form, "name", savedName.value);
                       }}
                     >
                       キャンセル
@@ -229,17 +249,29 @@ export default component$(() => {
                 fieldProps={props}
                 onApply$={async (iconImage) => {
                   let uploadedIcon: string | null = null;
+                  let uploadedOgp: string | null = null;
                   try {
-                    uploadedIcon = await uploadIcon$(iconImage);
-                    await saveProfile$({
+                    uploadedIcon = await uploadImage$(
+                      iconImage,
+                      "アイコン画像をアップロードできませんでした",
+                    );
+                    uploadedOgp = await uploadProfileOgp$({
                       publicId: savedPublicId.value,
                       name: savedName.value,
                       icon: uploadedIcon,
                     });
+                    await saveProfile$({
+                      publicId: savedPublicId.value,
+                      name: savedName.value,
+                      icon: uploadedIcon,
+                      ogp: uploadedOgp,
+                    });
                   } catch (error) {
-                    if (uploadedIcon) {
-                      await fetch(`/api/images/${uploadedIcon}`, { method: "DELETE" });
-                    }
+                    await Promise.all(
+                      [uploadedIcon, uploadedOgp]
+                        .filter((imageId): imageId is string => Boolean(imageId))
+                        .map((imageId) => fetch(`/api/images/${imageId}`, { method: "DELETE" })),
+                    );
                     await toast.error(
                       error instanceof Error ? error.message : "アイコンの保存に失敗しました",
                     );
@@ -257,6 +289,9 @@ export default component$(() => {
                 }}
               />
             )}
+          </Field>
+          <Field name="ogp">
+            {(field, props) => <input {...props} type="hidden" value={field.value ?? ""} />}
           </Field>
           {profileForm.response.status === "error" && profileForm.response.message && (
             <FormErrorMessage message={profileForm.response.message} />
