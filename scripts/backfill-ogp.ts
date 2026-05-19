@@ -2,7 +2,7 @@ import { createClient } from "@libsql/client";
 import { chromium, type Browser, type Page } from "playwright";
 import { and, asc, eq, isNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/libsql";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { spawn } from "node:child_process";
@@ -26,6 +26,7 @@ type Options = {
 
 const jpegContentType = "image/jpeg";
 const envFilePath = ".env.prod.local";
+const dryRunOutputDir = "tmp/ogp-backfill";
 const defaultLimit = 20;
 const defaultBucket = "oheya";
 
@@ -38,7 +39,8 @@ Examples:
 
 The script loads production credentials from ${envFilePath}.
 Set OHEYA_CHROMIUM_EXECUTABLE_PATH when Playwright's bundled browser is unavailable.
-The script is dry-run by default. Pass --apply to write images to R2 and update the database.`;
+The script is dry-run by default and writes generated OGP images to ${dryRunOutputDir}.
+Pass --apply to write images to R2 and update the database.`;
 
 const loadEnvFile = async (path: string, options: { required?: boolean } = {}) => {
   let content: string;
@@ -537,6 +539,31 @@ const putR2Object = async (bucket: string, key: string, content: Buffer) => {
 const deleteR2Object = (bucket: string, key: string) =>
   runWrangler(["r2", "object", "delete", `${bucket}/${key}`, "--remote", "--force"]);
 
+const prepareDryRunOutputDir = async () => {
+  const dir = resolve(dryRunOutputDir);
+  await rm(dir, { recursive: true, force: true });
+  await mkdir(dir, { recursive: true });
+  return dir;
+};
+
+const sanitizeFilename = (value: string) =>
+  value
+    .trim()
+    .replace(/[^A-Za-z0-9._-]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "profile";
+
+const writeDryRunOgp = async (
+  dir: string,
+  profile: ProfileRow,
+  imageId: string,
+  content: Buffer,
+) => {
+  const filename = `${sanitizeFilename(profile.publicId)}-${imageId}.jpg`;
+  const path = join(dir, filename);
+  await writeFile(path, content);
+  return path;
+};
+
 const main = async () => {
   const argv = process.argv.slice(2);
   if (argv.includes("--help") || argv.includes("-h")) {
@@ -579,6 +606,10 @@ const main = async () => {
   console.log(
     `${options.apply ? "Applying" : "Dry-run"} OGP backfill for ${targets.length} profile(s).`,
   );
+  const dryRunDir = options.apply ? null : await prepareDryRunOutputDir();
+  if (dryRunDir) {
+    console.log(`Writing dry-run OGP images to ${dryRunOutputDir}/`);
+  }
 
   const browser = await chromium.launch({
     executablePath: options.chromiumExecutablePath ?? undefined,
@@ -591,7 +622,12 @@ const main = async () => {
       const jpeg = await createProfileOgpJpeg(page, assets, target);
       console.log(`- ${target.publicId}: generated ${jpeg.byteLength} bytes`);
 
-      if (!options.apply) continue;
+      if (!options.apply) {
+        if (!dryRunDir) throw new Error("Dry-run output directory is unavailable");
+        const path = await writeDryRunOgp(dryRunDir, target, imageId, jpeg);
+        console.log(`  wrote ${path}`);
+        continue;
+      }
 
       await putR2Object(options.bucket, objectKey, jpeg);
       try {
@@ -624,7 +660,7 @@ const main = async () => {
   }
 
   if (!options.apply) {
-    console.log("Dry-run complete. Re-run with --apply to write R2 and DB changes.");
+    console.log(`Dry-run complete. Review ${dryRunOutputDir}/ before running with --apply.`);
   }
 };
 
