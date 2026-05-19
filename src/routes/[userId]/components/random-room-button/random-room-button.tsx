@@ -43,11 +43,7 @@ export const RandomRoomButton = component$<RandomRoomButtonProps>(({ currentPubl
 
   return (
     <div class={styles.action}>
-      <Button
-        label={loading.value ? "お部屋を探しています" : "誰かのお部屋へ"}
-        onClick$={goToRandomRoom$}
-        disabled={loading.value}
-      >
+      <Button label="誰かのお部屋へ" onClick$={goToRandomRoom$} disabled={loading.value}>
         <img class={styles.icon} src={doorSvg} alt="" width={24} height={24} />
       </Button>
     </div>
