@@ -8,14 +8,10 @@
 
 ## Database
 
-- This is an experimental product. Do not preserve existing local data when the schema changes.
-- When changing the database schema, recreate migration files from scratch instead of adding incremental migrations.
 - After changing the database schema, perform these steps in order:
-  1. Delete `local.db`.
-  2. Delete `drizzle` (migration folder).
-  3. Run `vp run db:generate`.
-  4. Run `vp run db:migrate`.
-- After updating the database, run `vp run db:erd` and generate `docs/er.md`.
+  1. Run `vp run db:generate`.
+  2. Run `vp run db:migrate`.
+  3. Run `vp run db:erd` and generate `docs/er.md`.
 
 ## References
 
