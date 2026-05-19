@@ -80,6 +80,12 @@ export const CommonFooter = component$<CommonFooterProps>(({ user, showAuthActio
           ホーム
         </Link>
       </nav>
+      <p class={styles.attribution}>
+        作った人:&nbsp;
+        <a class={styles.link} href="https://x.com/@nito_008" target="_blank" rel="noreferrer">
+          @nito_008
+        </a>
+      </p>
       <ConfirmDialog
         open={logoutConfirmOpen.value}
         title="ログアウトしますか？"
