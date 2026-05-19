@@ -12,8 +12,17 @@ const MUTED_COLOR = "#6f6a5f";
 const BRAND_ICON_SRC = "/favicon.svg";
 const BODY_FONT = `"Uzura", "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", sans-serif`;
 const TITLE_FONT = `"Caveat", ${BODY_FONT}, cursive`;
-const TEXT_MAX_WIDTH = 560;
+const TEXT_MAX_WIDTH = 520;
 const TEXT_BLOCK_OFFSET_Y = 16;
+const AVATAR_FRAME_SIZE = 470;
+const AVATAR_IMAGE_SIZE = 404;
+const AVATAR_OFFSET_X = 32;
+const NAME_FONT_SIZE = 82;
+const NAME_LINE_HEIGHT = 90;
+const PUBLIC_ID_MAX_FONT_SIZE = 60;
+const PUBLIC_ID_TOP_GAP = 24;
+const BRAND_ICON_SIZE = 68;
+const BRAND_ICON_BOTTOM_GAP = 30;
 
 type ProfileOgpImageOptions = {
   icon: string | null;
@@ -51,9 +60,9 @@ const drawRoundImage = (
 
 const loadProfileFonts = async () => {
   await Promise.all([
-    document.fonts.load(`400 72px ${BODY_FONT}`),
+    document.fonts.load(`400 ${NAME_FONT_SIZE}px ${BODY_FONT}`),
     document.fonts.load(`400 64px ${TITLE_FONT}`),
-    document.fonts.load(`700 54px ${TITLE_FONT}`),
+    document.fonts.load(`400 ${PUBLIC_ID_MAX_FONT_SIZE}px ${TITLE_FONT}`),
   ]);
 };
 
@@ -159,7 +168,8 @@ const wrapText = (
   maxWidth: number,
   maxLines: number,
 ) => {
-  const words = text.trim().split(/(\s+)/).filter(Boolean);
+  const trimmedText = text.trim();
+  const words = trimmedText.split(/(\s+)/).filter(Boolean);
   const lines: string[] = [];
   let currentLine = "";
   let overflowed = false;
@@ -167,15 +177,20 @@ const wrapText = (
   const pushSegment = (segment: string) => {
     if (overflowed) return;
 
+    const hasVisibleText = segment.trim().length > 0;
+    if (!hasVisibleText && !currentLine) return;
+
     const nextLine = `${currentLine}${segment}`;
     if (!currentLine || context.measureText(nextLine).width <= maxWidth) {
       currentLine = nextLine;
       return;
     }
 
+    if (!hasVisibleText) return;
+
     if (lines.length >= maxLines - 1) {
-      lines.push(appendEllipsis(context, currentLine.trimEnd(), maxWidth));
-      currentLine = "";
+      lines.push(currentLine.trimEnd());
+      currentLine = segment.trimStart();
       overflowed = true;
       return;
     }
@@ -184,7 +199,7 @@ const wrapText = (
     currentLine = segment.trimStart();
   };
 
-  for (const word of words.length > 0 ? words : [text]) {
+  for (const word of words.length > 0 ? words : [trimmedText]) {
     if (context.measureText(word).width <= maxWidth) {
       pushSegment(word);
       continue;
@@ -197,10 +212,6 @@ const wrapText = (
 
   if (currentLine && lines.length < maxLines) {
     lines.push(currentLine.trimEnd());
-  }
-
-  if (currentLine && lines.length >= maxLines) {
-    overflowed = true;
   }
 
   if (overflowed && lines.length > 0) {
@@ -239,24 +250,27 @@ export const createProfileOgpImageFile = async ({
   const rightColumnCenterX = columnWidth + columnWidth / 2;
   const columnCenterY = OGP_HEIGHT / 2;
 
-  const avatarFrameSize = 450;
-  const avatarImageSize = 386;
-  const avatarOffsetX = 36;
-  const avatarFrameX = leftColumnCenterX + avatarOffsetX - avatarFrameSize / 2;
-  const avatarFrameY = columnCenterY - avatarFrameSize / 2;
-  const avatarImageX = avatarFrameX + (avatarFrameSize - avatarImageSize) / 2;
-  const avatarImageY = avatarFrameY + (avatarFrameSize - avatarImageSize) / 2;
+  const avatarFrameX = leftColumnCenterX + AVATAR_OFFSET_X - AVATAR_FRAME_SIZE / 2;
+  const avatarFrameY = columnCenterY - AVATAR_FRAME_SIZE / 2;
+  const avatarImageX = avatarFrameX + (AVATAR_FRAME_SIZE - AVATAR_IMAGE_SIZE) / 2;
+  const avatarImageY = avatarFrameY + (AVATAR_FRAME_SIZE - AVATAR_IMAGE_SIZE) / 2;
   const iconImageUrl = icon ? getImageUrl(icon) : null;
   const iconImage = iconImageUrl ? await loadImage(iconImageUrl) : null;
   if (iconImage) {
-    drawRoundImage(context, iconImage, avatarImageX, avatarImageY, avatarImageSize);
+    drawRoundImage(context, iconImage, avatarImageX, avatarImageY, AVATAR_IMAGE_SIZE);
   } else {
-    await drawAvatarPlaceholder(context, avatarImageX, avatarImageY, avatarImageSize);
+    await drawAvatarPlaceholder(context, avatarImageX, avatarImageY, AVATAR_IMAGE_SIZE);
   }
 
   const avatarFrame = await loadImage(iconFrameSvg);
   if (avatarFrame) {
-    context.drawImage(avatarFrame, avatarFrameX, avatarFrameY, avatarFrameSize, avatarFrameSize);
+    context.drawImage(
+      avatarFrame,
+      avatarFrameX,
+      avatarFrameY,
+      AVATAR_FRAME_SIZE,
+      AVATAR_FRAME_SIZE,
+    );
   }
 
   context.textAlign = "center";
@@ -264,34 +278,37 @@ export const createProfileOgpImageFile = async ({
   context.fillStyle = INK_COLOR;
   const textOffsetX = -32;
   const textCenterX = rightColumnCenterX + textOffsetX;
-  const nameFontSize = 72;
-  const nameLineHeight = 78;
-  const nameFont = `400 ${nameFontSize}px ${BODY_FONT}`;
+  const nameFont = `400 ${NAME_FONT_SIZE}px ${BODY_FONT}`;
   context.font = nameFont;
   const nameLines = wrapText(context, name, TEXT_MAX_WIDTH, 2);
 
-  const publicIdFontSize = fitText(context, `@${publicId}`, TEXT_MAX_WIDTH, 60, "400", TITLE_FONT);
-  const publicIdTopGap = 24;
-  const textBlockHeight = nameLines.length * nameLineHeight + publicIdTopGap + publicIdFontSize;
+  const publicIdFontSize = fitText(
+    context,
+    `@${publicId}`,
+    TEXT_MAX_WIDTH,
+    PUBLIC_ID_MAX_FONT_SIZE,
+    "400",
+    TITLE_FONT,
+  );
+  const textBlockHeight =
+    nameLines.length * NAME_LINE_HEIGHT + PUBLIC_ID_TOP_GAP + publicIdFontSize;
   const textBlockTop = columnCenterY - textBlockHeight / 2 + TEXT_BLOCK_OFFSET_Y;
-  const nameStartY = textBlockTop + nameFontSize;
+  const nameStartY = textBlockTop + NAME_FONT_SIZE;
 
   const brandIcon = await loadImage(BRAND_ICON_SRC);
   if (brandIcon) {
-    const brandIconSize = 52;
-    const brandIconBottomGap = 34;
     context.drawImage(
       brandIcon,
-      textCenterX - brandIconSize / 2,
-      textBlockTop - brandIconBottomGap - brandIconSize,
-      brandIconSize,
-      brandIconSize,
+      textCenterX - BRAND_ICON_SIZE / 2,
+      textBlockTop - BRAND_ICON_BOTTOM_GAP - BRAND_ICON_SIZE,
+      BRAND_ICON_SIZE,
+      BRAND_ICON_SIZE,
     );
   }
 
   context.font = nameFont;
   nameLines.forEach((line, index) => {
-    context.fillText(line, textCenterX, nameStartY + index * nameLineHeight);
+    context.fillText(line, textCenterX, nameStartY + index * NAME_LINE_HEIGHT);
   });
 
   context.fillStyle = MUTED_COLOR;
@@ -299,7 +316,10 @@ export const createProfileOgpImageFile = async ({
   context.fillText(
     `@${publicId}`,
     textCenterX,
-    nameStartY + (nameLines.length - 1) * nameLineHeight + publicIdTopGap + publicIdFontSize,
+    nameStartY +
+      (nameLines.length - 1) * NAME_LINE_HEIGHT +
+      PUBLIC_ID_TOP_GAP +
+      publicIdFontSize,
   );
 
   const dataUrl = canvas.toDataURL(jpegContentType, OGP_QUALITY);
