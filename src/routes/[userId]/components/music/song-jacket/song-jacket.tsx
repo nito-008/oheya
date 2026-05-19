@@ -91,6 +91,8 @@ export const SongJacket = component$<SongJacketProps>(({ track }) => {
       {track?.trackViewUrl && (
         <a
           href={track.trackViewUrl}
+          target="_blank"
+          rel="noreferrer"
           class={styles.appleMusicBadgeLink}
           aria-label="Apple Musicで開く"
         >
