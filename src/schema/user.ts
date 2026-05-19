@@ -27,4 +27,14 @@ export const userSchema = v.object({
     ),
     "",
   ),
+  ogp: v.optional(
+    v.pipe(
+      v.string(),
+      v.check(
+        (value) => value === "" || imageIdPattern.test(value),
+        "OGP画像の形式が正しくありません",
+      ),
+    ),
+    "",
+  ),
 });
