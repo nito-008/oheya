@@ -1,4 +1,4 @@
-import { component$ } from "@builder.io/qwik";
+import { component$, type QRL } from "@builder.io/qwik";
 import albumPhotoFrameSvg from "~/media/album-photo-frame.svg";
 import photoPlaceholderSvg from "~/media/photo-placeholder.svg";
 import { albumPhotoImageHeight, albumPhotoImageWidth } from "~/schema/album";
@@ -8,6 +8,7 @@ type AlbumPhotoFrameProps = {
   imageUrl?: string | null;
   alt?: string;
   variant?: number;
+  onOpen$?: QRL<() => void | Promise<void>>;
 };
 
 const frameVariantClassNames = [
@@ -28,8 +29,9 @@ const getFrameVariantClassName = (variant: number) => {
 };
 
 export const AlbumPhotoFrame = component$<AlbumPhotoFrameProps>(
-  ({ imageUrl, alt = "", variant = 0 }) => {
+  ({ imageUrl, alt = "", variant = 0, onOpen$ }) => {
     const frameVariantClassName = getFrameVariantClassName(variant);
+    const openLabel = alt ? `${alt}の詳細を見る` : "写真の詳細を見る";
 
     return (
       <figure class={styles.albumPhotoFrame}>
@@ -53,12 +55,20 @@ export const AlbumPhotoFrame = component$<AlbumPhotoFrameProps>(
               />
             </div>
           )}
-          {imageUrl && (
+          {imageUrl && onOpen$ && (
+            <button
+              type="button"
+              class={styles.openAction}
+              aria-label={openLabel}
+              onClick$={onOpen$}
+            />
+          )}
+          {imageUrl && !onOpen$ && (
             <a
               href={imageUrl}
               target="_blank"
               rel="noreferrer"
-              class={styles.openLink}
+              class={styles.openAction}
               aria-label="写真を新しいタブで開く"
             />
           )}
