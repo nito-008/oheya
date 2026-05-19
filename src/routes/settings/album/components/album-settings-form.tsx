@@ -239,10 +239,9 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
     },
   );
 
-  const saveExistingPhotoImage$ = $(async (photoId: string, croppedPhoto: File) => {
+  const savePhotoImage$ = $(async (photoId: string, croppedPhoto: File) => {
     const photo = photos.value.find((item) => item.localId === photoId);
-    const savedPhoto = savedPhotos.value.find((item) => item.localId === photoId);
-    if (!photo || !savedPhoto) return false;
+    if (!photo) return false;
 
     let uploadedImageId: string | null = null;
     try {
@@ -410,9 +409,8 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
       input.files = files.files;
     }
 
-    const savedPhoto = savedPhotos.value.find((item) => item.localId === photoId);
-    if (saveOnEdit && savedPhoto) {
-      const saved = await saveExistingPhotoImage$(photoId, croppedPhoto);
+    if (saveOnEdit) {
+      const saved = await savePhotoImage$(photoId, croppedPhoto);
       if (saved && input instanceof HTMLInputElement) input.value = "";
       await closeCropModal();
       return;
@@ -791,11 +789,6 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
   const hasPhotos = photos.value.length > 0;
   const canSaveAllPhotos =
     hasPhotos && photos.value.every((photo) => photo.imageId || photo.previewUrl);
-  const cropAppliesWithSave =
-    saveOnEdit &&
-    cropPhotoId.value !== null &&
-    savedPhotos.value.some((photo) => photo.localId === cropPhotoId.value);
-
   return (
     <form
       ref={formRef}
@@ -1060,7 +1053,7 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
               aria-busy={isSaving.value}
               onClick$={applyCrop}
             >
-              {isSaving.value ? "保存中..." : cropAppliesWithSave ? "保存する" : "これにする"}
+              {isSaving.value ? "保存中..." : saveOnEdit ? "保存する" : "これにする"}
             </FormButton>
           </div>
         </div>
