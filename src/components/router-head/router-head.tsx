@@ -23,6 +23,35 @@ const GA_INLINE_SCRIPT = `
 const getMetaContent = (meta: readonly DocumentMeta[], name: string) =>
   meta.find((item) => item.name === name)?.content;
 
+const getMetaPropertyContent = (meta: readonly DocumentMeta[], property: string) =>
+  meta.find((item) => "property" in item && item.property === property)?.content;
+
+const managedMetaNames = new Set([
+  "description",
+  "twitter:card",
+  "twitter:title",
+  "twitter:description",
+  "twitter:image",
+]);
+const managedMetaProperties = new Set([
+  "og:site_name",
+  "og:title",
+  "og:description",
+  "og:type",
+  "og:url",
+  "og:image",
+  "og:image:width",
+  "og:image:height",
+  "og:image:alt",
+  "og:locale",
+]);
+
+const isManagedMeta = (meta: DocumentMeta) => {
+  if (meta.name && managedMetaNames.has(meta.name)) return true;
+  if ("property" in meta && meta.property && managedMetaProperties.has(meta.property)) return true;
+  return false;
+};
+
 /**
  * The RouterHead component is placed inside of the document `<head>` element.
  */
@@ -32,7 +61,9 @@ export const RouterHead = component$(() => {
   const headDescription = getMetaContent(head.meta, "description");
   const description = headDescription ?? DEFAULT_DESCRIPTION;
   const currentUrl = loc.url.href;
-  const ogpImageUrl = new URL(OGP_IMAGE_PATH, loc.url).href;
+  const headOgpImage = getMetaPropertyContent(head.meta, "og:image");
+  const ogpImageUrl = new URL(headOgpImage ?? OGP_IMAGE_PATH, loc.url).href;
+  const headMeta = head.meta.filter((meta) => !isManagedMeta(meta));
 
   return (
     <>
@@ -49,7 +80,7 @@ export const RouterHead = component$(() => {
       <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
       <meta name="apple-mobile-web-app-title" content={SITE_NAME} />
       <link rel="manifest" href="/site.webmanifest" />
-      {!headDescription && <meta name="description" content={DEFAULT_DESCRIPTION} />}
+      <meta name="description" content={description} />
       <meta property="og:site_name" content={SITE_NAME} />
       <meta property="og:title" content={head.title} />
       <meta property="og:description" content={description} />
@@ -65,7 +96,7 @@ export const RouterHead = component$(() => {
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={ogpImageUrl} />
 
-      {head.meta.map((m) => (
+      {headMeta.map((m) => (
         <meta key={m.key} {...m} />
       ))}
 

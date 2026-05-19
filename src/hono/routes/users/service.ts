@@ -37,6 +37,7 @@ const profileSelection = {
   publicId: profiles.publicId,
   name: profiles.name,
   icon: profiles.icon,
+  ogp: profiles.ogp,
 } as const;
 
 export const userHasProfile = async (env: Bindings, userId: string) => {
