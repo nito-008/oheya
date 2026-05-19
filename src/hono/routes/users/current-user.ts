@@ -5,7 +5,7 @@ import { authMiddleware } from "~/hono/middleware/auth";
 import { deleteUnusedUserImages } from "~/hono/utils/image";
 import { emptyOk } from "~/hono/utils/response";
 import { getDb } from "~/lib/db";
-import { albumPhotos, profiles } from "~/lib/db/schema";
+import { albumPhotos, music, profiles } from "~/lib/db/schema";
 import { albumSchema } from "~/schema/album";
 import { musicSelectionSchema } from "~/schema/music";
 import { userSchema } from "~/schema/user";
@@ -17,6 +17,8 @@ import {
   getUserMusic,
   getUserProfile,
   toAlbumPhotoRows,
+  toUserMusicRows,
+  userHasProfile,
 } from "./service";
 
 export const currentUserRouter = new Hono<UsersEnv>()
@@ -57,12 +59,7 @@ export const currentUserRouter = new Hono<UsersEnv>()
     const userId = c.var.userId;
     const { photos } = c.req.valid("json");
     const db = getDb(c.env);
-    const [profile] = await db
-      .select({ userId: profiles.userId })
-      .from(profiles)
-      .where(eq(profiles.userId, userId));
-
-    if (!profile) {
+    if (!(await userHasProfile(c.env, userId))) {
       return c.json(userNotFound, 404);
     }
 
@@ -101,26 +98,16 @@ export const currentUserRouter = new Hono<UsersEnv>()
     const userId = c.var.userId;
     const { track } = c.req.valid("json");
     const db = getDb(c.env);
-    const [profile] = await db
-      .select({ userId: profiles.userId })
-      .from(profiles)
-      .where(eq(profiles.userId, userId));
-
-    if (!profile) {
+    if (!(await userHasProfile(c.env, userId))) {
       return c.json(userNotFound, 404);
     }
 
-    await db
-      .update(profiles)
-      .set({
-        musicTrackId: track?.id ?? null,
-        musicTitle: track?.title ?? null,
-        musicArtist: track?.artist ?? null,
-        musicArtworkUrl: track?.artworkUrl ?? null,
-        musicPreviewUrl: track?.previewUrl ?? null,
-        musicTrackViewUrl: track?.trackViewUrl ?? null,
-      })
-      .where(eq(profiles.userId, userId));
+    await db.transaction(async (tx) => {
+      await tx.delete(music).where(eq(music.userId, userId));
+      if (track) {
+        await tx.insert(music).values(toUserMusicRows(userId, [track]));
+      }
+    });
 
     return emptyOk();
   })
