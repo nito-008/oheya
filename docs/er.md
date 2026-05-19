@@ -50,6 +50,7 @@ erDiagram
     text public_id UK
     text name
     text icon "nullable"
+    text ogp "nullable"
   }
   session {
     text sessionToken PK

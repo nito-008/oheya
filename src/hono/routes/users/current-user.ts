@@ -116,7 +116,7 @@ export const currentUserRouter = new Hono<UsersEnv>()
     const values = c.req.valid("json");
     const db = getDb(c.env);
     const [profile] = await db
-      .select({ userId: profiles.userId, icon: profiles.icon })
+      .select({ userId: profiles.userId, icon: profiles.icon, ogp: profiles.ogp })
       .from(profiles)
       .where(eq(profiles.userId, userId));
 
@@ -129,12 +129,18 @@ export const currentUserRouter = new Hono<UsersEnv>()
     }
 
     const icon = values.icon || null;
-    if (icon) {
-      const imageOwners = await getImageOwners(c.env, [icon]);
-      if (!imageOwners.has(icon)) {
+    const ogp = values.ogp || null;
+    const profileImageIds = [icon, ogp].filter((imageId): imageId is string => Boolean(imageId));
+    if (profileImageIds.length > 0) {
+      const imageOwners = await getImageOwners(c.env, profileImageIds);
+      const missingImageId = profileImageIds.find((imageId) => !imageOwners.has(imageId));
+      if (missingImageId) {
         return c.json({ message: "Image not found" } as const, 404);
       }
-      if (imageOwners.get(icon) !== userId) {
+      const forbiddenImageId = profileImageIds.find(
+        (imageId) => imageOwners.get(imageId) !== userId,
+      );
+      if (forbiddenImageId) {
         return c.json({ message: "Forbidden" } as const, 403);
       }
     }
@@ -143,6 +149,7 @@ export const currentUserRouter = new Hono<UsersEnv>()
       publicId: values.publicId,
       name: values.name,
       icon,
+      ogp,
     };
 
     if (profile) {
@@ -156,6 +163,9 @@ export const currentUserRouter = new Hono<UsersEnv>()
 
     if (profile?.icon && profile.icon !== icon) {
       await deleteUnusedUserImages(c.env, userId, [profile.icon]);
+    }
+    if (profile?.ogp && profile.ogp !== ogp) {
+      await deleteUnusedUserImages(c.env, userId, [profile.ogp]);
     }
 
     return emptyOk();

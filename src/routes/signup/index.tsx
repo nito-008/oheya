@@ -9,6 +9,7 @@ import { FormTextInput } from "~/components/ui/form/form-text-input/form-text-in
 import { IconCropInput } from "~/components/ui/form/icon-crop-input/icon-crop-input";
 import { useToast } from "~/components/ui/toast/toast";
 import { createApiClient } from "~/lib/api";
+import { createProfileOgpImageFile } from "~/lib/profile-ogp-image";
 import { useSignOut } from "~/routes/plugin@auth";
 import { AlbumSettingsForm } from "~/routes/settings/album/components/album-settings-form";
 import { MusicSettingsForm } from "~/routes/settings/music/components/music-settings-form";
@@ -76,6 +77,7 @@ export const useFormLoader = routeLoader$<InitialValues<SignupForm>>(() => ({
   publicId: "",
   name: "",
   icon: "",
+  ogp: "",
 }));
 
 export default component$(() => {
@@ -98,6 +100,21 @@ export default component$(() => {
     await navigate(getSignupPath(step), { replaceState: true });
   });
 
+  const uploadImage$ = $(async (image: File, errorMessage: string) => {
+    const imageFormData = new FormData();
+    imageFormData.set("image", image, image.name);
+    const uploadRes = await fetch("/api/images", {
+      method: "POST",
+      body: imageFormData,
+    });
+    if (!uploadRes.ok) {
+      throw new FormError<SignupForm>(errorMessage);
+    }
+
+    const uploaded = (await uploadRes.json()) as { imageId: string };
+    return uploaded.imageId;
+  });
+
   const finishSignup$ = $(async () => {
     if (!publicId.value) return;
     await navigate(`/${publicId.value}/`);
@@ -114,40 +131,48 @@ export default component$(() => {
               const form = event.target as HTMLFormElement;
               const iconImage = new FormData(form).get("iconImage");
               let uploadedIcon: string | null = null;
+              let uploadedOgp: string | null = null;
 
-              if (iconImage instanceof File && iconImage.size > 0) {
-                const imageFormData = new FormData();
-                imageFormData.set("image", iconImage, iconImage.name);
-                const uploadRes = await fetch("/api/images", {
-                  method: "POST",
-                  body: imageFormData,
-                });
-                if (!uploadRes.ok) {
-                  throw new FormError<SignupForm>("アイコン画像をアップロードできませんでした");
+              try {
+                if (iconImage instanceof File && iconImage.size > 0) {
+                  uploadedIcon = await uploadImage$(
+                    iconImage,
+                    "アイコン画像をアップロードできませんでした",
+                  );
                 }
-                const uploaded = (await uploadRes.json()) as { imageId: string };
-                uploadedIcon = uploaded.imageId;
-              }
 
-              const res = await fetch("/api/users/me", {
-                method: "PATCH",
-                headers: { "content-type": "application/json" },
-                body: JSON.stringify({ ...values, icon: uploadedIcon ?? values.icon }),
-              });
-
-              if (!res.ok && uploadedIcon) {
-                await fetch(`/api/images/${uploadedIcon}`, { method: "DELETE" });
-              }
-              if (res.status === 401) {
-                throw new FormError<SignupForm>("ログインが必要です");
-              }
-              if (res.status === 409) {
-                throw new FormError<SignupForm>({
-                  publicId: "このIDはすでに使用されています",
+                const nextValues = { ...values, icon: uploadedIcon ?? values.icon };
+                const ogpImage = await createProfileOgpImageFile({
+                  publicId: nextValues.publicId,
+                  name: nextValues.name,
+                  icon: nextValues.icon || null,
                 });
-              }
-              if (!res.ok) {
-                throw new FormError<SignupForm>("登録に失敗しました");
+                uploadedOgp = await uploadImage$(ogpImage, "OGP画像をアップロードできませんでした");
+
+                const res = await fetch("/api/users/me", {
+                  method: "PATCH",
+                  headers: { "content-type": "application/json" },
+                  body: JSON.stringify({ ...nextValues, ogp: uploadedOgp }),
+                });
+
+                if (res.status === 401) {
+                  throw new FormError<SignupForm>("ログインが必要です");
+                }
+                if (res.status === 409) {
+                  throw new FormError<SignupForm>({
+                    publicId: "このIDはすでに使用されています",
+                  });
+                }
+                if (!res.ok) {
+                  throw new FormError<SignupForm>("登録に失敗しました");
+                }
+              } catch (error) {
+                await Promise.all(
+                  [uploadedIcon, uploadedOgp]
+                    .filter((imageId): imageId is string => Boolean(imageId))
+                    .map((imageId) => fetch(`/api/images/${imageId}`, { method: "DELETE" })),
+                );
+                throw error;
               }
 
               publicId.value = values.publicId;
@@ -182,6 +207,9 @@ export default component$(() => {
                 {(field, props) => (
                   <IconCropInput label="アイコン" field={field} fieldProps={props} />
                 )}
+              </Field>
+              <Field name="ogp">
+                {(field, props) => <input {...props} type="hidden" value={field.value ?? ""} />}
               </Field>
               {signupForm.response.status === "error" && signupForm.response.message && (
                 <FormErrorMessage message={signupForm.response.message} />

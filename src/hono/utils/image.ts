@@ -37,7 +37,7 @@ export const deleteUnusedUserImages = async (
 
   const db = getDb(env);
   const [profile] = await db
-    .select({ icon: profiles.icon })
+    .select({ icon: profiles.icon, ogp: profiles.ogp })
     .from(profiles)
     .where(eq(profiles.userId, userId));
   const remainingAlbumPhotos = await db
@@ -47,6 +47,7 @@ export const deleteUnusedUserImages = async (
 
   const retainedImageIds = new Set([
     ...(profile?.icon ? [profile.icon] : []),
+    ...(profile?.ogp ? [profile.ogp] : []),
     ...remainingAlbumPhotos.map((photo) => photo.imageId),
   ]);
 
