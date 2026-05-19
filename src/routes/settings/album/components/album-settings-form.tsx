@@ -765,28 +765,27 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
           const savedPhoto = savedPhotos.value.find((item) => item.localId === photo.localId);
           const titleChanged = photo.title !== (savedPhoto?.title ?? "");
           const subtitleChanged = photo.subtitle !== (savedPhoto?.subtitle ?? "");
-          const isInitialPhoto = !savedPhoto;
+          const isSavedPhoto = savedPhoto !== undefined;
 
           return (
             <section key={photo.localId} class={styles.photoEditor}>
               <div class={styles.photoHeader}>
                 <h2>写真 {index + 1}</h2>
-                {(!isInitialPhoto || !saveOnEdit) && (
-                  <Button
-                    type="button"
-                    label="削除"
-                    onClick$={async () => {
-                      if (!saveOnEdit) {
-                        cancelPhoto$(photo);
-                        return;
-                      }
+                <Button
+                  type="button"
+                  label="削除"
+                  disabled={isSaving.value || isSavingAll.value}
+                  onClick$={async () => {
+                    if (!saveOnEdit || !isSavedPhoto) {
+                      cancelPhoto$(photo);
+                      return;
+                    }
 
-                      deleteConfirmPhotoId.value = photo.localId;
-                    }}
-                  >
-                    <img src={deleteSvg} alt="" width={24} height={24} />
-                  </Button>
-                )}
+                    deleteConfirmPhotoId.value = photo.localId;
+                  }}
+                >
+                  <img src={deleteSvg} alt="" width={24} height={24} />
+                </Button>
               </div>
 
               <label class={styles.imagePicker} aria-label="写真を選ぶ">
