@@ -239,10 +239,9 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
     },
   );
 
-  const saveExistingPhotoImage$ = $(async (photoId: string, croppedPhoto: File) => {
+  const savePhotoImage$ = $(async (photoId: string, croppedPhoto: File) => {
     const photo = photos.value.find((item) => item.localId === photoId);
-    const savedPhoto = savedPhotos.value.find((item) => item.localId === photoId);
-    if (!photo || !savedPhoto) return false;
+    if (!photo) return false;
 
     let uploadedImageId: string | null = null;
     try {
@@ -273,37 +272,33 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
     }
   });
 
-  const saveExistingPhotoText$ = $(
-    async (photo: AlbumSettingsPhoto, fieldName: "subtitle" | "title") => {
-      const savedPhoto = savedPhotos.value.find((item) => item.localId === photo.localId);
-      if (!savedPhoto) return;
+  const savePhotoText$ = $(async (photo: AlbumSettingsPhoto, fieldName: "subtitle" | "title") => {
+    const savedPhoto = savedPhotos.value.find((item) => item.localId === photo.localId);
+    if (!savedPhoto) return;
 
-      const nextValue = photo[fieldName];
-      const nextSavedPhotos = replacePhoto(await getSavedPhotoDrafts(), photo.localId, (item) => ({
-        ...item,
-        [fieldName]: nextValue,
-      }));
-      const nextDisplayPhotos = replacePhoto(photos.value, photo.localId, (item) => ({
-        ...item,
-        [fieldName]: nextValue,
-      }));
+    const nextValue = photo[fieldName];
+    const nextSavedPhotos = replacePhoto(await getSavedPhotoDrafts(), photo.localId, (item) => ({
+      ...item,
+      [fieldName]: nextValue,
+    }));
+    const nextDisplayPhotos = replacePhoto(photos.value, photo.localId, (item) => ({
+      ...item,
+      [fieldName]: nextValue,
+    }));
 
-      await saveAlbum$(nextSavedPhotos, [], nextDisplayPhotos);
-    },
-  );
+    await saveAlbum$(nextSavedPhotos, [], nextDisplayPhotos);
+  });
 
-  const cancelExistingPhotoText$ = $(
-    (photo: AlbumSettingsPhoto, fieldName: "subtitle" | "title") => {
-      const savedPhoto = savedPhotos.value.find((item) => item.localId === photo.localId);
-      if (!savedPhoto) return;
+  const cancelPhotoText$ = $((photo: AlbumSettingsPhoto, fieldName: "subtitle" | "title") => {
+    const savedPhoto = savedPhotos.value.find((item) => item.localId === photo.localId);
+    if (!savedPhoto) return;
 
-      photos.value = replacePhoto(photos.value, photo.localId, (item) => ({
-        ...item,
-        [fieldName]: savedPhoto[fieldName],
-      }));
-      saveError.value = null;
-    },
-  );
+    photos.value = replacePhoto(photos.value, photo.localId, (item) => ({
+      ...item,
+      [fieldName]: savedPhoto[fieldName],
+    }));
+    saveError.value = null;
+  });
 
   const updatePhotoText = $((photoId: string, fieldName: "subtitle" | "title", value: string) => {
     photos.value = photos.value.map((item) =>
@@ -410,9 +405,8 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
       input.files = files.files;
     }
 
-    const savedPhoto = savedPhotos.value.find((item) => item.localId === photoId);
-    if (saveOnEdit && savedPhoto) {
-      const saved = await saveExistingPhotoImage$(photoId, croppedPhoto);
+    if (saveOnEdit) {
+      const saved = await savePhotoImage$(photoId, croppedPhoto);
       if (saved && input instanceof HTMLInputElement) input.value = "";
       await closeCropModal();
       return;
@@ -430,46 +424,6 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
     photos.value = previewPhotos;
     saveError.value = null;
     await closeCropModal();
-  });
-
-  const savePhoto$ = $(async (photo: AlbumSettingsPhoto) => {
-    const form = formRef.value;
-    const input = form?.elements.namedItem(getPhotoImageName(photo));
-    const croppedPhoto = input instanceof HTMLInputElement ? input.files?.[0] : null;
-    if (!croppedPhoto && !photo.imageId) {
-      const message = "写真を選択してください";
-      saveError.value = message;
-      await toast.error(message);
-      return;
-    }
-
-    let uploadedImageId: string | null = null;
-    try {
-      if (croppedPhoto) {
-        const uploaded = await uploadPhoto$(croppedPhoto);
-        uploadedImageId = uploaded.imageId;
-        const uploadedPhotos = photos.value.map((item) =>
-          item.localId === photo.localId
-            ? { ...item, imageId: uploaded.imageId, previewUrl: null, url: uploaded.url }
-            : item,
-        );
-        const saved = await saveAlbum$(uploadedPhotos, [uploaded.imageId]);
-        if (saved) {
-          if (photo.previewUrl?.startsWith("blob:")) URL.revokeObjectURL(photo.previewUrl);
-          if (input instanceof HTMLInputElement) input.value = "";
-        }
-        return;
-      }
-
-      await saveAlbum$(photos.value);
-    } catch (error) {
-      if (uploadedImageId) {
-        await fetch(`/api/images/${uploadedImageId}`, { method: "DELETE" });
-      }
-      const message = error instanceof Error ? error.message : "保存に失敗しました";
-      saveError.value = message;
-      await toast.error(message);
-    }
   });
 
   const saveAllPhotos$ = $(async () => {
@@ -791,11 +745,6 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
   const hasPhotos = photos.value.length > 0;
   const canSaveAllPhotos =
     hasPhotos && photos.value.every((photo) => photo.imageId || photo.previewUrl);
-  const cropAppliesWithSave =
-    saveOnEdit &&
-    cropPhotoId.value !== null &&
-    savedPhotos.value.some((photo) => photo.localId === cropPhotoId.value);
-
   return (
     <form
       ref={formRef}
@@ -817,8 +766,6 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
           const titleChanged = photo.title !== (savedPhoto?.title ?? "");
           const subtitleChanged = photo.subtitle !== (savedPhoto?.subtitle ?? "");
           const isInitialPhoto = !savedPhoto;
-          const hasUnsavedChanges =
-            isInitialPhoto || titleChanged || subtitleChanged || !!photo.previewUrl;
 
           return (
             <section key={photo.localId} class={styles.photoEditor}>
@@ -899,7 +846,7 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
                     variant="secondary"
                     size="md"
                     disabled={isSaving.value}
-                    onClick$={() => cancelExistingPhotoText$(photo, "title")}
+                    onClick$={() => cancelPhotoText$(photo, "title")}
                   >
                     キャンセル
                   </FormButton>
@@ -909,7 +856,7 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
                     size="md"
                     disabled={isSaving.value}
                     aria-busy={isSaving.value}
-                    onClick$={() => saveExistingPhotoText$(photo, "title")}
+                    onClick$={() => savePhotoText$(photo, "title")}
                   >
                     {isSaving.value ? "保存中..." : "保存する"}
                   </FormButton>
@@ -937,7 +884,7 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
                     variant="secondary"
                     size="md"
                     disabled={isSaving.value}
-                    onClick$={() => cancelExistingPhotoText$(photo, "subtitle")}
+                    onClick$={() => cancelPhotoText$(photo, "subtitle")}
                   >
                     キャンセル
                   </FormButton>
@@ -947,33 +894,7 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
                     size="md"
                     disabled={isSaving.value}
                     aria-busy={isSaving.value}
-                    onClick$={() => saveExistingPhotoText$(photo, "subtitle")}
-                  >
-                    {isSaving.value ? "保存中..." : "保存する"}
-                  </FormButton>
-                </div>
-              )}
-
-              {saveOnEdit && isInitialPhoto && hasUnsavedChanges && (
-                <div class={styles.photoActions}>
-                  <FormButton
-                    type="button"
-                    variant="secondary"
-                    size="md"
-                    disabled={isSaving.value}
-                    onClick$={() => cancelPhoto$(photo)}
-                  >
-                    キャンセル
-                  </FormButton>
-                  <FormButton
-                    type="button"
-                    variant="primary"
-                    size="md"
-                    disabled={
-                      isSaving.value || (isInitialPhoto && !photo.previewUrl && !photo.imageId)
-                    }
-                    aria-busy={isSaving.value}
-                    onClick$={() => savePhoto$(photo)}
+                    onClick$={() => savePhotoText$(photo, "subtitle")}
                   >
                     {isSaving.value ? "保存中..." : "保存する"}
                   </FormButton>
@@ -1060,7 +981,7 @@ export const AlbumSettingsForm = component$<AlbumSettingsFormProps>((props) => {
               aria-busy={isSaving.value}
               onClick$={applyCrop}
             >
-              {isSaving.value ? "保存中..." : cropAppliesWithSave ? "保存する" : "これにする"}
+              {isSaving.value ? "保存中..." : saveOnEdit ? "保存する" : "これにする"}
             </FormButton>
           </div>
         </div>
