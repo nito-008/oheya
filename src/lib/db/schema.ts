@@ -1,3 +1,4 @@
+import { relations } from "drizzle-orm";
 import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const users = sqliteTable("user", {
@@ -17,12 +18,6 @@ export const profiles = sqliteTable("profile", {
   publicId: text("public_id").notNull().unique(),
   name: text("name").notNull(),
   icon: text("icon"),
-  musicTrackId: text("music_track_id"),
-  musicTitle: text("music_title"),
-  musicArtist: text("music_artist"),
-  musicArtworkUrl: text("music_artwork_url"),
-  musicPreviewUrl: text("music_preview_url"),
-  musicTrackViewUrl: text("music_track_view_url"),
 });
 
 export const images = sqliteTable(
@@ -64,6 +59,43 @@ export const albumPhotos = sqliteTable(
     index("album_photo_image_id_idx").on(albumPhoto.imageId),
   ],
 );
+
+export const music = sqliteTable(
+  "music",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    trackId: text("track_id").notNull(),
+    title: text("title").notNull(),
+    artist: text("artist").notNull(),
+    artworkUrl: text("artwork_url"),
+    previewUrl: text("preview_url"),
+    trackViewUrl: text("track_view_url"),
+    position: integer("position").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (music) => [
+    uniqueIndex("music_user_id_position_unique").on(music.userId, music.position),
+    index("music_user_id_idx").on(music.userId),
+  ],
+);
+
+export const profilesRelations = relations(profiles, ({ many }) => ({
+  musics: many(music),
+}));
+
+export const musicRelations = relations(music, ({ one }) => ({
+  profile: one(profiles, {
+    fields: [music.userId],
+    references: [profiles.userId],
+  }),
+}));
 
 export const accounts = sqliteTable(
   "account",
