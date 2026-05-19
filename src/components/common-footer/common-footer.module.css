@@ -11,7 +11,15 @@
   min-width: 0;
   box-sizing: border-box;
   margin-inline: auto;
-  padding: 3rem 1rem;
+  padding: 3rem 1rem 1.5rem;
+}
+
+.attribution {
+  margin: 0;
+  padding: 1.5rem 1rem 2rem;
+  color: #6f6862;
+  line-height: 1.4;
+  text-align: center;
 }
 
 .form {
