@@ -2,7 +2,7 @@ import { eq, inArray, sql } from "drizzle-orm";
 import type { Bindings } from "~/hono/types";
 import { getUserImageObjectKey } from "~/hono/utils/image";
 import { getDb } from "~/lib/db";
-import { accounts, albumPhotos, images, profiles, sessions, users } from "~/lib/db/schema";
+import { accounts, albumPhotos, images, music, profiles, sessions, users } from "~/lib/db/schema";
 import type { AlbumPhoto } from "~/schema/album";
 import { getImageUrl } from "~/schema/image";
 import type { MusicTrack } from "~/schema/music";
@@ -34,6 +34,16 @@ const profileSelection = {
   icon: profiles.icon,
 } as const;
 
+export const userHasProfile = async (env: Bindings, userId: string) => {
+  const db = getDb(env);
+  const [profile] = await db
+    .select({ userId: profiles.userId })
+    .from(profiles)
+    .where(eq(profiles.userId, userId));
+
+  return profile !== undefined;
+};
+
 export const getUserProfile = async (env: Bindings, userId: string) => {
   const db = getDb(env);
   const [profile] = await db
@@ -45,12 +55,12 @@ export const getUserProfile = async (env: Bindings, userId: string) => {
 };
 
 const musicSelection = {
-  id: profiles.musicTrackId,
-  title: profiles.musicTitle,
-  artist: profiles.musicArtist,
-  artworkUrl: profiles.musicArtworkUrl,
-  previewUrl: profiles.musicPreviewUrl,
-  trackViewUrl: profiles.musicTrackViewUrl,
+  id: music.trackId,
+  title: music.title,
+  artist: music.artist,
+  artworkUrl: music.artworkUrl,
+  previewUrl: music.previewUrl,
+  trackViewUrl: music.trackViewUrl,
 } as const;
 
 type MusicSelectionRow = {
@@ -79,21 +89,21 @@ const toMusicTrack = (row: MusicSelectionRow): MusicTrack | null => {
 
 export const getUserMusic = async (env: Bindings, userId: string) => {
   const db = getDb(env);
-  const [profile] = await db
-    .select(musicSelection)
-    .from(profiles)
-    .where(eq(profiles.userId, userId));
+  if (!(await userHasProfile(env, userId))) return null;
 
-  return profile ? { track: toMusicTrack(profile) } : null;
+  const [track] = await db
+    .select(musicSelection)
+    .from(music)
+    .where(eq(music.userId, userId))
+    .orderBy(music.position)
+    .limit(1);
+
+  return { track: track ? toMusicTrack(track) : null };
 };
 
 export const getUserAlbum = async (env: Bindings, userId: string) => {
   const db = getDb(env);
-  const [profile] = await db
-    .select({ userId: profiles.userId })
-    .from(profiles)
-    .where(eq(profiles.userId, userId));
-  if (!profile) return null;
+  if (!(await userHasProfile(env, userId))) return null;
 
   const photos = await db
     .select({
@@ -135,6 +145,7 @@ export const deleteUserAccount = async (env: Bindings, userId: string) => {
   const imageIds = userImages.map((image) => image.id);
   const deletedUsers = await db.transaction(async (tx) => {
     await tx.delete(albumPhotos).where(eq(albumPhotos.userId, userId));
+    await tx.delete(music).where(eq(music.userId, userId));
     await tx.delete(profiles).where(eq(profiles.userId, userId));
     await tx.delete(images).where(eq(images.userId, userId));
     await tx.delete(accounts).where(eq(accounts.userId, userId));
@@ -159,5 +170,17 @@ export const toAlbumPhotoRows = (userId: string, photos: readonly AlbumPhoto[]) 
     imageId: photo.imageId,
     title: photo.title,
     subtitle: photo.subtitle,
+    position: index,
+  }));
+
+export const toUserMusicRows = (userId: string, tracks: readonly MusicTrack[]) =>
+  tracks.map((track, index) => ({
+    userId,
+    trackId: track.id,
+    title: track.title,
+    artist: track.artist,
+    artworkUrl: track.artworkUrl,
+    previewUrl: track.previewUrl,
+    trackViewUrl: track.trackViewUrl,
     position: index,
   }));
