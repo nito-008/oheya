@@ -9,6 +9,9 @@ import styles from "./song-jacket.module.css";
 
 const APPLE_MUSIC_BADGE_URL =
   "https://toolbox.marketingtools.apple.com/api/v2/badges/listen-on-apple-music/mono-black/en-us?releaseDate=1754438400";
+const EMPTY_TRACK_TITLE = "楽曲未設定";
+const EMPTY_TRACK_ARTIST = "設定から変更できます";
+const SONG_PLACEHOLDER_SIZE = 96;
 
 type SongJacketProps = {
   track: MusicTrack | null;
@@ -18,9 +21,12 @@ export const SongJacket = component$<SongJacketProps>(({ track }) => {
   const isPlaying = useSignal(false);
   const audioRef = useSignal<HTMLAudioElement>();
 
-  const trackTitle = track?.title ?? "楽曲未設定";
+  const trackTitle = track?.title ?? EMPTY_TRACK_TITLE;
   const canPlayPreview = !!track?.previewUrl;
   const artworkUrl = getAppleMusicArtworkUrl(track?.artworkUrl, APPLE_MUSIC_ARTWORK_SIZE);
+  const mediaArtworkUrl = artworkUrl ?? songPlaceholderSvg;
+  const mediaArtworkSize = artworkUrl ? APPLE_MUSIC_ARTWORK_SIZE : SONG_PLACEHOLDER_SIZE;
+  const mediaArtworkType = artworkUrl ? "image/jpeg" : "image/svg+xml";
 
   return (
     <article class={styles.songJacket} aria-label="選択中のプレビュー">
@@ -38,8 +44,8 @@ export const SongJacket = component$<SongJacketProps>(({ track }) => {
             <img
               src={songPlaceholderSvg}
               alt=""
-              width={96}
-              height={96}
+              width={SONG_PLACEHOLDER_SIZE}
+              height={SONG_PLACEHOLDER_SIZE}
               class={styles.jacketPlaceholder}
             />
           </span>
@@ -86,7 +92,7 @@ export const SongJacket = component$<SongJacketProps>(({ track }) => {
       </div>
       <div class={styles.trackInfo}>
         <p class={styles.trackTitle}>{trackTitle}</p>
-        <p class={styles.trackArtist}>{track?.artist ?? "設定から変更できます"}</p>
+        <p class={styles.trackArtist}>{track?.artist ?? EMPTY_TRACK_ARTIST}</p>
       </div>
       {track?.trackViewUrl && (
         <a
@@ -111,12 +117,33 @@ export const SongJacket = component$<SongJacketProps>(({ track }) => {
           src={track.previewUrl}
           onEnded$={() => {
             isPlaying.value = false;
+            if ("mediaSession" in navigator) {
+              navigator.mediaSession.playbackState = "none";
+            }
           }}
           onPause$={() => {
             isPlaying.value = false;
+            if ("mediaSession" in navigator) {
+              navigator.mediaSession.playbackState = "paused";
+            }
           }}
           onPlay$={() => {
             isPlaying.value = true;
+            if ("mediaSession" in navigator) {
+              navigator.mediaSession.metadata = new MediaMetadata({
+                title: track.title,
+                artist: track.artist,
+                album: "Oheya",
+                artwork: [
+                  {
+                    src: new URL(mediaArtworkUrl, window.location.href).href,
+                    sizes: `${mediaArtworkSize}x${mediaArtworkSize}`,
+                    type: mediaArtworkType,
+                  },
+                ],
+              });
+              navigator.mediaSession.playbackState = "playing";
+            }
           }}
         />
       ) : null}
