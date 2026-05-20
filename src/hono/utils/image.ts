@@ -15,6 +15,14 @@ export const applyR2HttpMetadata = (headers: Headers, metadata: R2HTTPMetadata |
   if (metadata.cacheExpiry) headers.set("expires", metadata.cacheExpiry.toUTCString());
 };
 
+export const createR2ImageResponse = (object: R2ObjectBody) => {
+  const headers = new Headers();
+  applyR2HttpMetadata(headers, object.httpMetadata);
+  headers.set("etag", object.httpEtag);
+  headers.set("cache-control", "public, max-age=31536000, immutable");
+  return new Response(object.body, { status: 200, headers });
+};
+
 export const deleteOwnedImage = async (env: Bindings, imageId: string, userId: string) => {
   const db = getDb(env);
   const deletedImages = await db

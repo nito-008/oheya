@@ -2,7 +2,7 @@ import { eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { authMiddleware } from "~/hono/middleware/auth";
 import type { Bindings } from "~/hono/types";
-import { applyR2HttpMetadata, deleteOwnedImage, getUserImageObjectKey } from "~/hono/utils/image";
+import { createR2ImageResponse, deleteOwnedImage, getUserImageObjectKey } from "~/hono/utils/image";
 import { emptyOk } from "~/hono/utils/response";
 import { getDb } from "~/lib/db";
 import { images } from "~/lib/db/schema";
@@ -34,11 +34,7 @@ export const imagesRouter = new Hono<{ Bindings: Bindings }>()
       return c.json({ message: "Image not found" } as const, 404);
     }
 
-    const headers = new Headers();
-    applyR2HttpMetadata(headers, object.httpMetadata);
-    headers.set("etag", object.httpEtag);
-    headers.set("cache-control", "public, max-age=31536000, immutable");
-    return new Response(object.body, { status: 200, headers });
+    return createR2ImageResponse(object);
   })
   .post("/", authMiddleware, async (c) => {
     const userId = c.var.userId;
