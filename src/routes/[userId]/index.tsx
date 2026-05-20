@@ -8,22 +8,27 @@ import { Album } from "~/routes/[userId]/components/album/album";
 import { Music } from "~/routes/[userId]/components/music/music";
 import { Profile } from "~/routes/[userId]/components/profile/profile";
 import { RandomRoomButton } from "~/routes/[userId]/components/random-room-button/random-room-button";
+import { RoomShareButton } from "~/routes/[userId]/components/room-share-button/room-share-button";
 import { ErrorPage } from "~/routes/components/error-page/error-page";
 import { PUBLIC_ID_MAX_LENGTH, publicIdPattern } from "~/schema/user";
+import { getUserRoomHref } from "~/lib/room";
 import styles from "./index.module.css";
 
 const ROOM_NOT_FOUND_MESSAGE = "お部屋が見つかりません";
 
+type PublicProfile = {
+  icon: string | null;
+  name: string;
+  ogp: string | null;
+  publicId: string;
+};
+
 type ProfileLoaderData =
   | {
       status: "found";
-      profile: {
-        icon: string | null;
-        name: string;
-        ogp: string | null;
-        publicId: string;
-      };
+      profile: PublicProfile;
       albumPhotos: UserAlbumPhoto[];
+      shareHref: string;
       track: MusicTrack | null;
     }
   | {
@@ -38,19 +43,23 @@ const createNotFoundProfileData = (): ProfileLoaderData => ({
   message: ROOM_NOT_FOUND_MESSAGE,
 });
 
+const createRoomShareHref = (profile: PublicProfile, originUrl: URL) => {
+  const roomUrl = new URL(getUserRoomHref(profile.publicId), originUrl);
+  const shareUrl = new URL("https://x.com/intent/tweet");
+  shareUrl.searchParams.set("text", `${profile.name}のお部屋 #Oheya\n${roomUrl.toString()}`);
+  return shareUrl.toString();
+};
+
 const createFoundProfileData = (
-  profile: {
-    icon: string | null;
-    name: string;
-    ogp: string | null;
-    publicId: string;
-  },
+  profile: PublicProfile,
   albumPhotos: UserAlbumPhoto[],
   track: MusicTrack | null,
+  originUrl: URL,
 ): FoundProfileLoaderData => ({
   status: "found",
   profile,
   albumPhotos,
+  shareHref: createRoomShareHref(profile, originUrl),
   track,
 });
 
@@ -95,7 +104,7 @@ export const useProfile = routeLoader$<ProfileLoaderData>(async (event) => {
   const music = (await musicRes.json()) as { track: MusicTrack | null };
   const album = (await albumRes.json()) as { photos: UserAlbumPhoto[] };
 
-  return createFoundProfileData(profile, album.photos, music.track);
+  return createFoundProfileData(profile, album.photos, music.track, event.url);
 });
 
 export default component$(() => {
@@ -110,6 +119,7 @@ export default component$(() => {
       <Profile profile={data.value.profile} />
       <Music track={data.value.track} />
       <Album photos={data.value.albumPhotos} />
+      <RoomShareButton href={data.value.shareHref} />
       <RandomRoomButton currentPublicId={data.value.profile.publicId} />
     </div>
   );
