@@ -3,7 +3,7 @@ import musicPauseSvg from "~/media/music-pause.svg";
 import musicPlaySvg from "~/media/music-play.svg";
 import songPlaceholderSvg from "~/media/song-placeholder.svg";
 import songJacketFrameSvg from "~/media/song-jacket-frame.svg";
-import { getAppleMusicArtworkUrl } from "~/lib/music-artwork";
+import { APPLE_MUSIC_ARTWORK_SIZE, getAppleMusicArtworkUrl } from "~/lib/music-artwork";
 import type { MusicTrack } from "~/schema/music";
 import styles from "./song-jacket.module.css";
 
@@ -20,7 +20,7 @@ export const SongJacket = component$<SongJacketProps>(({ track }) => {
 
   const trackTitle = track?.title ?? "楽曲未設定";
   const canPlayPreview = !!track?.previewUrl;
-  const artworkUrl = getAppleMusicArtworkUrl(track?.artworkUrl, 1000);
+  const artworkUrl = getAppleMusicArtworkUrl(track?.artworkUrl, APPLE_MUSIC_ARTWORK_SIZE);
 
   return (
     <article class={styles.songJacket} aria-label="選択中のプレビュー">
@@ -29,8 +29,8 @@ export const SongJacket = component$<SongJacketProps>(({ track }) => {
           <img
             src={artworkUrl}
             alt={`${trackTitle}のジャケット`}
-            width={1000}
-            height={1000}
+            width={APPLE_MUSIC_ARTWORK_SIZE}
+            height={APPLE_MUSIC_ARTWORK_SIZE}
             class={styles.jacketImage}
           />
         ) : (
