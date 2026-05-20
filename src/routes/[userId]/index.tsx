@@ -28,7 +28,9 @@ type ProfileLoaderData =
       status: "found";
       profile: PublicProfile;
       albumPhotos: UserAlbumPhoto[];
-      shareHref: string;
+      roomUrl: string;
+      shareText: string;
+      xShareHref: string;
       track: MusicTrack | null;
     }
   | {
@@ -43,10 +45,14 @@ const createNotFoundProfileData = (): ProfileLoaderData => ({
   message: ROOM_NOT_FOUND_MESSAGE,
 });
 
-const createRoomShareHref = (profile: PublicProfile, originUrl: URL) => {
-  const roomUrl = new URL(getUserRoomHref(profile.publicId), originUrl);
+const createRoomUrl = (profile: PublicProfile, originUrl: URL) =>
+  new URL(getUserRoomHref(profile.publicId), originUrl).toString();
+
+const createRoomShareText = (profile: PublicProfile) => `${profile.name}のお部屋 #Oheya`;
+
+const createXRoomShareHref = (text: string, roomUrl: string) => {
   const shareUrl = new URL("https://x.com/intent/tweet");
-  shareUrl.searchParams.set("text", `${profile.name}のお部屋 #Oheya\n${roomUrl.toString()}`);
+  shareUrl.searchParams.set("text", `${text}\n${roomUrl}`);
   return shareUrl.toString();
 };
 
@@ -55,13 +61,20 @@ const createFoundProfileData = (
   albumPhotos: UserAlbumPhoto[],
   track: MusicTrack | null,
   originUrl: URL,
-): FoundProfileLoaderData => ({
-  status: "found",
-  profile,
-  albumPhotos,
-  shareHref: createRoomShareHref(profile, originUrl),
-  track,
-});
+): FoundProfileLoaderData => {
+  const roomUrl = createRoomUrl(profile, originUrl);
+  const shareText = createRoomShareText(profile);
+
+  return {
+    status: "found",
+    profile,
+    albumPhotos,
+    roomUrl,
+    shareText,
+    xShareHref: createXRoomShareHref(shareText, roomUrl),
+    track,
+  };
+};
 
 export const useProfile = routeLoader$<ProfileLoaderData>(async (event) => {
   const client = createApiClient(event);
@@ -119,7 +132,11 @@ export default component$(() => {
       <Profile profile={data.value.profile} />
       <Music track={data.value.track} />
       <Album photos={data.value.albumPhotos} />
-      <RoomShareButton href={data.value.shareHref} />
+      <RoomShareButton
+        roomUrl={data.value.roomUrl}
+        text={data.value.shareText}
+        xHref={data.value.xShareHref}
+      />
       <RandomRoomButton currentPublicId={data.value.profile.publicId} />
     </div>
   );
