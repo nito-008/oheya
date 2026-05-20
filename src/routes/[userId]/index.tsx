@@ -129,7 +129,7 @@ export const head: DocumentHead = ({ resolveValue }) => {
     meta: [
       { name: "description", content: `${data.profile.name}のお部屋` },
       ...(data.profile.ogp
-        ? [{ property: "og:image", content: `/api/images/${data.profile.ogp}` }]
+        ? [{ property: "og:image", content: `/api/ogp/${data.profile.publicId}` }]
         : []),
     ],
   };
