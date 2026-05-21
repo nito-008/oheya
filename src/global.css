@@ -16,6 +16,7 @@
 }
 
 :root {
+  --anchor-scroll-padding-top: calc(var(--common-header-height) + 2rem);
   --common-header-height: 4.2rem;
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --font-body:
@@ -24,6 +25,7 @@
 }
 
 html {
+  scroll-padding-top: var(--anchor-scroll-padding-top);
   line-height: 1;
   -webkit-text-size-adjust: 100%;
   -moz-tab-size: 4;
