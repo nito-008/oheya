@@ -6,22 +6,30 @@ import { accounts, albumPhotos, images, music, profiles, sessions, users } from 
 import type { AlbumPhoto } from "~/schema/album";
 import { getImageUrl } from "~/schema/image";
 import type { MusicTrack } from "~/schema/music";
+import type { PublicProfile } from ".";
 
 const publicIdMatches = (publicId: string) => sql`lower(${profiles.publicId}) = lower(${publicId})`;
+
+const profileSelection = {
+  publicId: profiles.publicId,
+  name: profiles.name,
+  icon: profiles.icon,
+  ogp: profiles.ogp,
+} as const;
+
+const profileWithUserIdSelection = {
+  userId: profiles.userId,
+  ...profileSelection,
+} as const;
 
 export const getProfileByPublicId = async (env: Bindings, publicId: string) => {
   const db = getDb(env);
   const [profile] = await db
-    .select({ userId: profiles.userId, publicId: profiles.publicId, ogp: profiles.ogp })
+    .select(profileWithUserIdSelection)
     .from(profiles)
     .where(publicIdMatches(publicId));
 
   return profile ?? null;
-};
-
-export const getUserIdByPublicId = async (env: Bindings, publicId: string) => {
-  const profile = await getProfileByPublicId(env, publicId);
-  return profile?.userId ?? null;
 };
 
 export const getRandomPublicId = async (
@@ -39,13 +47,6 @@ export const getRandomPublicId = async (
 
   return profile?.publicId ?? null;
 };
-
-const profileSelection = {
-  publicId: profiles.publicId,
-  name: profiles.name,
-  icon: profiles.icon,
-  ogp: profiles.ogp,
-} as const;
 
 export const userHasProfile = async (env: Bindings, userId: string) => {
   const db = getDb(env);
@@ -101,9 +102,12 @@ const toMusicTrack = (row: MusicSelectionRow): MusicTrack | null => {
 };
 
 export const getUserMusic = async (env: Bindings, userId: string) => {
-  const db = getDb(env);
   if (!(await userHasProfile(env, userId))) return null;
+  return getMusicByUserId(env, userId);
+};
 
+const getMusicByUserId = async (env: Bindings, userId: string) => {
+  const db = getDb(env);
   const [track] = await db
     .select(musicSelection)
     .from(music)
@@ -115,9 +119,12 @@ export const getUserMusic = async (env: Bindings, userId: string) => {
 };
 
 export const getUserAlbum = async (env: Bindings, userId: string) => {
-  const db = getDb(env);
   if (!(await userHasProfile(env, userId))) return null;
+  return getAlbumByUserId(env, userId);
+};
 
+const getAlbumByUserId = async (env: Bindings, userId: string) => {
+  const db = getDb(env);
   const photos = await db
     .select({
       imageId: albumPhotos.imageId,
@@ -133,6 +140,23 @@ export const getUserAlbum = async (env: Bindings, userId: string) => {
       ...photo,
       url: getImageUrl(photo.imageId)!,
     })),
+  };
+};
+
+export const getPublicRoomByUserId = async (
+  env: Bindings,
+  profile: PublicProfile,
+  userId: string,
+) => {
+  const [music, album] = await Promise.all([
+    getMusicByUserId(env, userId),
+    getAlbumByUserId(env, userId),
+  ]);
+
+  return {
+    profile,
+    music,
+    album,
   };
 };
 

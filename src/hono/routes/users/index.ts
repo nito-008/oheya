@@ -6,7 +6,17 @@ import { randomUserRouter } from "./random-user";
 
 export type UsersEnv = {
   Bindings: Bindings;
-  Variables: { userId: string };
+  Variables: {
+    publicProfile: PublicProfile;
+    userId: string;
+  };
+};
+
+export type PublicProfile = {
+  icon: string | null;
+  name: string;
+  ogp: string | null;
+  publicId: string;
 };
 
 export const userNotFound = { message: "User not found" } as const;
