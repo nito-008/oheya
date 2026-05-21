@@ -10,8 +10,9 @@
   align-items: center;
   justify-content: center;
   min-width: 0;
-  gap: 0.5rem;
-  padding: 0.65rem 0.9rem;
+  width: 2.9rem;
+  height: 2.9rem;
+  padding: 0;
   border: 1px solid #b8ad9a;
   border-radius: 999px;
   box-sizing: border-box;
@@ -47,9 +48,23 @@
 }
 
 .label {
-  min-width: 0;
-  overflow: hidden;
-  line-height: 1;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: none;
+}
+
+@media (min-width: 32rem) {
+  .link {
+    width: auto;
+    height: auto;
+    gap: 0.5rem;
+    padding: 0.65rem 0.9rem;
+  }
+
+  .label {
+    display: inline;
+    min-width: 0;
+    overflow: hidden;
+    line-height: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
