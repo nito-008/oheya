@@ -7,23 +7,20 @@ import type { AlbumPhoto } from "~/schema/album";
 import { getImageUrl } from "~/schema/image";
 import type { MusicTrack } from "~/schema/music";
 
-export const getProfileByPublicIdIgnoringCase = async (env: Bindings, publicId: string) => {
+const publicIdMatches = (publicId: string) => sql`lower(${profiles.publicId}) = lower(${publicId})`;
+
+export const getProfileByPublicId = async (env: Bindings, publicId: string) => {
   const db = getDb(env);
   const [profile] = await db
-    .select({ userId: profiles.userId })
+    .select({ userId: profiles.userId, publicId: profiles.publicId, ogp: profiles.ogp })
     .from(profiles)
-    .where(sql`lower(${profiles.publicId}) = lower(${publicId})`);
+    .where(publicIdMatches(publicId));
 
   return profile ?? null;
 };
 
 export const getUserIdByPublicId = async (env: Bindings, publicId: string) => {
-  const db = getDb(env);
-  const [profile] = await db
-    .select({ userId: profiles.userId })
-    .from(profiles)
-    .where(eq(profiles.publicId, publicId));
-
+  const profile = await getProfileByPublicId(env, publicId);
   return profile?.userId ?? null;
 };
 
