@@ -47,7 +47,7 @@ erDiagram
   }
   profile {
     text user_id PK,FK
-    text public_id UK
+    text public_id
     text name
     text icon "nullable"
     text ogp "nullable"

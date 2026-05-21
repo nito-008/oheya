@@ -12,6 +12,7 @@ import { userSchema } from "~/schema/user";
 import { userNotFound, type UsersEnv } from ".";
 import {
   deleteUserAccount,
+  getProfileByPublicId,
   getImageOwners,
   getUserAlbum,
   getUserMusic,
@@ -120,10 +121,7 @@ export const currentUserRouter = new Hono<UsersEnv>()
       .from(profiles)
       .where(eq(profiles.userId, userId));
 
-    const [existing] = await db
-      .select({ userId: profiles.userId })
-      .from(profiles)
-      .where(eq(profiles.publicId, values.publicId));
+    const existing = await getProfileByPublicId(c.env, values.publicId);
     if (existing && existing.userId !== userId) {
       return c.json({ message: "User ID already exists" } as const, 409);
     }
