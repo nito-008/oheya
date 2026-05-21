@@ -1,10 +1,25 @@
-import { component$, useSignal } from "@builder.io/qwik";
+import {
+  component$,
+  noSerialize,
+  useSignal,
+  useVisibleTask$,
+  type NoSerialize,
+} from "@builder.io/qwik";
+import type { Howl } from "howler";
 import musicPauseSvg from "~/media/music-pause.svg";
 import musicPlaySvg from "~/media/music-play.svg";
 import songPlaceholderSvg from "~/media/song-placeholder.svg";
 import songJacketFrameSvg from "~/media/song-jacket-frame.svg";
 import { APPLE_MUSIC_ARTWORK_SIZE, getAppleMusicArtworkUrl } from "~/lib/music-artwork";
 import type { MusicTrack } from "~/schema/music";
+import {
+  createPreviewSound,
+  pausePreviewSound,
+  PREVIEW_FADE_IN_DURATION_MS,
+  PREVIEW_PAUSE_RESUME_FADE_DURATION_MS,
+  type PreviewSoundState,
+  unloadPreviewSound,
+} from "./song-jacket-audio";
 import styles from "./song-jacket.module.css";
 
 const APPLE_MUSIC_BADGE_URL =
@@ -19,7 +34,13 @@ type SongJacketProps = {
 
 export const SongJacket = component$<SongJacketProps>(({ track }) => {
   const isPlaying = useSignal(false);
-  const audioRef = useSignal<HTMLAudioElement>();
+  const previewSound = useSignal<NoSerialize<Howl>>();
+  const previewSoundId = useSignal<number>();
+  const naturalFadeStarted = useSignal(false);
+  const naturalFadeTimeoutId = useSignal<number>();
+  const pauseFadeTimeoutId = useSignal<number>();
+  const previewFadeInDurationMs = useSignal(PREVIEW_FADE_IN_DURATION_MS);
+  const shouldFadeIn = useSignal(true);
 
   const trackTitle = track?.title ?? EMPTY_TRACK_TITLE;
   const canPlayPreview = !!track?.previewUrl;
@@ -27,6 +48,33 @@ export const SongJacket = component$<SongJacketProps>(({ track }) => {
   const mediaArtworkUrl = artworkUrl ?? songPlaceholderSvg;
   const mediaArtworkSize = artworkUrl ? APPLE_MUSIC_ARTWORK_SIZE : SONG_PLACEHOLDER_SIZE;
   const mediaArtworkType = artworkUrl ? "image/jpeg" : "image/svg+xml";
+  const soundState: PreviewSoundState = {
+    isPlaying,
+    naturalFadeStarted,
+    naturalFadeTimeoutId,
+    pauseFadeTimeoutId,
+    previewFadeInDurationMs,
+    previewSound,
+    previewSoundId,
+    shouldFadeIn,
+  };
+  const previewMetadata = track
+    ? {
+        mediaArtworkSize,
+        mediaArtworkType,
+        mediaArtworkUrl,
+        track,
+      }
+    : null;
+
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(({ track: trackSignal, cleanup }) => {
+    trackSignal(() => track?.previewUrl);
+
+    cleanup(() => {
+      unloadPreviewSound(soundState);
+    });
+  });
 
   return (
     <article class={styles.songJacket} aria-label="選択中のプレビュー">
@@ -67,15 +115,32 @@ export const SongJacket = component$<SongJacketProps>(({ track }) => {
             }}
             aria-label={isPlaying.value ? "プレビューを一時停止" : "プレビューを再生"}
             onClick$={async () => {
-              const audio = audioRef.value;
-              if (!audio) return;
+              if (!isPlaying.value) {
+                if (!previewMetadata) return;
 
-              if (audio.paused) {
-                await audio.play();
-                isPlaying.value = true;
+                let sound = soundState.previewSound.value;
+                if (!sound) {
+                  const createdSound = await createPreviewSound(soundState, previewMetadata);
+                  if (!createdSound) return;
+
+                  sound = createdSound;
+                  previewSound.value = noSerialize(createdSound);
+                }
+                if (!sound) return;
+
+                const pausedSoundId = soundState.previewSoundId.value;
+                const seek = pausedSoundId === undefined ? 0 : sound.seek(pausedSoundId);
+                const isResuming = typeof seek === "number" && seek > 0.1;
+
+                shouldFadeIn.value = true;
+                previewFadeInDurationMs.value = isResuming
+                  ? PREVIEW_PAUSE_RESUME_FADE_DURATION_MS
+                  : PREVIEW_FADE_IN_DURATION_MS;
+                sound.volume(0);
+                soundState.previewSoundId.value =
+                  pausedSoundId === undefined ? sound.play() : sound.play(pausedSoundId);
               } else {
-                audio.pause();
-                isPlaying.value = false;
+                pausePreviewSound(soundState);
               }
             }}
           >
@@ -111,42 +176,6 @@ export const SongJacket = component$<SongJacketProps>(({ track }) => {
           />
         </a>
       )}
-      {track?.previewUrl ? (
-        <audio
-          ref={audioRef}
-          src={track.previewUrl}
-          onEnded$={() => {
-            isPlaying.value = false;
-            if ("mediaSession" in navigator) {
-              navigator.mediaSession.playbackState = "none";
-            }
-          }}
-          onPause$={() => {
-            isPlaying.value = false;
-            if ("mediaSession" in navigator) {
-              navigator.mediaSession.playbackState = "paused";
-            }
-          }}
-          onPlay$={() => {
-            isPlaying.value = true;
-            if ("mediaSession" in navigator) {
-              navigator.mediaSession.metadata = new MediaMetadata({
-                title: track.title,
-                artist: track.artist,
-                album: "Oheya",
-                artwork: [
-                  {
-                    src: new URL(mediaArtworkUrl, window.location.href).href,
-                    sizes: `${mediaArtworkSize}x${mediaArtworkSize}`,
-                    type: mediaArtworkType,
-                  },
-                ],
-              });
-              navigator.mediaSession.playbackState = "playing";
-            }
-          }}
-        />
-      ) : null}
     </article>
   );
 });
