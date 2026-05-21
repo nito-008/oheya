@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const users = sqliteTable("user", {
@@ -11,15 +11,19 @@ export const users = sqliteTable("user", {
   image: text("image"),
 });
 
-export const profiles = sqliteTable("profile", {
-  userId: text("user_id")
-    .primaryKey()
-    .references(() => users.id, { onDelete: "cascade" }),
-  publicId: text("public_id").notNull().unique(),
-  name: text("name").notNull(),
-  icon: text("icon"),
-  ogp: text("ogp"),
-});
+export const profiles = sqliteTable(
+  "profile",
+  {
+    userId: text("user_id")
+      .primaryKey()
+      .references(() => users.id, { onDelete: "cascade" }),
+    publicId: text("public_id").notNull(),
+    name: text("name").notNull(),
+    icon: text("icon"),
+    ogp: text("ogp"),
+  },
+  (profile) => [uniqueIndex("profile_public_id_lower_unique").on(sql`lower(${profile.publicId})`)],
+);
 
 export const images = sqliteTable(
   "image",
