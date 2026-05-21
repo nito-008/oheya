@@ -15,7 +15,7 @@ export const RoomShareButton = component$<RoomShareButtonProps>(({ xHref }) => (
       rel="noopener noreferrer"
       aria-label="Xで共有"
     >
-      <img class={styles.icon} src={shareSvg} alt="" width={24} height={24} />
+      <img class={styles.icon} src={shareSvg} alt="" aria-hidden="true" width={24} height={24} />
       <span class={styles.label}>Xで共有</span>
     </a>
   </div>
