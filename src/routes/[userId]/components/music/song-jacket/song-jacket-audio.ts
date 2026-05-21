@@ -131,7 +131,7 @@ export const createPreviewSound = async (
   const { Howl } = await import("howler");
   return new Howl({
     src: [metadata.track.previewUrl],
-    html5: false,
+    html5: true,
     volume: PREVIEW_VOLUME,
     onend: () => {
       resetPreviewState(state, "none");
