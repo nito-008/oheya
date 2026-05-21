@@ -50,6 +50,12 @@ const createXRoomShareHref = (profile: PublicProfile, originUrl: URL) => {
   return shareUrl.toString();
 };
 
+const createCanonicalRoomHref = (publicId: string, currentUrl: URL) => {
+  const canonicalUrl = new URL(getUserRoomHref(publicId), currentUrl);
+  canonicalUrl.search = currentUrl.search;
+  return `${canonicalUrl.pathname}${canonicalUrl.search}`;
+};
+
 const createFoundProfileData = (
   profile: PublicProfile,
   albumPhotos: UserAlbumPhoto[],
@@ -74,10 +80,25 @@ export const useProfile = routeLoader$<ProfileLoaderData>(async (event) => {
     return createNotFoundProfileData();
   }
 
-  const [profileRes, musicRes, albumRes] = await Promise.all([
-    client.api.users[":publicId"].$get({
-      param: { publicId },
-    }),
+  const profileRes = await client.api.users[":publicId"].$get({
+    param: { publicId },
+  });
+
+  if (profileRes.status === 404) {
+    event.status(404);
+    return createNotFoundProfileData();
+  }
+
+  if (!profileRes.ok) {
+    throw new Error("プロフィールの取得に失敗しました");
+  }
+
+  const profile = await profileRes.json();
+  if (profile.publicId !== publicId) {
+    throw event.redirect(301, createCanonicalRoomHref(profile.publicId, event.url));
+  }
+
+  const [musicRes, albumRes] = await Promise.all([
     client.api.users[":publicId"].music.$get({
       param: { publicId },
     }),
@@ -86,13 +107,9 @@ export const useProfile = routeLoader$<ProfileLoaderData>(async (event) => {
     }),
   ]);
 
-  if (profileRes.status === 404 || musicRes.status === 404 || albumRes.status === 404) {
+  if (musicRes.status === 404 || albumRes.status === 404) {
     event.status(404);
     return createNotFoundProfileData();
-  }
-
-  if (!profileRes.ok) {
-    throw new Error("プロフィールの取得に失敗しました");
   }
 
   if (!musicRes.ok) {
@@ -102,7 +119,6 @@ export const useProfile = routeLoader$<ProfileLoaderData>(async (event) => {
     throw new Error("アルバムの取得に失敗しました");
   }
 
-  const profile = await profileRes.json();
   const music = (await musicRes.json()) as { track: MusicTrack | null };
   const album = (await albumRes.json()) as { photos: UserAlbumPhoto[] };
 
