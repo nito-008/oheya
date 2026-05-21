@@ -23,6 +23,12 @@ type PublicProfile = {
   publicId: string;
 };
 
+type PublicRoom = {
+  profile: PublicProfile;
+  music: { track: MusicTrack | null };
+  album: { photos: UserAlbumPhoto[] };
+};
+
 type ProfileLoaderData =
   | {
       status: "found";
@@ -80,49 +86,26 @@ export const useProfile = routeLoader$<ProfileLoaderData>(async (event) => {
     return createNotFoundProfileData();
   }
 
-  const profileRes = await client.api.users[":publicId"].$get({
+  const roomRes = await client.api.users[":publicId"].room.$get({
     param: { publicId },
   });
 
-  if (profileRes.status === 404) {
+  if (roomRes.status === 404) {
     event.status(404);
     return createNotFoundProfileData();
   }
 
-  if (!profileRes.ok) {
+  if (!roomRes.ok) {
     throw new Error("プロフィールの取得に失敗しました");
   }
 
-  const profile = await profileRes.json();
+  const room = (await roomRes.json()) as PublicRoom;
+  const { profile } = room;
   if (profile.publicId !== publicId) {
     throw event.redirect(301, createCanonicalRoomHref(profile.publicId, event.url));
   }
 
-  const [musicRes, albumRes] = await Promise.all([
-    client.api.users[":publicId"].music.$get({
-      param: { publicId },
-    }),
-    client.api.users[":publicId"].album.$get({
-      param: { publicId },
-    }),
-  ]);
-
-  if (musicRes.status === 404 || albumRes.status === 404) {
-    event.status(404);
-    return createNotFoundProfileData();
-  }
-
-  if (!musicRes.ok) {
-    throw new Error("音楽情報の取得に失敗しました");
-  }
-  if (!albumRes.ok) {
-    throw new Error("アルバムの取得に失敗しました");
-  }
-
-  const music = (await musicRes.json()) as { track: MusicTrack | null };
-  const album = (await albumRes.json()) as { photos: UserAlbumPhoto[] };
-
-  return createFoundProfileData(profile, album.photos, music.track, event.url);
+  return createFoundProfileData(profile, room.album.photos, room.music.track, event.url);
 });
 
 export default component$(() => {
