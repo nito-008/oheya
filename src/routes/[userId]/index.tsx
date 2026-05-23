@@ -8,7 +8,6 @@ import { Album } from "~/routes/[userId]/components/album/album";
 import { Music } from "~/routes/[userId]/components/music/music";
 import { Profile } from "~/routes/[userId]/components/profile/profile";
 import { RandomRoomButton } from "~/routes/[userId]/components/random-room-button/random-room-button";
-import { RoomShareButton } from "~/routes/[userId]/components/room-share-button/room-share-button";
 import { ErrorPage } from "~/routes/components/error-page/error-page";
 import { PUBLIC_ID_MAX_LENGTH, publicIdPattern } from "~/schema/user";
 import { getUserRoomHref } from "~/lib/room";
@@ -34,7 +33,6 @@ type ProfileLoaderData =
       status: "found";
       profile: PublicProfile;
       albumPhotos: UserAlbumPhoto[];
-      xShareHref: string;
       track: MusicTrack | null;
     }
   | {
@@ -49,13 +47,6 @@ const createNotFoundProfileData = (): ProfileLoaderData => ({
   message: ROOM_NOT_FOUND_MESSAGE,
 });
 
-const createXRoomShareHref = (profile: PublicProfile, originUrl: URL) => {
-  const roomUrl = new URL(getUserRoomHref(profile.publicId), originUrl);
-  const shareUrl = new URL("https://x.com/intent/tweet");
-  shareUrl.searchParams.set("text", `${profile.name}のお部屋 #Oheya\n${roomUrl.toString()}`);
-  return shareUrl.toString();
-};
-
 const createCanonicalRoomHref = (publicId: string, currentUrl: URL) => {
   const canonicalUrl = new URL(getUserRoomHref(publicId), currentUrl);
   canonicalUrl.search = currentUrl.search;
@@ -66,13 +57,11 @@ const createFoundProfileData = (
   profile: PublicProfile,
   albumPhotos: UserAlbumPhoto[],
   track: MusicTrack | null,
-  originUrl: URL,
 ): FoundProfileLoaderData => {
   return {
     status: "found",
     profile,
     albumPhotos,
-    xShareHref: createXRoomShareHref(profile, originUrl),
     track,
   };
 };
@@ -105,7 +94,7 @@ export const useProfile = routeLoader$<ProfileLoaderData>(async (event) => {
     throw event.redirect(301, createCanonicalRoomHref(profile.publicId, event.url));
   }
 
-  return createFoundProfileData(profile, room.album.photos, room.music.track, event.url);
+  return createFoundProfileData(profile, room.album.photos, room.music.track);
 });
 
 export default component$(() => {
@@ -120,7 +109,6 @@ export default component$(() => {
       <Profile profile={data.value.profile} />
       <Music track={data.value.track} />
       <Album photos={data.value.albumPhotos} />
-      <RoomShareButton xHref={data.value.xShareHref} />
       <RandomRoomButton currentPublicId={data.value.profile.publicId} />
     </div>
   );
