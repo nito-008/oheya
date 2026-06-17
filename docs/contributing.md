@@ -23,4 +23,5 @@
 - Write pull request titles in Japanese.
 - Keep pull request comments in Japanese.
 - Keep pull request comments limited to a brief summary so they are easy to read.
+- Do not include a confirmation or verification section in pull request comments.
 - Link related issues from the pull request body when an issue exists.
