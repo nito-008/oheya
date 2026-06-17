@@ -2,14 +2,31 @@ import { $, component$, useSignal, useVisibleTask$, type QRL } from "@builder.io
 import { FormButton } from "~/components/ui/form/form-button/form-button";
 import inputStyles from "~/components/ui/form/form-text-input/form-text-input.module.css";
 import { useToast } from "~/components/ui/toast/toast";
+import { APPLE_MUSIC_ARTWORK_SIZE, getAppleMusicArtworkUrl } from "~/lib/music-artwork";
 import type { MusicTrack } from "~/schema/music";
 import formStyles from "~/routes/signup/index.module.css";
 import sharedStyles from "~/routes/settings/components/settings-tabs/settings-tabs.module.css";
 import styles from "./music-settings-form.module.css";
 
-type MusicSearchResponse = {
-  results: MusicTrack[];
+const appleMusicSearchEndpoint = "https://itunes.apple.com/search";
+const appleMusicSearchTimeoutMs = 10_000;
+
+type ITunesTrack = {
+  artistName?: string;
+  artworkUrl100?: string;
+  previewUrl?: string;
+  trackId?: number;
+  trackName?: string;
+  trackViewUrl?: string;
 };
+
+type ITunesSearchResponse = {
+  results?: ITunesTrack[];
+};
+
+type AppleMusicSearchWindow = Window &
+  typeof globalThis &
+  Record<string, ((data: ITunesSearchResponse) => void) | undefined>;
 
 type MusicSettingsFormProps = {
   initialTrack: MusicTrack | null;
@@ -21,6 +38,86 @@ const getTrackLabel = (track: Pick<MusicTrack, "title" | "artist">) =>
   `${track.title.slice(0, 1)}${track.artist.slice(0, 1)}`.toUpperCase();
 
 const cloneTrack = (track: MusicTrack): MusicTrack => ({ ...track });
+
+let appleMusicSearchSequence = 0;
+
+const isMusicTrackResult = (
+  track: ITunesTrack,
+): track is ITunesTrack & { artistName: string; trackId: number; trackName: string } =>
+  typeof track.trackId === "number" && !!track.trackName && !!track.artistName;
+
+const toMusicTrack = (
+  track: ITunesTrack & { artistName: string; trackId: number; trackName: string },
+) => ({
+  id: String(track.trackId),
+  title: track.trackName,
+  artist: track.artistName,
+  artworkUrl: getAppleMusicArtworkUrl(track.artworkUrl100, APPLE_MUSIC_ARTWORK_SIZE),
+  previewUrl: track.previewUrl ?? null,
+  trackViewUrl: track.trackViewUrl ?? null,
+});
+
+const toMusicTracks = (data: ITunesSearchResponse): MusicTrack[] =>
+  (data.results ?? []).filter(isMusicTrackResult).map(toMusicTrack);
+
+const searchAppleMusic = (term: string, signal: AbortSignal): Promise<MusicTrack[]> =>
+  new Promise((resolve, reject) => {
+    if (signal.aborted) {
+      reject(new Error("Aborted"));
+      return;
+    }
+
+    const callbackName = `__oheyaAppleMusicSearch${Date.now()}${appleMusicSearchSequence++}`;
+    const params = new URLSearchParams({
+      callback: callbackName,
+      country: "jp",
+      entity: "song",
+      lang: "ja_jp",
+      limit: "10",
+      term,
+    });
+    const script = document.createElement("script");
+    const searchWindow = window as AppleMusicSearchWindow;
+    let isSettled = false;
+    let timeoutId = 0;
+
+    const cleanup = () => {
+      signal.removeEventListener("abort", abortSearch);
+      window.clearTimeout(timeoutId);
+      script.remove();
+      delete searchWindow[callbackName];
+    };
+
+    const rejectSearch = (error: Error) => {
+      if (isSettled) return;
+      isSettled = true;
+      cleanup();
+      reject(error);
+    };
+
+    const abortSearch = () => {
+      rejectSearch(new Error("Aborted"));
+    };
+
+    searchWindow[callbackName] = (data) => {
+      if (isSettled) return;
+      isSettled = true;
+      cleanup();
+      resolve(toMusicTracks(data));
+    };
+
+    script.async = true;
+    script.onerror = () => {
+      rejectSearch(new Error("音楽の検索に失敗しました"));
+    };
+    script.src = `${appleMusicSearchEndpoint}?${params.toString()}`;
+
+    signal.addEventListener("abort", abortSearch, { once: true });
+    timeoutId = window.setTimeout(() => {
+      rejectSearch(new Error("音楽の検索に失敗しました"));
+    }, appleMusicSearchTimeoutMs);
+    document.head.appendChild(script);
+  });
 
 export const MusicSettingsForm = component$<MusicSettingsFormProps>((props) => {
   const { initialTrack, onNext$, saveOnSelect = true } = props;
@@ -93,17 +190,7 @@ export const MusicSettingsForm = component$<MusicSettingsFormProps>((props) => {
       searchError.value = null;
 
       try {
-        const params = new URLSearchParams({ term: currentQuery });
-        const response = await fetch(`/api/music/search?${params.toString()}`, {
-          signal: controller.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error("音楽の検索に失敗しました");
-        }
-
-        const data = (await response.json()) as MusicSearchResponse;
-        results.value = data.results;
+        results.value = await searchAppleMusic(currentQuery, controller.signal);
       } catch (error) {
         if (controller.signal.aborted) return;
         console.error("Music search error:", error);
