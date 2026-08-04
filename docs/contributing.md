@@ -24,4 +24,5 @@
 - Keep pull request comments in Japanese.
 - Keep pull request comments limited to a brief summary so they are easy to read.
 - Do not include a confirmation or verification section in pull request comments.
+- Do not include successful check results such as lint or build in pull request bodies or comments.
 - Link related issues from the pull request body when an issue exists.

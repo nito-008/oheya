@@ -105,7 +105,11 @@ export default component$(() => {
   }
 
   return (
-    <div class={styles.main} aria-label={`${data.value.profile.name}のお部屋`}>
+    <div
+      key={data.value.profile.publicId}
+      class={styles.main}
+      aria-label={`${data.value.profile.name}のお部屋`}
+    >
       <Profile profile={data.value.profile} />
       <Music track={data.value.track} />
       <Album photos={data.value.albumPhotos} />
